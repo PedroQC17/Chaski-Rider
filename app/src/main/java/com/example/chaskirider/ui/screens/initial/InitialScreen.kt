@@ -1,9 +1,6 @@
 package com.example.chaskirider.ui.screens.initial
 
-import android.R.attr.onClick
-import android.media.Image
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,19 +9,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.BlendModeColorFilter
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -40,24 +32,22 @@ import androidx.compose.ui.unit.sp
 import com.example.chaskirider.R
 import com.example.chaskirider.ui.theme.Orange
 
-
 @Preview(showBackground = true)
 @Composable
-fun InitialScreenPreview(){
+fun InitialScreenPreview() {
     InitialScreen()
 }
 
-//PANTALLA INICIO
+// PANTALLA INICIO
 @Composable
-fun InitialScreen(){
-
+fun InitialScreen(
+    onNavigateToLogin: () -> Unit = {},
+    onNavigateToRegister: () -> Unit = {}
+) {
     Column(
         modifier = Modifier.fillMaxSize(),
-
-        horizontalAlignment = Alignment.CenterHorizontally,
-
-
-    ){
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         ChaskiLogo()
 
         RiderIlustration()
@@ -65,19 +55,19 @@ fun InitialScreen(){
         Spacer(modifier = Modifier.weight(1f))
         WelcomeText()
         Spacer(modifier = Modifier.weight(1f))
-        OnboardingActions()
-
+        OnboardingActions(
+            onNavigateToLogin = onNavigateToLogin,
+            onNavigateToRegister = onNavigateToRegister
+        )
     }
 }
 
-
-
-//Logo imagen
+// Logo imagen
 @Composable
-fun ChaskiLogo(){
+fun ChaskiLogo() {
     val image = painterResource(R.drawable.chaski_rider_logo_transparent)
 
-    Image (
+    Image(
         painter = image,
         contentDescription = "chaski_rider_logo",
         contentScale = ContentScale.Crop,
@@ -85,21 +75,12 @@ fun ChaskiLogo(){
             .padding(top = 20.dp)
             .height(200.dp)
             .width(300.dp)
-
-
     )
 }
 
-
-//Imagenes desplazables
+// Imagenes desplazables
 @Composable
-fun RiderIlustration (){
- /*
-    val imageOne = painterResource(R.drawable.image_one)
-    val imageTwo = painterResource(R.drawable.image_two)
-    val imageThree = painterResource(R.drawable.image_three)
-*/
-
+fun RiderIlustration() {
     val images = listOf(
         R.drawable.image_one,
         R.drawable.image_two,
@@ -108,81 +89,62 @@ fun RiderIlustration (){
 
     val pageState = rememberPagerState(
         initialPage = 0,
-        pageCount = { 3 } //cantidad de imagenes
+        pageCount = { 3 }
     )
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
-    ){
-
+    ) {
         HorizontalPager(
             state = pageState,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(250.dp)
-
-        ) {
-            page ->
-
-            Image (
+        ) { page ->
+            Image(
                 painter = painterResource(images[page]),
                 contentDescription = "imagenes de repartidores de chaski riders",
-                contentScale = ContentScale.Crop,
-
+                contentScale = ContentScale.Crop
             )
         }
 
-        //Agregar los puntos o indicadores de las imagenes
-
+        // Puntos o indicadores de las imagenes
         Row(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(top = 8.dp),
-        ){
+            modifier = Modifier.padding(top = 8.dp)
+        ) {
             repeat(3) { index ->
-
-                Text (
+                Text(
                     text = if (pageState.currentPage == index) "●" else "○",
                     fontSize = 20.sp,
                     color = Orange
                 )
-
             }
         }
     }
-
-
 }
 
-//Texto de bienvenida completa
-
+// Texto de bienvenida completa
 @Composable
-fun WelcomeText(){
-
+fun WelcomeText() {
     Column(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-
-
-
-
+        verticalArrangement = Arrangement.Center
     ) {
         Text(
             text = "Bienvenido a",
-            fontSize =28.sp,
-
+            fontSize = 28.sp
         )
-        Spacer (modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         Text(
             text = buildAnnotatedString {
-
                 withStyle(
                     style = SpanStyle(
                         color = Color.Black,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.Bold
                     )
                 ) {
                     append("Chaski")
@@ -193,69 +155,59 @@ fun WelcomeText(){
                         color = Orange,
                         fontWeight = FontWeight.Bold
                     )
-                ){
-                    append (" Rider")
+                ) {
+                    append(" Rider")
                 }
             },
-            fontSize = 48.sp,
+            fontSize = 48.sp
         )
 
-        Spacer (modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-
             text = "La app para repartidores de Chaski Food.\nConecta, entrega y gana.",
             fontSize = 20.sp,
             fontStyle = FontStyle.Italic,
             color = Color.Gray,
             textAlign = TextAlign.Center,
-            fontWeight = FontWeight.Bold,
+            fontWeight = FontWeight.Bold
         )
-
-
     }
 }
 
-
-//Agrupa los botones e indicador de la pagina
-
+// Agrupa los botones e indicador de la pagina
 @Composable
-fun OnboardingActions(){
-    val text_signin = "Registrarse"
-    val text_login = "Iniciar Sesión"
+fun OnboardingActions(
+    onNavigateToLogin: () -> Unit = {},
+    onNavigateToRegister: () -> Unit = {}
+) {
+    val textSignin = "Registrarse"
+    val textLogin = "Iniciar Sesión"
 
     Row(
         modifier = Modifier
             .padding(bottom = 20.dp)
             .fillMaxWidth(),
-
-        horizontalArrangement = Arrangement.Center,
-
-    ){
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
         Button(
-            onClick = {},
-            modifier = Modifier
-                .height(55.dp)
+            onClick = onNavigateToLogin,
+            modifier = Modifier.height(55.dp)
         ) {
             Text(
-                text = text_login,
-                fontSize = 16.sp,
+                text = textLogin,
+                fontSize = 16.sp
             )
-
         }
 
         Button(
-
-            onClick = {},
-            modifier = Modifier
-                .height(55.dp),
-
+            onClick = onNavigateToRegister,
+            modifier = Modifier.height(55.dp)
         ) {
             Text(
-                text = text_signin,
-                fontSize = 16.sp,
+                text = textSignin,
+                fontSize = 16.sp
             )
         }
     }
-
 }
