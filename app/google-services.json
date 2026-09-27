@@ -1,26 +1,44 @@
 {
   "project_info": {
-    "project_number": "123456789012",
-    "project_id": "chaski-rider-dev",
-    "storage_bucket": "chaski-rider-dev.appspot.com"
+    "project_number": "634578215837",
+    "project_id": "chaski-rider",
+    "storage_bucket": "chaski-rider.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:123456789012:android:abcdef1234567890",
+        "mobilesdk_app_id": "1:634578215837:android:8d03c5f934dcb13ea38574",
         "android_client_info": {
           "package_name": "com.example.chaskirider"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "634578215837-j4nvo2qutdsefo8tephllngv15past5f.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.chaskirider",
+            "certificate_hash": "ed1be89851d71e3afc7114b9669d26654f284b4c"
+          }
+        },
+        {
+          "client_id": "634578215837-qht3h6db0v5bjp1tjmdse59780vtjupn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyDummyKeyForChaskiRiderDevelopment123"
+          "current_key": "AIzaSyDGKhH87wZCXlScHhn8DGqbXUdfMHTDQFg"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "634578215837-qht3h6db0v5bjp1tjmdse59780vtjupn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
