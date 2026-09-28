@@ -28,6 +28,10 @@
 //    campana del Home y la fila "Notificaciones" del perfil. Al tocar una
 //    notificación push se abre MainActivity (NEW_TASK|CLEAR_TASK) y el
 //    routing existente deja en Home con sesión o en Access sin ella.
+// HU06 - Parte 3 - cambios en este archivo:
+// 10. Nuevo OrdersViewModel (inyectado desde AppContainer) vinculado al
+//     usuario actual; cuando llega una oferta se navega sola a la ruta
+//     Screen.Offer y al aceptar/rechazar/expirar se regresa (popBackStack).
 package com.example.chaskirider.ui.navigation
 
 import android.content.Intent
@@ -42,12 +46,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.*
 import androidx.navigation.NavHostController
 import com.example.chaskirider.data.auth.GoogleSignInClient
+import com.example.chaskirider.di.AppContainer
 import com.example.chaskirider.domain.model.*
 import com.example.chaskirider.ui.components.AppBottomBar
 import com.example.chaskirider.ui.screens.auth.*
 import com.example.chaskirider.ui.screens.home.*
 import com.example.chaskirider.ui.screens.notifications.*
 import com.example.chaskirider.ui.screens.onboarding.*
+import com.example.chaskirider.ui.screens.orders.*
 import com.example.chaskirider.ui.screens.profile.*
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.CancellationException
@@ -56,6 +62,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun AppNavigation(navController: NavHostController = rememberNavController(), authViewModel: AuthViewModel = viewModel()) {
     val state by authViewModel.uiState.collectAsState()
+    // HU06 - Parte 3: ViewModel de pedidos con el repositorio mock (AppContainer).
+    val ordersViewModel: OrdersViewModel = viewModel { OrdersViewModel(AppContainer.orderRepository) }
+    val ordersState by ordersViewModel.uiState.collectAsState()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val google = remember { GoogleSignInClient() }
@@ -217,6 +226,13 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
             composable(Screen.Notifications.route) {
                 NotificationsScreen(onNavigateBack = { navController.popBackStack() })
             }
+            composable(Screen.Offer.route) {
+                OfferScreen(
+                    state = ordersState,
+                    onAccept = { ordersViewModel.accept() },
+                    onReject = { ordersViewModel.reject() }
+                )
+            }
         }
     }
     LaunchedEffect(user?.id) {
@@ -229,6 +245,18 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
         if (state.initialized && user != null) {
             try { FirebaseMessaging.getInstance().subscribeToTopic("rider_${user.id}") }
             catch (e: CancellationException) { throw e } catch (_: Exception) { }
+        }
+    }
+    // HU06 - Parte 3: vincula el estado del rider al motor de ofertas.
+    LaunchedEffect(user?.id, user?.isAvailable) { ordersViewModel.bindUser(user) }
+    // Navega solo a la oferta cuando llega; y regresa al decidir (aceptar/
+    // rechazar) o cuando la oferta expira.
+    LaunchedEffect(ordersState.status, route) {
+        when {
+            ordersState.status == OrderUiStatus.OFFER_ACTIVE && route != Screen.Offer.route ->
+                navController.navigate(Screen.Offer.route) { launchSingleTop = true }
+            route == Screen.Offer.route && ordersState.status != OrderUiStatus.OFFER_ACTIVE ->
+                navController.popBackStack()
         }
     }
     if (recovery) AlertDialog(onDismissRequest = { if (!state.isLoading) recovery = false },
