@@ -11,6 +11,10 @@
 // HU03 - Parte 3 - cambios en este archivo:
 // 5. Nueva ruta Screen.ProfileVehicle con ProfileVehicleScreen y
 //    ProfileScreen.onVehicleClick conectado a updateVehicle.
+// HU03 - Parte 4 - cambios en este archivo:
+// 6. Nueva ruta Screen.ProfileDocuments con ProfileDocumentsScreen; reutiliza
+//    uploadDocument/openDocument (cámara + picker) y se conecta
+//    ProfileScreen.onDocumentsClick.
 package com.example.chaskirider.ui.navigation
 
 import android.content.Intent
@@ -154,10 +158,10 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
             }
             composable(Screen.Profile.route) {
                 user?.let {
-                    // Parte 1: Cerrar sesión. Parte 2: Datos personales. Parte 3: Vehículos. Parte 4: Documentos.
                     ProfileScreen(user = it,
                         onPersonalDataClick = { authViewModel.clearError(); navController.navigate(Screen.ProfilePersonalData.route) },
                         onVehicleClick = { authViewModel.clearError(); navController.navigate(Screen.ProfileVehicle.route) },
+                        onDocumentsClick = { authViewModel.clearError(); navController.navigate(Screen.ProfileDocuments.route) },
                         onLogoutClick = { authViewModel.logout() })
                 }
             }
@@ -178,6 +182,19 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
                         onSaveClick = { vehicle ->
                             authViewModel.updateVehicle(vehicle) { navController.popBackStack() }
                         },
+                        isLoading = state.isLoading, errorMessage = state.errorMessage)
+                }
+            }
+            composable(Screen.ProfileDocuments.route) {
+                user?.let {
+                    ProfileDocumentsScreen(user = it,
+                        documentsMap = state.documentsMap,
+                        onNavigateBack = { authViewModel.clearError(); navController.popBackStack() },
+                        onDocumentPick = authViewModel::uploadDocument,
+                        onDocumentView = { type -> authViewModel.openDocument(type) { uri ->
+                            try { context.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(uri, context.contentResolver.getType(uri)).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)) }
+                            catch (_: Exception) { authViewModel.reportError("No hay una aplicación disponible para abrir este archivo") }
+                        } },
                         isLoading = state.isLoading, errorMessage = state.errorMessage)
                 }
             }

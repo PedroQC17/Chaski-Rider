@@ -1,7 +1,7 @@
 // HU03 - Parte 1: pantalla "Mi perfil" (mockup "Mi perfil").
 // HU03 - Parte 2: "Datos personales" queda habilitado (navega a ProfilePersonalData).
-// HU03 - Parte 3: "Vehículos" queda habilitado (navega a ProfileVehicle);
-//   Documentos se habilita en la Parte 4 (null = Próximamente).
+// HU03 - Parte 3: "Vehículos" queda habilitado (navega a ProfileVehicle).
+// HU03 - Parte 4: "Documentos" queda habilitado (navega a ProfileDocuments).
 // - Tarjeta naranja con avatar (inicial), nombre y rol "Repartidor".
 // - Tarjeta "Estado de cuenta" con chip según RegistrationStatus
 //   (Firestore no guarda estado por documento, se usa el estado del registro).
