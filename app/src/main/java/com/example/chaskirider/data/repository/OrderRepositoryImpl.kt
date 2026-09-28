@@ -1,11 +1,4 @@
-// HU06 - Parte 1: implementación MOCK (local) de OrderRepository.
-// Simula el ciclo de ofertas en memoria para poder probar la HU06 sin backend:
-// - Solo genera ofertas si el rider está Disponible (criterio HU06).
-// - Una oferta a la vez; con pedido activo no genera otra (sin conflictos).
-// - Aceptar marca el pedido como activo; rechazar lo libera para la siguiente.
-// CAMBIO FUTURO: sustituir el cuerpo por llamadas a la Cloud Function propuesta
-// `riderOrders` (acciones "accept"/"reject") + escucha de ofertas push; la
-// interfaz OrderRepository no cambia.
+
 package com.example.chaskirider.data.repository
 
 import com.example.chaskirider.domain.model.RideOffer
@@ -62,7 +55,7 @@ class OrderRepositoryImpl : OrderRepository {
             destinationAddress = DESTINATIONS.random(),
             fareSoles = fare,
             distanceKm = distance,
-            // Criterio HU06: razón real de asignación (proximidad + vehículo).
+            
             reason = "Estás a $distance km de la recogida y tu ${vehicleLabel(vehicle)} es compatible con este pedido."
         )
     }

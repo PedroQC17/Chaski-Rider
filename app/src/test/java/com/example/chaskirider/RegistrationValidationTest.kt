@@ -1,9 +1,5 @@
 package com.example.chaskirider
 
-// HU03 - Parte 3: se valida que el automóvil avance al paso 3 y pida los
-// mismos documentos que la bicicleta (sin licencia ni SOAT).
-// HU04 - Parte 1: se valida que solo un repartidor aprobado y habilitado
-// pueda activarse como Disponible (desconectar siempre está permitido).
 import com.example.chaskirider.domain.model.*
 import org.junit.Assert.*
 import org.junit.Test

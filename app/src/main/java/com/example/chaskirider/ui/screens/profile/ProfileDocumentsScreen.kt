@@ -1,15 +1,4 @@
-// HU03 - Parte 4: pantalla "Documentos" accesible desde Mi perfil.
-// - Lista los documentos requeridos según el vehículo (requiredDocuments).
-// - Estado por documento mapeado desde RegistrationStatus (Firestore no guarda
-//   estado por documento): sin URL o PENDING_REVIEW/INCOMPLETE -> Pendiente;
-//   APPROVED -> Aprobado; NEEDS_CORRECTION -> Observado.
-// - Un documento Observado (o faltante) puede reemplazarse: "Tomar foto" o
-//   "Elegir archivo". La cámara pide el permiso CAMERA en runtime solo al
-//   tocar "Tomar foto" (HU03 criterio de permisos).
-// - La foto se previsualiza antes de enviarse: "Usar fotografía" / "Tomar otra
-//   foto". El envío final usa AuthViewModel.uploadDocument (acción "document").
-// - Colores: DangerRed/SuccessGreen/WarningAmber ahora provienen del tema
-//   (Color.kt) en lugar de valores privados locales.
+
 package com.example.chaskirider.ui.screens.profile
 
 import android.Manifest

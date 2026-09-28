@@ -1,10 +1,4 @@
-// HU03 - Parte 1: se agrega la ruta "profile" para la pantalla Mi perfil.
-// HU03 - Parte 2: se agrega la ruta "profile_personal_data" para editar datos personales.
-// HU03 - Parte 3: se agrega la ruta "profile_vehicle" para gestionar el vehículo.
-// HU03 - Parte 4: se agrega la ruta "profile_documents" para gestionar documentos.
-// HU04 - Parte 4: se agrega la ruta "notifications" para ver notificaciones.
-// HU06 - Parte 3: se agrega la ruta "offer" para la pantalla de oferta.
-// HU06 - Parte 4: se agrega la ruta "orders" para la pestaña Pedidos.
+
 package com.example.chaskirider.ui.navigation
 
 sealed class Screen(val route: String) {

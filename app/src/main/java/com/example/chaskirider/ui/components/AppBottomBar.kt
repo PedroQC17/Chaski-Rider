@@ -1,6 +1,4 @@
-// HU03 - Parte 1: barra de navegación inferior (bottom nav) del mockup.
-// Tabs: Inicio y Perfil navegan; Pedidos quedó habilitado en HU06 - Parte 4
-// (pestaña Orders) y Ganancias sigue deshabilitado hasta su historia.
+
 package com.example.chaskirider.ui.components
 
 import androidx.compose.material.icons.Icons

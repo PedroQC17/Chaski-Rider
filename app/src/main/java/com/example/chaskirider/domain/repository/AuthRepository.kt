@@ -1,6 +1,4 @@
-// HU04 - Parte 1: se agrega setAvailability() para activar/desactivar la
-// disponibilidad del repartidor (campo isAvailable, acción "availability" de la
-// Cloud Function).
+
 package com.example.chaskirider.domain.repository
 
 import android.net.Uri

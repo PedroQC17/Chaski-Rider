@@ -1,9 +1,4 @@
-// HU03 - Parte 2: pantalla "Datos personales" accesible desde Mi perfil.
-// Permite editar nombres, apellidos, DNI y celular; el correo es solo lectura
-// (viene de la autenticación y no se puede cambiar). Reutiliza el mismo estilo
-// de campos que OnboardingStep1Screen y la validación RegistrationValidation.
-// Guardar llama a AuthViewModel.updatePersonalData (acción "personal" de la
-// Cloud Function); al volver al perfil se refleja el estado actualizado.
+
 package com.example.chaskirider.ui.screens.profile
 
 import androidx.compose.foundation.background

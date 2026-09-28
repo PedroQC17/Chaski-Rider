@@ -283,7 +283,7 @@ fun RegistrationStatusScreen(
         errorMessage?.let { Text(it, color = Color.Red) }
         androidx.compose.material3.TextButton(onClick = onRefresh, enabled = !isLoading) { Text("Actualizar estado") }
         androidx.compose.material3.TextButton(onClick = onConfigurePassword, enabled = !isLoading) { Text("Configurar contraseña") }
-        // Botón Cerrar Sesión
+        
         OutlinedButton(
             onClick = onLogoutClick,
             enabled = !isLoading,

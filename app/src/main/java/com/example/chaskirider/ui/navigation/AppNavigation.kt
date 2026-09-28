@@ -1,40 +1,4 @@
-// HU03 - Parte 1 - cambios en este archivo:
-// 1. El NavHost ahora vive dentro de un Scaffold con bottom bar (AppBottomBar),
-//    visible solo en las rutas Home y Profile; contentWindowInsets en 0 para no
-//    duplicar insets (las pantallas ya usan systemBarsPadding/statusBarsPadding).
-// 2. Nueva ruta Screen.Profile que muestra ProfileScreen (en esta parte solo
-//    Cerrar sesión está habilitado; el resto se habilita en las Partes 2-4).
-// 3. En el Home se agregó el botón "Mi perfil".
-// HU03 - Parte 2 - cambios en este archivo:
-// 4. Nueva ruta Screen.ProfilePersonalData con ProfilePersonalDataScreen y
-//    ProfileScreen.onPersonalDataClick conectado a updatePersonalData.
-// HU03 - Parte 3 - cambios en este archivo:
-// 5. Nueva ruta Screen.ProfileVehicle con ProfileVehicleScreen y
-//    ProfileScreen.onVehicleClick conectado a updateVehicle.
-// HU03 - Parte 4 - cambios en este archivo:
-// 6. Nueva ruta Screen.ProfileDocuments con ProfileDocumentsScreen; reutiliza
-//    uploadDocument/openDocument (cámara + picker) y se conecta
-//    ProfileScreen.onDocumentsClick.
-// HU04 - Parte 2 - cambios en este archivo:
-// 7. El Home deja de ser una columna de texto y pasa a HomeScreen (saludo,
-//    chip de estado, tarjeta de disponibilidad con slider, permiso de
-//    ubicación al activarse); conecta setAvailability/reportError y conserva
-//    Configurar contraseña y Cerrar sesión.
-// HU04 - Parte 3 - cambios en este archivo:
-// 8. Con cada sesión activa se suscribe el dispositivo al topic FCM
-//    "rider_{uid}" para recibir pushes dirigidos a este repartidor.
-// HU04 - Parte 4 - cambios en este archivo:
-// 9. Nueva ruta Screen.Notifications con NotificationsScreen; se conecta la
-//    campana del Home y la fila "Notificaciones" del perfil. Al tocar una
-//    notificación push se abre MainActivity (NEW_TASK|CLEAR_TASK) y el
-//    routing existente deja en Home con sesión o en Access sin ella.
-// HU06 - Parte 3 - cambios en este archivo:
-// 10. Nuevo OrdersViewModel (inyectado desde AppContainer) vinculado al
-//     usuario actual; cuando llega una oferta se navega sola a la ruta
-//     Screen.Offer y al aceptar/rechazar/expirar se regresa (popBackStack).
-// HU06 - Parte 4 - cambios en este archivo:
-// 11. Nueva ruta Screen.Orders (pestaña Pedidos, visible en la bottom bar) y
-//     HomeScreen recibe ordersState + onSimulateOffer para el estado mock.
+
 package com.example.chaskirider.ui.navigation
 
 import android.content.Intent
@@ -65,7 +29,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun AppNavigation(navController: NavHostController = rememberNavController(), authViewModel: AuthViewModel = viewModel()) {
     val state by authViewModel.uiState.collectAsState()
-    // HU06 - Parte 3: ViewModel de pedidos con el repositorio mock (AppContainer).
+    
     val ordersViewModel: OrdersViewModel = viewModel { OrdersViewModel(AppContainer.orderRepository) }
     val ordersState by ordersViewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -79,7 +43,6 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
     val route = entry?.destination?.route
     val user = state.currentUser
 
-    // Session restoration and sign-in use the same routing logic. Never infer a new account on read failure.
     LaunchedEffect(state.initialized, user?.id, user?.status, route) {
         if (!state.initialized) return@LaunchedEffect
         if (user != null && (route == Screen.Access.route || route == Screen.EmailLogin.route)) {
@@ -107,7 +70,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
                             authViewModel.clearError()
                             scope.launch {
                                 try { authViewModel.loginWithGoogle(google.getIdToken(context)) }
-                                catch (_: GetCredentialCancellationException) { /* User dismissed the picker. */ }
+                                catch (_: GetCredentialCancellationException) {  }
                                 catch (e: CancellationException) { throw e }
                                 catch (_: Exception) { authViewModel.reportError("No se pudo iniciar sesión con Google. Revisa la conexión y la configuración de Firebase.") }
                                 finally { googleBusy = false }
@@ -172,7 +135,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
                 }
             }
             composable(Screen.Home.route) {
-                // HU04: Home con disponibilidad. El módulo de pedidos sigue sin existir.
+                
                 user?.let {
                     HomeScreen(user = it,
                         onAvailabilityChange = { available -> authViewModel.setAvailability(available) },
@@ -247,17 +210,16 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
             try { google.clear(context) } catch (e: CancellationException) { throw e } catch (_: Exception) { }
         }
     }
-    // HU04 - Parte 3: pushes dirigidos a este repartidor (topic por uid).
+    
     LaunchedEffect(user?.id) {
         if (state.initialized && user != null) {
             try { FirebaseMessaging.getInstance().subscribeToTopic("rider_${user.id}") }
             catch (e: CancellationException) { throw e } catch (_: Exception) { }
         }
     }
-    // HU06 - Parte 3: vincula el estado del rider al motor de ofertas.
+    
     LaunchedEffect(user?.id, user?.isAvailable) { ordersViewModel.bindUser(user) }
-    // Navega solo a la oferta cuando llega; y regresa al decidir (aceptar/
-    // rechazar) o cuando la oferta expira.
+    
     LaunchedEffect(ordersState.status, route) {
         when {
             ordersState.status == OrderUiStatus.OFFER_ACTIVE && route != Screen.Offer.route ->

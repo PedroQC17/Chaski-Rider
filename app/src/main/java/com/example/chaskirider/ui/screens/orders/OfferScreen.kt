@@ -1,8 +1,4 @@
-// HU06 - Parte 3: pantalla "Nueva oferta" (estilo profile: tarjetas blancas).
-// Muestra recogida, entrega, ganancia, distancia, la razón real de asignación
-// (criterio HU06) y la cuenta regresiva de expiración. Acciones: Aceptar
-// (naranja) y Rechazar (outlined); sin botón de volver: hay que decidir.
-// Al aceptar/rechazar o expirar, AppNavigation regresa a la pantalla anterior.
+
 package com.example.chaskirider.ui.screens.orders
 
 import androidx.compose.foundation.background
@@ -100,7 +96,6 @@ fun OfferScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Ruta: recogida y entrega
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -117,7 +112,6 @@ fun OfferScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Ganancia y distancia
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -130,7 +124,6 @@ fun OfferScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Razón real de asignación (criterio HU06)
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -146,7 +139,6 @@ fun OfferScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Cuenta regresiva
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = "La oferta expira en ${state.secondsLeft} s",

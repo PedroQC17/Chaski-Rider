@@ -1,5 +1,4 @@
-// HU06 - Parte 1: se registra OrderRepository (implementación mock) en el
-// contenedor de DI para que el ViewModel de pedidos lo consuma.
+
 package com.example.chaskirider.di
 
 import android.content.Context

@@ -85,7 +85,7 @@ fun EmailLoginScreen(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 12.dp)
     ) {
-        // Botón Volver
+        
         IconButton(
             onClick = onNavigateBack,
             modifier = Modifier.padding(top = 8.dp)
@@ -99,7 +99,6 @@ fun EmailLoginScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Título
         Text(
             text = "Ingresar con correo",
             fontSize = 28.sp,
@@ -117,7 +116,6 @@ fun EmailLoginScreen(
 
         Spacer(modifier = Modifier.height(28.dp))
 
-        // Campo Correo
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
@@ -144,7 +142,6 @@ fun EmailLoginScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Campo Contraseña con Mostrar/Ocultar
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
@@ -179,7 +176,6 @@ fun EmailLoginScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Enlace Olvidé mi contraseña
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -213,7 +209,6 @@ fun EmailLoginScreen(
 
         Spacer(modifier = Modifier.height(28.dp))
 
-        // Botón Iniciar Sesión
         Button(
             onClick = { onLoginClick(email.trim(), password) },
             enabled = !isLoading && email.isNotBlank() && password.isNotBlank(),
@@ -241,7 +236,6 @@ fun EmailLoginScreen(
         }
     }
 
-    // Diálogo de recuperación de contraseña
     if (showResetDialog) {
         AlertDialog(
             onDismissRequest = { showResetDialog = false },

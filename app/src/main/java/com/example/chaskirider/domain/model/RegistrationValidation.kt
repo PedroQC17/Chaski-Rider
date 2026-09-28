@@ -1,7 +1,4 @@
-// HU03 - Parte 3: nextStep ahora acepta VehicleType.CAR (bicicleta, motocicleta
-// o automóvil). Los automóviles piden los mismos documentos que la bicicleta.
-// HU04 - Parte 1: availabilityError controla quién puede activarse como Disponible
-// (solo un repartidor aprobado y habilitado; desconectar siempre está permitido).
+
 package com.example.chaskirider.domain.model
 
 object RegistrationValidation {

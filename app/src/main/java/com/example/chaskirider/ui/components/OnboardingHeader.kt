@@ -38,7 +38,7 @@ fun OnboardingHeader(
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
-        // Botón Atrás
+        
         IconButton(onClick = onNavigateBack) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -49,7 +49,6 @@ fun OnboardingHeader(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Título y paso
         Text(
             text = "Crear cuenta",
             fontSize = 28.sp,
@@ -68,7 +67,6 @@ fun OnboardingHeader(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Indicador de Pasos (1 - 2 - 3 con líneas)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -81,7 +79,6 @@ fun OnboardingHeader(
                 val isCompleted = step < currentStep
                 val isCurrent = step == currentStep
 
-                // Círculo indicador
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
@@ -113,7 +110,6 @@ fun OnboardingHeader(
                     }
                 }
 
-                // Línea conectora entre pasos
                 if (step < 3) {
                     Box(
                         modifier = Modifier

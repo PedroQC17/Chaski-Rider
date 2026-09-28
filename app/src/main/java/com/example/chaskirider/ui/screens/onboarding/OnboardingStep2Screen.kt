@@ -1,5 +1,4 @@
-// HU03 - Parte 3: se agrega la opción "Automóvil" (VehicleType.CAR) y VehicleOptionCard
-// deja de ser privada para reutilizarse en ProfileVehicleScreen.
+
 package com.example.chaskirider.ui.screens.onboarding
 
 import androidx.compose.foundation.Image
@@ -105,7 +104,6 @@ fun OnboardingStep2Screen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Tarjeta Bicicleta
         VehicleOptionCard(
             title = "Bicicleta",
             imageRes = R.drawable.vehicle_bicycle,
@@ -115,7 +113,6 @@ fun OnboardingStep2Screen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Tarjeta Motocicleta
         VehicleOptionCard(
             title = "Motocicleta",
             imageRes = R.drawable.vehicle_motorcycle,
@@ -125,7 +122,6 @@ fun OnboardingStep2Screen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Tarjeta Automóvil (HU03)
         VehicleOptionCard(
             title = "Automóvil",
             imageRes = R.drawable.vehicle_car,
@@ -145,7 +141,6 @@ fun OnboardingStep2Screen(
 
         Spacer(modifier = Modifier.height(36.dp))
 
-        // Botón Continuar
         Button(
             onClick = { onContinueClick(selectedVehicle) },
             enabled = !isLoading && selectedVehicle != VehicleType.NONE,
@@ -218,7 +213,6 @@ fun VehicleOptionCard(
                 modifier = Modifier.weight(1f)
             )
 
-            // Selector Círculo Check
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier

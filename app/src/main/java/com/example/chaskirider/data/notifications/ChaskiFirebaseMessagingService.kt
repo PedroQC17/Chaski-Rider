@@ -1,10 +1,4 @@
-// HU04 - Parte 3: recepción de notificaciones push (FCM).
-// - onMessageReceived: guarda el mensaje en NotificationsStore y muestra la
-//   notificación en la barra de estado (canal "chaski_riders").
-// - onNewToken: se suscribe al topic general "riders"; el token real se
-//   enviará al backend cuando exista el módulo de pedidos.
-// - Al tocar la notificación se abre MainActivity con NEW_TASK|CLEAR_TASK:
-//   si hay sesión se entra a Home, si no a Access (routing existente).
+
 package com.example.chaskirider.data.notifications
 
 import android.Manifest
@@ -42,8 +36,6 @@ class ChaskiFirebaseMessagingService : FirebaseMessagingService() {
         showNotification(title, body)
     }
 
-    // El permiso POST_NOTIFICATIONS se pide en runtime desde HomeScreen (Parte 3);
-    // sin él la notificación simplemente no se muestra (no crashea).
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     private fun showNotification(title: String, body: String) {
         ensureChannel(this)

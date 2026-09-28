@@ -1,11 +1,4 @@
-// HU06 - Parte 2: ViewModel del módulo de pedidos.
-// Máquina de estados: Idle -> Searching (esperando oferta mock) ->
-// OfferActive (cuenta regresiva de 30 s con Aceptar/Rechazar) -> Accepted.
-// - Solo busca oferta si el rider está Disponible (bindUser lo decide).
-// - Al rechazar (o expirar la cuenta regresiva) vuelve a Searching y agenda
-//   la siguiente oferta; al aceptar queda en Accepted y no se ofrecen más.
-// - simulateOffer() permite disparar una oferta al instante para pruebas.
-// La fuente real es OrderRepository (mock hoy; backend `riderOrders` después).
+
 package com.example.chaskirider.ui.screens.orders
 
 import androidx.lifecycle.ViewModel
@@ -44,7 +37,6 @@ class OrdersViewModel(private val repository: OrderRepository) : ViewModel() {
     private var searchJob: Job? = null
     private var countdownJob: Job? = null
 
-    // Debe llamarse cada vez que cambie el usuario (AppNavigation).
     fun bindUser(user: RiderUser?) {
         currentUser = user
         if (user == null) {
@@ -53,7 +45,7 @@ class OrdersViewModel(private val repository: OrderRepository) : ViewModel() {
         }
         val available = user.isAvailable
         if (!available && wasAvailable) {
-            // Se desconectó: cancela búsqueda y oferta vigente si la hubiera.
+            
             wasAvailable = false
             searchJob?.cancel()
             countdownJob?.cancel()
@@ -70,7 +62,6 @@ class OrdersViewModel(private val repository: OrderRepository) : ViewModel() {
         }
     }
 
-    // Dispara una oferta inmediata (botón de prueba en Home).
     fun simulateOffer() {
         if (_uiState.value.status != OrderUiStatus.SEARCHING) return
         searchJob?.cancel()
@@ -148,7 +139,7 @@ class OrdersViewModel(private val repository: OrderRepository) : ViewModel() {
                 _uiState.update { it.copy(secondsLeft = it.secondsLeft - 1) }
             }
             if (_uiState.value.status == OrderUiStatus.OFFER_ACTIVE) {
-                // Criterio HU06: al expirar se rechaza y el rider sigue buscando.
+                
                 _uiState.value.offer?.let { repository.reject(it.id) }
                 _uiState.update {
                     it.copy(status = OrderUiStatus.SEARCHING, offer = null, secondsLeft = 0,
@@ -189,8 +180,7 @@ class OrdersViewModel(private val repository: OrderRepository) : ViewModel() {
     }
 
     companion object {
-        // Mock: la primera oferta llega a los 5 s de activarse; las
-        // siguientes, 6 s después de cada rechazo/expiración.
+        
         const val FIRST_OFFER_DELAY_MS = 5_000L
         const val NEXT_OFFER_DELAY_MS = 6_000L
     }

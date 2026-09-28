@@ -60,7 +60,6 @@ fun InitialScreenPreview() {
     }
 }
 
-// PANTALLA INICIO OPTIMIZADA Y ESTILIZADA
 @Composable
 fun InitialScreen(
     onNavigateToLogin: () -> Unit = {},
@@ -77,7 +76,6 @@ fun InitialScreen(
         pageCount = { images.size }
     )
 
-    // TRANSICIÓN AUTOMÁTICA MÁS SUAVE Y PAUSADA (Cada 5s con animación fluida de 1.2s)
     LaunchedEffect(pageState) {
         while (true) {
             delay(5000)
@@ -102,12 +100,12 @@ fun InitialScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        // SECCIÓN SUPERIOR: Logo, Ilustración y Texto de bienvenida
+        
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxWidth()
         ) {
-            // 1. Logo Chaski Rider
+            
             Image(
                 painter = painterResource(R.drawable.chaski_rider_logo_transparent),
                 contentDescription = "Chaski Rider Logo",
@@ -120,7 +118,6 @@ fun InitialScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // 2. Carrusel de Ilustraciones del Repartidor
             HorizontalPager(
                 state = pageState,
                 modifier = Modifier
@@ -140,7 +137,6 @@ fun InitialScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 3. Textos de Bienvenida
             Text(
                 text = "Bienvenido a",
                 fontSize = 18.sp,
@@ -186,12 +182,11 @@ fun InitialScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // SECCIÓN INFERIOR: Botones y Enlace de Recuperación
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxWidth()
         ) {
-            // Botón Primario Naranja (Iniciar sesión)
+            
             Button(
                 onClick = onNavigateToLogin,
                 shape = CircleShape,
@@ -212,7 +207,6 @@ fun InitialScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Botón Secundario Bordeado (Registrarme)
             OutlinedButton(
                 onClick = onNavigateToRegister,
                 shape = CircleShape,
@@ -233,9 +227,8 @@ fun InitialScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Enlace "He perdido mi cuenta" subrayado
             TextButton(
-                onClick = { /* TODO: Funcionalidad de recuperación de cuenta */ },
+                onClick = {  },
                 modifier = Modifier.padding(bottom = 8.dp)
             ) {
                 Text(

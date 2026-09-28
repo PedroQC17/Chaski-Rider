@@ -1,8 +1,4 @@
-// HU03 - Parte 3: pantalla "Vehículos" accesible desde Mi perfil.
-// Permite ver el vehículo vinculado y cambiar entre bicicleta, motocicleta y
-// automóvil (HU03: "Se puede registrar bicicleta, motocicleta o automóvil").
-// Reutiliza VehicleOptionCard del onboarding y guarda con la acción "vehicle"
-// de la Cloud Function (AuthViewModel.updateVehicle).
+
 package com.example.chaskirider.ui.screens.profile
 
 import androidx.compose.foundation.background

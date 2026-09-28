@@ -120,7 +120,6 @@ fun OnboardingStep1Screen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Campo Nombres
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
@@ -144,7 +143,6 @@ fun OnboardingStep1Screen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Campo Apellidos
         OutlinedTextField(
             value = lastName,
             onValueChange = { lastName = it },
@@ -168,7 +166,6 @@ fun OnboardingStep1Screen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Campo DNI (8 dígitos)
         OutlinedTextField(
             value = dni,
             onValueChange = {
@@ -199,7 +196,6 @@ fun OnboardingStep1Screen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Campo Teléfono (9 dígitos, con prefijo +51 estático)
         OutlinedTextField(
             value = phone,
             onValueChange = {
@@ -242,7 +238,6 @@ fun OnboardingStep1Screen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Campo Correo electrónico (Sólo lectura, viene de Google Auth)
         OutlinedTextField(
             value = user.email,
             onValueChange = {},
@@ -268,7 +263,6 @@ fun OnboardingStep1Screen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Términos y Condiciones
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
@@ -317,7 +311,6 @@ fun OnboardingStep1Screen(
 
         Spacer(modifier = Modifier.height(28.dp))
 
-        // Botón Continuar
         Button(
             onClick = {
                 onContinueClick(

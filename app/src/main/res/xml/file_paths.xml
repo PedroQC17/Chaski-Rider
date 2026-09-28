@@ -1,3 +1,2 @@
-<!-- HU03 - Parte 4: se agrega "captures/" para guardar las fotos tomadas con la
-     cámara antes de previsualizarlas y enviarlas (FileProvider). -->
+
 <paths xmlns:android="http://schemas.android.com/apk/res/android"><cache-path name="documents" path="documents/" /><cache-path name="captures" path="captures/" /></paths>

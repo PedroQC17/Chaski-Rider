@@ -1,12 +1,4 @@
-// HU03 - Parte 2: se agrega updatePersonalData() para editar los datos personales
-// desde Mi perfil (reutiliza la acción "personal" de la Cloud Function y la misma
-// validación que el onboarding; se omite la validación de términos porque ya fue
-// aceptada durante el registro).
-// HU03 - Parte 3: saveStep2VehicleType ahora acepta CAR y se agrega updateVehicle()
-// para cambiar el vehículo desde Mi perfil (acción "vehicle").
-// HU04 - Parte 1: se agrega setAvailability() para conectar/desconectar al repartidor;
-// valida que solo un repartidor aprobado y habilitado pueda activarse y persiste
-// el estado con la acción "availability".
+
 package com.example.chaskirider.ui.screens.auth
 
 import android.net.Uri

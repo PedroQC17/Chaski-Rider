@@ -1,6 +1,4 @@
-// HU04 - Parte 1: se implementa setAvailability() con la acción "availability"
-// de la Cloud Function riderRegistration (nombre de acción propuesto; si el
-// backend usa otro, se ajusta aquí).
+
 package com.example.chaskirider.data.repository
 
 import android.content.Context
@@ -59,7 +57,7 @@ class AuthRepositoryImpl(
 
     private suspend fun profile(): RiderUser {
         val user = auth.currentUser ?: error("No hay una sesión activa")
-        // A failed server read must not turn an approved/existing user into a new profile.
+        
         val snapshot = db.collection("riders").document(user.uid).get(Source.SERVER).await()
         return snapshot.toObject(RiderUser::class.java)?.copy(id = user.uid, email = user.email.orEmpty())
             ?: RiderUser(id = user.uid, email = user.email.orEmpty(),
@@ -133,7 +131,7 @@ class AuthRepositoryImpl(
             } catch (e: Exception) { file.delete(); throw e }
         }
         try {
-            // Immutable object names prevent a replacement from changing a submitted document.
+            
             val path = "riders/$uid/documents/$docType/${UUID.randomUUID()}"
             val metadata = StorageMetadata.Builder().setContentType(mime).build()
             storage.reference.child(path).putFile(Uri.fromFile(temp), metadata).await()

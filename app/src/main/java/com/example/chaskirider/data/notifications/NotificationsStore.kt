@@ -1,7 +1,4 @@
-// HU04 - Parte 3: almacén de notificaciones en memoria (sesión de la app).
-// Cada push recibido por FCM se agrega aquí para que la pantalla de
-// Notificaciones (Parte 4) y el badge de la campana lo muestren.
-// El estado no se persiste: al cerrar la app la lista inicia vacía.
+
 package com.example.chaskirider.data.notifications
 
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,7 +25,6 @@ object NotificationsStore {
         _unreadCount.update { it + 1 }
     }
 
-    // Parte 4: el badge de la campana se limpia al abrir la pantalla.
     fun markSeen() {
         _unreadCount.value = 0
     }

@@ -1,5 +1,4 @@
-<!-- HU03 - Parte 3: ilustración de automóvil para la selección de vehículo
-     (mismo estilo 120x88 que vehicle_bicycle y vehicle_motorcycle). -->
+
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="120dp"
     android:height="88dp"

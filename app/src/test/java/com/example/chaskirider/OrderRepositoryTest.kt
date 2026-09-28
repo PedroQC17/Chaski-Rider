@@ -1,10 +1,5 @@
 package com.example.chaskirider
 
-// HU06 - Parte 1: reglas del repositorio de pedidos (mock):
-// - Solo un repartidor Disponible recibe ofertas.
-// - Una oferta a la vez; con pedido activo no se ofrecen más (sin conflictos).
-// - Aceptar marca el pedido activo; rechazar permite recibir la siguiente.
-// - Aceptar/Rechazar solo funciona con la oferta vigente.
 import com.example.chaskirider.data.repository.OrderRepositoryImpl
 import com.example.chaskirider.domain.model.RegistrationStatus
 import com.example.chaskirider.domain.model.RiderUser

@@ -1,6 +1,4 @@
-// HU06 - Parte 4: pestaña "Pedidos" (antes deshabilitada en la bottom bar).
-// Muestra el pedido aceptado con sus datos (criterio: aceptar deja el pedido
-// asignado) o el estado vacío si aún no se ha aceptado ninguno.
+
 package com.example.chaskirider.ui.screens.orders
 
 import androidx.compose.foundation.background

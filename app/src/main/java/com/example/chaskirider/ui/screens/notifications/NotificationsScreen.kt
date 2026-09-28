@@ -1,7 +1,4 @@
-// HU04 - Parte 4: pantalla "Notificaciones" accesible desde el menú de perfil
-// y desde la campana del Home. Muestra los mensajes recibidos por FCM en esta
-// sesión (NotificationsStore); si aún no hay ninguno, muestra el estado vacío.
-// Al abrirse marca la lista como leída (el badge de la campana se limpia).
+
 package com.example.chaskirider.ui.screens.notifications
 
 import androidx.compose.foundation.background
@@ -79,7 +76,6 @@ fun NotificationsScreen(
     val stored by NotificationsStore.notifications.collectAsState()
     val notifications = previewList ?: stored
 
-    // Marca como leída al entrar para limpiar el badge de la campana.
     LaunchedEffect(Unit) { if (previewList == null) NotificationsStore.markSeen() }
 
     Column(

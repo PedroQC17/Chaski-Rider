@@ -1,16 +1,4 @@
-// HU03 - Parte 1: pantalla "Mi perfil" (mockup "Mi perfil").
-// HU03 - Parte 2: "Datos personales" queda habilitado (navega a ProfilePersonalData).
-// HU03 - Parte 3: "Vehículos" queda habilitado (navega a ProfileVehicle).
-// HU03 - Parte 4: "Documentos" queda habilitado (navega a ProfileDocuments).
-// HU04 - Parte 4: "Notificaciones" queda habilitado (navega a Notifications).
-// - Tarjeta naranja con avatar (inicial), nombre y rol "Repartidor".
-// - Tarjeta "Estado de cuenta" con chip según RegistrationStatus
-//   (Firestore no guarda estado por documento, se usa el estado del registro).
-// - Menú: cada opción se habilita pasando su callback (null = "Próximamente").
-// - Métodos de pago y Ayuda quedan deshabilitados (fuera del alcance).
-// - Se omite el rating 4.8 del mockup porque no existe dato en el backend.
-// - Colores: DangerRed/SuccessGreen/WarningAmber ahora provienen del tema
-//   (Color.kt) en lugar de valores privados locales.
+
 package com.example.chaskirider.ui.screens.profile
 
 import androidx.compose.foundation.Image

@@ -1,20 +1,4 @@
-// HU04 - Parte 2: pantalla Home rediseñada (reemplaza el placeholder inline).
-// - Saludo "¡Hola, {nombre}!" con chip de estado Conectado/Desconectado.
-// - Tarjeta de disponibilidad con slider personalizado "Desliza para estar
-//   disponible" (umbral 85%; si no llega, la base regresa animada).
-// - Criterio 2 (permiso de ubicación): al intentar activarse se pide
-//   ACCESS_FINE_LOCATION en runtime solo si el repartidor está habilitado;
-//   si se niega, se muestra el error y no se activa.
-// - Se conservan los accesos a Configurar contraseña y Cerrar sesión.
-// - Colores: se reutilizan los del tema (Color.kt); el tono claro de la
-//   tarjeta naranja se deriva con Orange.copy(alpha) en vez de hex nuevos.
-// - Permisos: también se pide POST_NOTIFICATIONS (SDK 33+) al entrar al Home
-//   para que los pushes de FCM se muestren en la barra de estado (Parte 3).
-// HU04 - Parte 4: campana con badge de no leídos en la esquina superior
-// derecha; al tocarla abre la pantalla Notificaciones (badge se limpia).
-// HU06 - Parte 4: debajo de la tarjeta de disponibilidad se muestra el estado
-// del módulo de pedidos (buscando pedido con botón "Simular oferta" para el
-// mock, o el pedido ya aceptado). Requiere ordersState y onSimulateOffer.
+
 package com.example.chaskirider.ui.screens.home
 
 import android.Manifest
@@ -91,8 +75,6 @@ import com.example.chaskirider.ui.theme.TextMuted
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
-
-
 @Preview(name = "Home - Conectado", showBackground = true, showSystemUi = true)
 @Composable
 fun HomeConnectedPreview() {
@@ -128,7 +110,7 @@ fun HomeScreen(
         if (granted) onAvailabilityChange(true)
         else onError("Se requiere el permiso de ubicación para activarte como disponible.")
     }
-    // HU04 - Parte 3: permiso de notificaciones para mostrar los pushes de FCM.
+    
     val notificationsPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     LaunchedEffect(Unit) {
         if (android.os.Build.VERSION.SDK_INT >= 33 &&
@@ -137,8 +119,7 @@ fun HomeScreen(
             notificationsPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
-    // Criterio HU04: al activarse se pide ubicación; quien no esté habilitado
-    // recibe el error del validador sin llegar a pedir el permiso.
+    
     fun toggleAvailability() {
         if (user.isAvailable) { onAvailabilityChange(false); return }
         val enabledRider = user.status == RegistrationStatus.APPROVED && user.isEnabled
@@ -229,7 +210,6 @@ fun HomeScreen(
             Text(text = it, color = DangerRed, fontSize = 13.sp, fontWeight = FontWeight.Medium)
         }
 
-        // HU06 - Parte 4: estado del módulo de pedidos.
         if (user.isAvailable || ordersState.status == OrderUiStatus.ACCEPTED) {
             Spacer(modifier = Modifier.height(16.dp))
             OrdersHomeCard(state = ordersState, onSimulateOffer = onSimulateOffer)
@@ -256,8 +236,7 @@ private fun AvailabilitySlider(
     val maxOffset = with(androidx.compose.ui.platform.LocalDensity.current) {
         (innerWidth - thumbSize.toPx()).coerceAtLeast(0f)
     }
-    // onDrag no es suspend: la posición se guarda en un float normal y el
-    // regreso animado a la base se ejecuta en un Job cancelable.
+    
     var dragPx by remember { mutableFloatStateOf(0f) }
     var snapJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
     val trackColor = if (available) SuccessGreen else Orange
@@ -329,7 +308,6 @@ private fun AvailabilitySlider(
     }
 }
 
-// HU04 - Parte 4: campana con badge de no leídos (9+ si hay más de 9).
 @Composable
 private fun NotificationsBell(count: Int, onClick: () -> Unit) {
     Box(contentAlignment = Alignment.TopEnd) {
@@ -360,7 +338,6 @@ private fun NotificationsBell(count: Int, onClick: () -> Unit) {
     }
 }
 
-// HU06 - Parte 4: tarjeta de pedidos en Home (buscando con mock, o aceptado).
 @Composable
 private fun OrdersHomeCard(state: OrdersUiState, onSimulateOffer: () -> Unit) {
     Column(

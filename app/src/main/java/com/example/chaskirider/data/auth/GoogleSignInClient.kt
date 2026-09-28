@@ -9,7 +9,6 @@ import com.example.chaskirider.R
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 
-/** The account picker needs an Activity context; it never owns application state. */
 class GoogleSignInClient {
     suspend fun getIdToken(context: Context): String {
         val option = GetSignInWithGoogleOption.Builder(context.getString(R.string.default_web_client_id)).build()
