@@ -4,6 +4,7 @@
 // HU03 - Parte 4: se agrega la ruta "profile_documents" para gestionar documentos.
 // HU04 - Parte 4: se agrega la ruta "notifications" para ver notificaciones.
 // HU06 - Parte 3: se agrega la ruta "offer" para la pantalla de oferta.
+// HU06 - Parte 4: se agrega la ruta "orders" para la pestaña Pedidos.
 package com.example.chaskirider.ui.navigation
 
 sealed class Screen(val route: String) {
@@ -20,4 +21,5 @@ sealed class Screen(val route: String) {
     object ProfileDocuments : Screen("profile_documents")
     object Notifications : Screen("notifications")
     object Offer : Screen("offer")
+    object Orders : Screen("orders")
 }

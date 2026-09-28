@@ -26,6 +26,7 @@ enum class OrderUiStatus { IDLE, SEARCHING, OFFER_ACTIVE, ACCEPTED }
 data class OrdersUiState(
     val status: OrderUiStatus = OrderUiStatus.IDLE,
     val offer: RideOffer? = null,
+    val acceptedOffer: RideOffer? = null,
     val secondsLeft: Int = 0,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
@@ -84,8 +85,9 @@ class OrdersViewModel(private val repository: OrderRepository) : ViewModel() {
             repository.accept(offer.id)
                 .onSuccess {
                     _uiState.update {
-                        it.copy(status = OrderUiStatus.ACCEPTED, offer = null, secondsLeft = 0,
-                            isLoading = false, message = "Pedido aceptado. Ya está asignado a ti.")
+                        it.copy(status = OrderUiStatus.ACCEPTED, offer = null, acceptedOffer = offer,
+                            secondsLeft = 0, isLoading = false,
+                            message = "Pedido aceptado. Ya está asignado a ti.")
                     }
                 }
                 .onFailure { e ->

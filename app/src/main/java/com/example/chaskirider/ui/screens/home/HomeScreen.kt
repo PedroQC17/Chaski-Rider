@@ -12,6 +12,9 @@
 //   para que los pushes de FCM se muestren en la barra de estado (Parte 3).
 // HU04 - Parte 4: campana con badge de no leídos en la esquina superior
 // derecha; al tocarla abre la pantalla Notificaciones (badge se limpia).
+// HU06 - Parte 4: debajo de la tarjeta de disponibilidad se muestra el estado
+// del módulo de pedidos (buscando pedido con botón "Simular oferta" para el
+// mock, o el pedido ya aceptado). Requiere ordersState y onSimulateOffer.
 package com.example.chaskirider.ui.screens.home
 
 import android.Manifest
@@ -45,6 +48,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -73,6 +77,8 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.example.chaskirider.data.notifications.NotificationsStore
 import com.example.chaskirider.domain.model.RegistrationStatus
+import com.example.chaskirider.ui.screens.orders.OrderUiStatus
+import com.example.chaskirider.ui.screens.orders.OrdersUiState
 import com.example.chaskirider.domain.model.RiderUser
 import com.example.chaskirider.ui.theme.BackgroundLight
 import com.example.chaskirider.ui.theme.BorderLight
@@ -85,20 +91,7 @@ import com.example.chaskirider.ui.theme.TextMuted
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
-@Composable
-fun HomeDisconnectedPreview() {
-    ChaskiRiderTheme {
-        HomeScreen(
-            user = RiderUser(
-                id = "123",
-                name = "Pedro",
-                lastName = "Quincho Cordova",
-                status = RegistrationStatus.APPROVED,
-                isEnabled = true
-            )
-        )
-    }
-}
+
 
 @Preview(name = "Home - Conectado", showBackground = true, showSystemUi = true)
 @Composable
@@ -126,7 +119,9 @@ fun HomeScreen(
     onNotificationsClick: () -> Unit = {},
     onLogout: () -> Unit = {},
     isLoading: Boolean = false,
-    errorMessage: String? = null
+    errorMessage: String? = null,
+    ordersState: OrdersUiState = OrdersUiState(),
+    onSimulateOffer: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val locationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -232,6 +227,12 @@ fun HomeScreen(
         errorMessage?.let {
             Spacer(modifier = Modifier.height(12.dp))
             Text(text = it, color = DangerRed, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+        }
+
+        // HU06 - Parte 4: estado del módulo de pedidos.
+        if (user.isAvailable || ordersState.status == OrderUiStatus.ACCEPTED) {
+            Spacer(modifier = Modifier.height(16.dp))
+            OrdersHomeCard(state = ordersState, onSimulateOffer = onSimulateOffer)
         }
 
         Spacer(modifier = Modifier.height(48.dp))
@@ -354,6 +355,69 @@ private fun NotificationsBell(count: Int, onClick: () -> Unit) {
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
+            }
+        }
+    }
+}
+
+// HU06 - Parte 4: tarjeta de pedidos en Home (buscando con mock, o aceptado).
+@Composable
+private fun OrdersHomeCard(state: OrdersUiState, onSimulateOffer: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+            .background(Color.White, RoundedCornerShape(16.dp))
+            .padding(16.dp)
+    ) {
+        if (state.status == OrderUiStatus.ACCEPTED && state.acceptedOffer != null) {
+            val offer = state.acceptedOffer
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .background(SuccessGreen.copy(alpha = 0.12f), CircleShape)
+                        .padding(horizontal = 12.dp, vertical = 4.dp)
+                ) {
+                    Text(text = "Pedido aceptado", fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold, color = SuccessGreen)
+                }
+                Spacer(modifier = Modifier.weight(1f))
+                Text(text = "S/ ${"%.2f".format(offer.fareSoles)}",
+                    fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextDark)
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = "${offer.pickupAddress} → ${offer.destinationAddress}",
+                fontSize = 14.sp, color = TextDark, lineHeight = 19.sp
+            )
+            state.message?.let {
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(text = it, fontSize = 13.sp, color = TextMuted, lineHeight = 18.sp)
+            }
+        } else {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                CircularProgressIndicator(
+                    color = Orange,
+                    strokeWidth = 2.dp,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(text = "Buscando pedidos cerca de ti…",
+                    fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
+            }
+            state.message?.let {
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(text = it, fontSize = 13.sp, color = TextMuted, lineHeight = 18.sp)
+            }
+            state.errorMessage?.let {
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(text = it, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = DangerRed)
+            }
+            TextButton(
+                onClick = onSimulateOffer,
+                enabled = state.status == OrderUiStatus.SEARCHING
+            ) {
+                Text(text = "Simular oferta", color = Orange, fontWeight = FontWeight.SemiBold)
             }
         }
     }

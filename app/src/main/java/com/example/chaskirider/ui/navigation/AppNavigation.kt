@@ -32,6 +32,9 @@
 // 10. Nuevo OrdersViewModel (inyectado desde AppContainer) vinculado al
 //     usuario actual; cuando llega una oferta se navega sola a la ruta
 //     Screen.Offer y al aceptar/rechazar/expirar se regresa (popBackStack).
+// HU06 - Parte 4 - cambios en este archivo:
+// 11. Nueva ruta Screen.Orders (pestaña Pedidos, visible en la bottom bar) y
+//     HomeScreen recibe ordersState + onSimulateOffer para el estado mock.
 package com.example.chaskirider.ui.navigation
 
 import android.content.Intent
@@ -86,7 +89,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
         }
     }
 
-    val mainRoutes = listOf(Screen.Home.route, Screen.Profile.route)
+    val mainRoutes = listOf(Screen.Home.route, Screen.Profile.route, Screen.Orders.route)
     Scaffold(
         bottomBar = {
             if (route in mainRoutes) AppBottomBar(currentRoute = route, onNavigate = { target ->
@@ -177,7 +180,8 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
                         onConfigurePassword = { passwordDialog = true; authViewModel.clearError() },
                         onNotificationsClick = { navController.navigate(Screen.Notifications.route) },
                         onLogout = { authViewModel.logout() },
-                        isLoading = state.isLoading, errorMessage = state.errorMessage)
+                        isLoading = state.isLoading, errorMessage = state.errorMessage,
+                        ordersState = ordersState, onSimulateOffer = { ordersViewModel.simulateOffer() })
                 }
             }
             composable(Screen.Profile.route) {
@@ -232,6 +236,9 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
                     onAccept = { ordersViewModel.accept() },
                     onReject = { ordersViewModel.reject() }
                 )
+            }
+            composable(Screen.Orders.route) {
+                OrdersScreen(state = ordersState)
             }
         }
     }

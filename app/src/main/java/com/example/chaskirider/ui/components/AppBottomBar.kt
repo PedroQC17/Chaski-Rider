@@ -1,6 +1,6 @@
 // HU03 - Parte 1: barra de navegación inferior (bottom nav) del mockup.
-// Tabs: Inicio y Perfil navegan; Pedidos y Ganancias quedan deshabilitados
-// hasta que se implementen sus historias de usuario.
+// Tabs: Inicio y Perfil navegan; Pedidos quedó habilitado en HU06 - Parte 4
+// (pestaña Orders) y Ganancias sigue deshabilitado hasta su historia.
 package com.example.chaskirider.ui.components
 
 import androidx.compose.material.icons.Icons
@@ -42,12 +42,12 @@ fun AppBottomBar(
             colors = colors
         )
         NavigationBarItem(
-            selected = false,
-            onClick = { },
-            enabled = false,
+            selected = currentRoute == Screen.Orders.route,
+            onClick = { onNavigate(Screen.Orders.route) },
             icon = { Icon(Icons.Default.ShoppingCart, contentDescription = "Pedidos") },
             label = { Text("Pedidos", fontSize = 12.sp) },
-            alwaysShowLabel = true
+            alwaysShowLabel = true,
+            colors = colors
         )
         NavigationBarItem(
             selected = false,
