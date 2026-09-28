@@ -21,3 +21,4 @@ val BackgroundLight = Color.White
 // Colores semánticos compartidos (estado y alertas)
 val SuccessGreen = Color(0xFF2E7D32)
 val DangerRed = Color(0xFFD32F2F)
+val WarningAmber = Color(0xFFF57C00)

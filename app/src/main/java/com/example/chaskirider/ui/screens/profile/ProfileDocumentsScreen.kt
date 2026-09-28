@@ -8,6 +8,8 @@
 //   tocar "Tomar foto" (HU03 criterio de permisos).
 // - La foto se previsualiza antes de enviarse: "Usar fotografía" / "Tomar otra
 //   foto". El envío final usa AuthViewModel.uploadDocument (acción "document").
+// - Colores: DangerRed/SuccessGreen/WarningAmber ahora provienen del tema
+//   (Color.kt) en lugar de valores privados locales.
 package com.example.chaskirider.ui.screens.profile
 
 import android.Manifest
@@ -72,14 +74,13 @@ import com.example.chaskirider.ui.components.ChevronRightIcon
 import com.example.chaskirider.ui.theme.BackgroundLight
 import com.example.chaskirider.ui.theme.BorderLight
 import com.example.chaskirider.ui.theme.ChaskiRiderTheme
+import com.example.chaskirider.ui.theme.DangerRed
 import com.example.chaskirider.ui.theme.Orange
+import com.example.chaskirider.ui.theme.SuccessGreen
 import com.example.chaskirider.ui.theme.TextDark
 import com.example.chaskirider.ui.theme.TextMuted
+import com.example.chaskirider.ui.theme.WarningAmber
 import java.io.File
-
-private val DangerRed = Color(0xFFD32F2F)
-private val ApprovedGreen = Color(0xFF2E7D32)
-private val WarningAmber = Color(0xFFF57C00)
 
 private enum class DocState { PENDING, APPROVED, OBSERVED }
 
@@ -407,7 +408,7 @@ private fun DocumentStateChip(state: DocState, uploading: Boolean) {
         }
         state == DocState.APPROVED -> {
             label = "Aprobado"
-            color = ApprovedGreen
+            color = SuccessGreen
         }
         state == DocState.OBSERVED -> {
             label = "Observado"
