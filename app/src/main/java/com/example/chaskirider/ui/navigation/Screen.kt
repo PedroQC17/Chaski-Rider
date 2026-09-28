@@ -1,3 +1,5 @@
+// HU03 - Parte 1: se agrega la ruta "profile" para la pantalla Mi perfil.
+// Partes 2-4 agregarán rutas para datos personales, vehículo y documentos.
 package com.example.chaskirider.ui.navigation
 
 sealed class Screen(val route: String) {
@@ -8,4 +10,5 @@ sealed class Screen(val route: String) {
     object OnboardingStep3 : Screen("onboarding_step_3")
     object RegistrationStatus : Screen("registration_status")
     object Home : Screen("home")
+    object Profile : Screen("profile")
 }

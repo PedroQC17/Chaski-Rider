@@ -1,3 +1,10 @@
+// HU03 - Parte 1 - cambios en este archivo:
+// 1. El NavHost ahora vive dentro de un Scaffold con bottom bar (AppBottomBar),
+//    visible solo en las rutas Home y Profile; contentWindowInsets en 0 para no
+//    duplicar insets (las pantallas ya usan systemBarsPadding/statusBarsPadding).
+// 2. Nueva ruta Screen.Profile que muestra ProfileScreen (en esta parte solo
+//    Cerrar sesión está habilitado; el resto se habilita en las Partes 2-4).
+// 3. En el Home se agregó el botón "Mi perfil".
 package com.example.chaskirider.ui.navigation
 
 import android.content.Intent
@@ -13,8 +20,10 @@ import androidx.navigation.compose.*
 import androidx.navigation.NavHostController
 import com.example.chaskirider.data.auth.GoogleSignInClient
 import com.example.chaskirider.domain.model.*
+import com.example.chaskirider.ui.components.AppBottomBar
 import com.example.chaskirider.ui.screens.auth.*
 import com.example.chaskirider.ui.screens.onboarding.*
+import com.example.chaskirider.ui.screens.profile.ProfileScreen
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
@@ -42,89 +51,106 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
         }
     }
 
-    NavHost(navController, startDestination = Screen.Access.route) {
-        composable(Screen.Access.route) {
-            AccessScreen(
-                onGoogleSignInClick = {
-                    if (!googleBusy && !state.isLoading) {
-                        googleBusy = true
-                        authViewModel.clearError()
-                        scope.launch {
-                            try { authViewModel.loginWithGoogle(google.getIdToken(context)) }
-                            catch (_: GetCredentialCancellationException) { /* User dismissed the picker. */ }
-                            catch (e: CancellationException) { throw e }
-                            catch (_: Exception) { authViewModel.reportError("No se pudo iniciar sesión con Google. Revisa la conexión y la configuración de Firebase.") }
-                            finally { googleBusy = false }
+    val mainRoutes = listOf(Screen.Home.route, Screen.Profile.route)
+    Scaffold(
+        bottomBar = {
+            if (route in mainRoutes) AppBottomBar(currentRoute = route, onNavigate = { target ->
+                navController.navigate(target) { launchSingleTop = true }
+            })
+        },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
+    ) { padding ->
+        NavHost(navController, startDestination = Screen.Access.route, modifier = Modifier.padding(padding)) {
+            composable(Screen.Access.route) {
+                AccessScreen(
+                    onGoogleSignInClick = {
+                        if (!googleBusy && !state.isLoading) {
+                            googleBusy = true
+                            authViewModel.clearError()
+                            scope.launch {
+                                try { authViewModel.loginWithGoogle(google.getIdToken(context)) }
+                                catch (_: GetCredentialCancellationException) { /* User dismissed the picker. */ }
+                                catch (e: CancellationException) { throw e }
+                                catch (_: Exception) { authViewModel.reportError("No se pudo iniciar sesión con Google. Revisa la conexión y la configuración de Firebase.") }
+                                finally { googleBusy = false }
+                            }
                         }
-                    }
-                },
-                onEmailLoginClick = { authViewModel.clearError(); navController.navigate(Screen.EmailLogin.route) },
-                onAccountRecoveryClick = { authViewModel.clearError(); recovery = true },
-                isLoading = state.isLoading || googleBusy, errorMessage = state.errorMessage
-            )
-        }
-        composable(Screen.EmailLogin.route) {
-            EmailLoginScreen(onNavigateBack = { authViewModel.clearError(); navController.popBackStack() },
-                onLoginClick = authViewModel::loginWithEmail,
-                onPasswordResetRequest = authViewModel::sendPasswordResetEmail,
-                isLoading = state.isLoading, errorMessage = state.errorMessage,
-                successMessage = state.message)
-        }
-        composable(Screen.OnboardingStep1.route) {
-            user?.let {
-                OnboardingStep1Screen(user = it,
-                    onNavigateBack = { authViewModel.logout() },
-                    onContinueClick = { n, l, d, p, t ->
-                        authViewModel.saveStep1PersonalData(n,l,d,p,t) { navController.navigate(Screen.OnboardingStep2.route) }
-                    }, isLoading = state.isLoading, errorMessage = state.errorMessage)
+                    },
+                    onEmailLoginClick = { authViewModel.clearError(); navController.navigate(Screen.EmailLogin.route) },
+                    onAccountRecoveryClick = { authViewModel.clearError(); recovery = true },
+                    isLoading = state.isLoading || googleBusy, errorMessage = state.errorMessage
+                )
             }
-        }
-        composable(Screen.OnboardingStep2.route) {
-            user?.let {
-                OnboardingStep2Screen(currentVehicle = it.vehicleType,
-                    onNavigateBack = { authViewModel.clearError(); navController.navigate(Screen.OnboardingStep1.route) { launchSingleTop = true } },
-                    onContinueClick = { vehicle -> authViewModel.saveStep2VehicleType(vehicle) { navController.navigate(Screen.OnboardingStep3.route) } },
-                    isLoading = state.isLoading, errorMessage = state.errorMessage)
+            composable(Screen.EmailLogin.route) {
+                EmailLoginScreen(onNavigateBack = { authViewModel.clearError(); navController.popBackStack() },
+                    onLoginClick = authViewModel::loginWithEmail,
+                    onPasswordResetRequest = authViewModel::sendPasswordResetEmail,
+                    isLoading = state.isLoading, errorMessage = state.errorMessage,
+                    successMessage = state.message)
             }
-        }
-        composable(Screen.OnboardingStep3.route) {
-            user?.let {
-                OnboardingStep3Screen(vehicleType = it.vehicleType, initialBankInfo = it.bankInfo,
-                    onNavigateBack = { authViewModel.clearError(); navController.navigate(Screen.OnboardingStep2.route) { launchSingleTop = true } },
-                    onDocumentPick = authViewModel::uploadDocument,
-                    onDocumentView = { type -> authViewModel.openDocument(type) { uri ->
-                        try { context.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(uri, context.contentResolver.getType(uri)).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)) }
-                        catch (_: Exception) { authViewModel.reportError("No hay una aplicación disponible para abrir este archivo") }
-                    } },
-                    onSaveBank = authViewModel::saveBank,
-                    onFinishRegistrationClick = { b,h,a,c -> authViewModel.finishRegistration(b,h,a,c) {
-                        navController.navigate(Screen.RegistrationStatus.route) { popUpTo(navController.graph.id) { inclusive = true } }
-                    } },
-                    documentsMap = state.documentsMap, isLoading = state.isLoading,
-                    errorMessage = state.errorMessage, successMessage = state.message)
+            composable(Screen.OnboardingStep1.route) {
+                user?.let {
+                    OnboardingStep1Screen(user = it,
+                        onNavigateBack = { authViewModel.logout() },
+                        onContinueClick = { n, l, d, p, t ->
+                            authViewModel.saveStep1PersonalData(n,l,d,p,t) { navController.navigate(Screen.OnboardingStep2.route) }
+                        }, isLoading = state.isLoading, errorMessage = state.errorMessage)
+                }
             }
-        }
-        composable(Screen.RegistrationStatus.route) {
-            user?.let {
-                RegistrationStatusScreen(user = it,
-                    onResumeRegistrationClick = { authViewModel.clearError(); navController.navigate(Screen.OnboardingStep1.route) },
-                    onGoToHomeClick = { if (it.status == RegistrationStatus.APPROVED && it.isEnabled) navController.navigate(Screen.Home.route) },
-                    onLogoutClick = { authViewModel.logout() },
-                    onRefresh = authViewModel::checkCurrentUser,
-                    onConfigurePassword = { authViewModel.clearError(); passwordDialog = true },
-                    isLoading = state.isLoading, errorMessage = state.errorMessage)
+            composable(Screen.OnboardingStep2.route) {
+                user?.let {
+                    OnboardingStep2Screen(currentVehicle = it.vehicleType,
+                        onNavigateBack = { authViewModel.clearError(); navController.navigate(Screen.OnboardingStep1.route) { launchSingleTop = true } },
+                        onContinueClick = { vehicle -> authViewModel.saveStep2VehicleType(vehicle) { navController.navigate(Screen.OnboardingStep3.route) } },
+                        isLoading = state.isLoading, errorMessage = state.errorMessage)
+                }
             }
-        }
-        composable(Screen.Home.route) {
-            // The project has no orders screen yet. Do not invent operational functionality.
-            Column(Modifier.fillMaxSize().systemBarsPadding().padding(24.dp)) {
-                Text("Mi cuenta", style = MaterialTheme.typography.headlineMedium)
-                Spacer(Modifier.height(20.dp))
-                Text(if (user?.status == RegistrationStatus.APPROVED && user.isEnabled)
-                    "Tu registro está aprobado. El módulo de pedidos aún no está implementado en este proyecto."
-                    else "Tu cuenta aún no está habilitada para recibir pedidos.")
-                TextButton(onClick = { passwordDialog = true; authViewModel.clearError() }) { Text("Configurar contraseña") }
-                TextButton(onClick = { authViewModel.logout() }) { Text("Cerrar sesión") }
+            composable(Screen.OnboardingStep3.route) {
+                user?.let {
+                    OnboardingStep3Screen(vehicleType = it.vehicleType, initialBankInfo = it.bankInfo,
+                        onNavigateBack = { authViewModel.clearError(); navController.navigate(Screen.OnboardingStep2.route) { launchSingleTop = true } },
+                        onDocumentPick = authViewModel::uploadDocument,
+                        onDocumentView = { type -> authViewModel.openDocument(type) { uri ->
+                            try { context.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(uri, context.contentResolver.getType(uri)).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)) }
+                            catch (_: Exception) { authViewModel.reportError("No hay una aplicación disponible para abrir este archivo") }
+                        } },
+                        onSaveBank = authViewModel::saveBank,
+                        onFinishRegistrationClick = { b,h,a,c -> authViewModel.finishRegistration(b,h,a,c) {
+                            navController.navigate(Screen.RegistrationStatus.route) { popUpTo(navController.graph.id) { inclusive = true } }
+                        } },
+                        documentsMap = state.documentsMap, isLoading = state.isLoading,
+                        errorMessage = state.errorMessage, successMessage = state.message)
+                }
+            }
+            composable(Screen.RegistrationStatus.route) {
+                user?.let {
+                    RegistrationStatusScreen(user = it,
+                        onResumeRegistrationClick = { authViewModel.clearError(); navController.navigate(Screen.OnboardingStep1.route) },
+                        onGoToHomeClick = { if (it.status == RegistrationStatus.APPROVED && it.isEnabled) navController.navigate(Screen.Home.route) },
+                        onLogoutClick = { authViewModel.logout() },
+                        onRefresh = authViewModel::checkCurrentUser,
+                        onConfigurePassword = { authViewModel.clearError(); passwordDialog = true },
+                        isLoading = state.isLoading, errorMessage = state.errorMessage)
+                }
+            }
+            composable(Screen.Home.route) {
+                // The project has no orders screen yet. Do not invent operational functionality.
+                Column(Modifier.fillMaxSize().systemBarsPadding().padding(24.dp)) {
+                    Text("Mi cuenta", style = MaterialTheme.typography.headlineMedium)
+                    Spacer(Modifier.height(20.dp))
+                    Text(if (user?.status == RegistrationStatus.APPROVED && user.isEnabled)
+                        "Tu registro está aprobado. El módulo de pedidos aún no está implementado en este proyecto."
+                        else "Tu cuenta aún no está habilitada para recibir pedidos.")
+                    TextButton(onClick = { navController.navigate(Screen.Profile.route) { launchSingleTop = true } }) { Text("Mi perfil") }
+                    TextButton(onClick = { passwordDialog = true; authViewModel.clearError() }) { Text("Configurar contraseña") }
+                    TextButton(onClick = { authViewModel.logout() }) { Text("Cerrar sesión") }
+                }
+            }
+            composable(Screen.Profile.route) {
+                user?.let {
+                    // Parte 1: solo Cerrar sesión habilitado. Partes 2-4 conectan el resto de opciones.
+                    ProfileScreen(user = it, onLogoutClick = { authViewModel.logout() })
+                }
             }
         }
     }
