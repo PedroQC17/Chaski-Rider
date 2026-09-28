@@ -20,9 +20,30 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
 import com.example.chaskirider.domain.model.*
 import com.example.chaskirider.ui.components.OnboardingHeader
 import com.example.chaskirider.ui.theme.*
+
+@Preview(name = "Paso 3: Documentación y Banco", showBackground = true, showSystemUi = true)
+@Composable
+fun OnboardingStep3ScreenPreview() {
+    ChaskiRiderTheme {
+        OnboardingStep3Screen(
+            vehicleType = VehicleType.MOTORCYCLE,
+            initialBankInfo = BankInfo(
+                bankName = "BCP",
+                holderName = "Ana García",
+                accountNumber = "191-12345678-0-12",
+                cci = "00219100123456780123"
+            ),
+            documentsMap = mapOf(
+                "dniFront" to DocumentFile("dniFront", uploadState = DocumentUploadState.UPLOADED),
+                "dniBack" to DocumentFile("dniBack", uploadState = DocumentUploadState.UPLOADED)
+            )
+        )
+    }
+}
 
 @Composable
 fun OnboardingStep3Screen(

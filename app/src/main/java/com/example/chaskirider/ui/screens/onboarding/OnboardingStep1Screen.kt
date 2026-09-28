@@ -48,13 +48,33 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
 import com.example.chaskirider.domain.model.RiderUser
 import com.example.chaskirider.ui.components.OnboardingHeader
 import com.example.chaskirider.ui.theme.BackgroundLight
 import com.example.chaskirider.ui.theme.BorderLight
+import com.example.chaskirider.ui.theme.ChaskiRiderTheme
 import com.example.chaskirider.ui.theme.Orange
 import com.example.chaskirider.ui.theme.TextDark
 import com.example.chaskirider.ui.theme.TextMuted
+
+@Preview(name = "Paso 1: Datos Personales", showBackground = true, showSystemUi = true)
+@Composable
+fun OnboardingStep1ScreenPreview() {
+    ChaskiRiderTheme {
+        OnboardingStep1Screen(
+            user = RiderUser(
+                id = "123",
+                name = "Ana",
+                lastName = "García",
+                email = "ana.garcia@example.com",
+                phone = "+51987654321",
+                dni = "12345678",
+                termsAccepted = true
+            )
+        )
+    }
+}
 
 @Composable
 fun OnboardingStep1Screen(

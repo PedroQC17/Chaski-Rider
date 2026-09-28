@@ -4,6 +4,23 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
+import com.example.chaskirider.ui.theme.ChaskiRiderTheme
+
+@Preview(name = "Diálogo Configurar Contraseña", showBackground = true)
+@Composable
+fun PasswordSetupDialogPreview() {
+    ChaskiRiderTheme {
+        PasswordSetupDialog(
+            email = "usuario@example.com",
+            isLoading = false,
+            error = null,
+            message = null,
+            onSave = { _, _ -> },
+            onDismiss = {}
+        )
+    }
+}
 
 @Composable
 fun PasswordSetupDialog(email: String, isLoading: Boolean, error: String?, message: String?,

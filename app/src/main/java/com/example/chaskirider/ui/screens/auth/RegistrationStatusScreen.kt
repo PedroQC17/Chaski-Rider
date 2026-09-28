@@ -28,14 +28,52 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.chaskirider.domain.model.RegistrationStatus
 import com.example.chaskirider.domain.model.RiderUser
+import com.example.chaskirider.domain.model.VehicleType
 import com.example.chaskirider.ui.theme.BackgroundLight
+import com.example.chaskirider.ui.theme.ChaskiRiderTheme
 import com.example.chaskirider.ui.theme.Orange
 import com.example.chaskirider.ui.theme.TextDark
 import com.example.chaskirider.ui.theme.TextMuted
+
+@Preview(name = "Estado de Registro - En Revisión", showBackground = true, showSystemUi = true)
+@Composable
+fun RegistrationStatusPendingPreview() {
+    ChaskiRiderTheme {
+        RegistrationStatusScreen(
+            user = RiderUser(
+                id = "123",
+                name = "Ana",
+                lastName = "García",
+                email = "ana.garcia@example.com",
+                status = RegistrationStatus.PENDING_REVIEW,
+                vehicleType = VehicleType.MOTORCYCLE
+            )
+        )
+    }
+}
+
+@Preview(name = "Estado de Registro - Aprobado", showBackground = true, showSystemUi = true)
+@Composable
+fun RegistrationStatusApprovedPreview() {
+    ChaskiRiderTheme {
+        RegistrationStatusScreen(
+            user = RiderUser(
+                id = "123",
+                name = "Ana",
+                lastName = "García",
+                email = "ana.garcia@example.com",
+                status = RegistrationStatus.APPROVED,
+                isEnabled = true,
+                vehicleType = VehicleType.MOTORCYCLE
+            )
+        )
+    }
+}
 
 @Composable
 fun RegistrationStatusScreen(

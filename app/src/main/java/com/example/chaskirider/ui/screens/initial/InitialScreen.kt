@@ -50,10 +50,14 @@ import com.example.chaskirider.ui.theme.TextDark
 import com.example.chaskirider.ui.theme.TextMuted
 import kotlinx.coroutines.delay
 
-@Preview(showBackground = true)
+import com.example.chaskirider.ui.theme.ChaskiRiderTheme
+
+@Preview(name = "Pantalla Inicial - Modo Claro", showBackground = true, showSystemUi = true)
 @Composable
 fun InitialScreenPreview() {
-    InitialScreen()
+    ChaskiRiderTheme {
+        InitialScreen()
+    }
 }
 
 // PANTALLA INICIO OPTIMIZADA Y ESTILIZADA

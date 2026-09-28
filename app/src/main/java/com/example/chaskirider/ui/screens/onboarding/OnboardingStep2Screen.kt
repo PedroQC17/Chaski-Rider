@@ -40,14 +40,26 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
 import com.example.chaskirider.R
 import com.example.chaskirider.domain.model.VehicleType
 import com.example.chaskirider.ui.components.OnboardingHeader
 import com.example.chaskirider.ui.theme.BackgroundLight
 import com.example.chaskirider.ui.theme.BorderLight
+import com.example.chaskirider.ui.theme.ChaskiRiderTheme
 import com.example.chaskirider.ui.theme.Orange
 import com.example.chaskirider.ui.theme.TextDark
 import com.example.chaskirider.ui.theme.TextMuted
+
+@Preview(name = "Paso 2: Tipo de Vehículo", showBackground = true, showSystemUi = true)
+@Composable
+fun OnboardingStep2ScreenPreview() {
+    ChaskiRiderTheme {
+        OnboardingStep2Screen(
+            currentVehicle = VehicleType.MOTORCYCLE
+        )
+    }
+}
 
 @Composable
 fun OnboardingStep2Screen(

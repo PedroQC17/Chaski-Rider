@@ -43,13 +43,23 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
 import com.example.chaskirider.ui.components.EyeIcon
 import com.example.chaskirider.ui.components.EyeOffIcon
 import com.example.chaskirider.ui.theme.BackgroundLight
 import com.example.chaskirider.ui.theme.BorderLight
+import com.example.chaskirider.ui.theme.ChaskiRiderTheme
 import com.example.chaskirider.ui.theme.Orange
 import com.example.chaskirider.ui.theme.TextDark
 import com.example.chaskirider.ui.theme.TextMuted
+
+@Preview(name = "Ingreso con Correo", showBackground = true, showSystemUi = true)
+@Composable
+fun EmailLoginScreenPreview() {
+    ChaskiRiderTheme {
+        EmailLoginScreen()
+    }
+}
 
 @Composable
 fun EmailLoginScreen(
