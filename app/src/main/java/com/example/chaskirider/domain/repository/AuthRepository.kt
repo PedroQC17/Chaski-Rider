@@ -1,3 +1,6 @@
+// HU04 - Parte 1: se agrega setAvailability() para activar/desactivar la
+// disponibilidad del repartidor (campo isAvailable, acción "availability" de la
+// Cloud Function).
 package com.example.chaskirider.domain.repository
 
 import android.net.Uri
@@ -16,4 +19,5 @@ interface AuthRepository {
     suspend fun getDocument(docType: String): Result<Uri>
     suspend fun logout()
     suspend fun getCurrentUser(): Result<RiderUser?>
+    suspend fun setAvailability(available: Boolean): Result<RiderUser>
 }

@@ -1,3 +1,6 @@
+// HU04 - Parte 1: se implementa setAvailability() con la acción "availability"
+// de la Cloud Function riderRegistration (nombre de acción propuesto; si el
+// backend usa otro, se ajusta aquí).
 package com.example.chaskirider.data.repository
 
 import android.content.Context
@@ -151,4 +154,7 @@ class AuthRepositoryImpl(
         FileProvider.getUriForFile(context, "${context.packageName}.files", file)
     }
     override suspend fun logout() { auth.signOut() }
+    override suspend fun setAvailability(available: Boolean) = safe {
+        mutate("availability", mapOf("isAvailable" to available))
+    }
 }

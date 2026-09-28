@@ -2,6 +2,8 @@ package com.example.chaskirider
 
 // HU03 - Parte 3: se valida que el automóvil avance al paso 3 y pida los
 // mismos documentos que la bicicleta (sin licencia ni SOAT).
+// HU04 - Parte 1: se valida que solo un repartidor aprobado y habilitado
+// pueda activarse como Disponible (desconectar siempre está permitido).
 import com.example.chaskirider.domain.model.*
 import org.junit.Assert.*
 import org.junit.Test
@@ -25,6 +27,13 @@ class RegistrationValidationTest {
         val personal = RiderUser(name = "Ana", lastName = "Perez", dni = "00123456", phone = "+51987654321", termsAccepted = true)
         assertEquals(3, RegistrationValidation.nextStep(personal.copy(vehicleType = VehicleType.CAR)))
         assertEquals(3, RegistrationValidation.requiredDocuments(VehicleType.CAR).size)
+    }
+    @Test fun onlyEnabledRidersCanGoAvailable() {
+        val approved = RiderUser(status = RegistrationStatus.APPROVED, isEnabled = true)
+        assertNull(RegistrationValidation.availabilityError(approved, activating = true))
+        assertNull(RegistrationValidation.availabilityError(approved.copy(isEnabled = false), activating = false))
+        assertNotNull(RegistrationValidation.availabilityError(approved.copy(isEnabled = false), activating = true))
+        assertNotNull(RegistrationValidation.availabilityError(RiderUser(status = RegistrationStatus.PENDING_REVIEW), activating = true))
     }
     @Test fun invalidDniAndMissingConsentAreRejected() {
         assertNotNull(RegistrationValidation.personalError("Ana", "Perez", "123", "987654321", true))

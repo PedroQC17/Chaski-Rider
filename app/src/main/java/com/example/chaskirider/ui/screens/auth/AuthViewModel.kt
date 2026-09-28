@@ -4,6 +4,9 @@
 // aceptada durante el registro).
 // HU03 - Parte 3: saveStep2VehicleType ahora acepta CAR y se agrega updateVehicle()
 // para cambiar el vehículo desde Mi perfil (acción "vehicle").
+// HU04 - Parte 1: se agrega setAvailability() para conectar/desconectar al repartidor;
+// valida que solo un repartidor aprobado y habilitado pueda activarse y persiste
+// el estado con la acción "availability".
 package com.example.chaskirider.ui.screens.auth
 
 import android.net.Uri
@@ -104,6 +107,12 @@ class AuthViewModel(private val repository: AuthRepository = AppContainer.authRe
             reportError("Selecciona un vehículo"); return
         }
         userAction({ repository.saveVehicle(vehicleType) }) { onSuccess() }
+    }
+    fun setAvailability(available: Boolean, onSuccess: () -> Unit = {}) {
+        val user = _uiState.value.currentUser
+        if (user == null) { reportError("No hay una sesión activa"); return }
+        RegistrationValidation.availabilityError(user, activating = available)?.let { reportError(it); return }
+        userAction({ repository.setAvailability(available) }) { onSuccess() }
     }
     fun saveBank(bank: BankInfo) {
         RegistrationValidation.bankError(bank)?.let { reportError(it); return }

@@ -1,5 +1,7 @@
 // HU03 - Parte 3: nextStep ahora acepta VehicleType.CAR (bicicleta, motocicleta
 // o automóvil). Los automóviles piden los mismos documentos que la bicicleta.
+// HU04 - Parte 1: availabilityError controla quién puede activarse como Disponible
+// (solo un repartidor aprobado y habilitado; desconectar siempre está permitido).
 package com.example.chaskirider.domain.model
 
 object RegistrationValidation {
@@ -30,6 +32,12 @@ object RegistrationValidation {
         "bankStatement" to user.bankStatementUrl, "driverLicense" to user.driverLicenseUrl,
         "soat" to user.soatUrl
     )
+    fun availabilityError(user: RiderUser, activating: Boolean): String? = when {
+        !activating -> null
+        user.status != RegistrationStatus.APPROVED || !user.isEnabled ->
+            "Solo los repartidores habilitados pueden activarse"
+        else -> null
+    }
     fun nextStep(user: RiderUser): Int = when {
         personalError(user.name, user.lastName, user.dni, user.phone, user.termsAccepted) != null -> 1
         user.vehicleType !in listOf(VehicleType.BICYCLE, VehicleType.MOTORCYCLE, VehicleType.CAR) -> 2
