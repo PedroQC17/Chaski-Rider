@@ -8,7 +8,8 @@
 // - Se conservan los accesos a Configurar contraseña y Cerrar sesión.
 // - Permisos: también se pide POST_NOTIFICATIONS (SDK 33+) al entrar al Home
 //   para que los pushes de FCM se muestren en la barra de estado (Parte 3).
-// - La campana de notificaciones se agrega en la Parte 4.
+// HU04 - Parte 4: campana con badge de no leídos en la esquina superior
+// derecha; al tocarla abre la pantalla Notificaciones (badge se limpia).
 package com.example.chaskirider.ui.screens.home
 
 import android.Manifest
@@ -20,6 +21,7 @@ import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,11 +42,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableFloatStateOf
@@ -65,6 +69,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import com.example.chaskirider.data.notifications.NotificationsStore
 import com.example.chaskirider.domain.model.RegistrationStatus
 import com.example.chaskirider.domain.model.RiderUser
 import com.example.chaskirider.ui.theme.BackgroundLight
@@ -118,6 +123,7 @@ fun HomeScreen(
     onAvailabilityChange: (Boolean) -> Unit = {},
     onError: (String) -> Unit = {},
     onConfigurePassword: () -> Unit = {},
+    onNotificationsClick: () -> Unit = {},
     onLogout: () -> Unit = {},
     isLoading: Boolean = false,
     errorMessage: String? = null
@@ -150,6 +156,7 @@ fun HomeScreen(
 
     val fullName = "${user.name} ${user.lastName}".trim().ifBlank { "Repartidor" }
     val firstName = fullName.substringBefore(" ")
+    val unreadCount by NotificationsStore.unreadCount.collectAsState()
 
     Column(
         modifier = Modifier
@@ -159,28 +166,36 @@ fun HomeScreen(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 24.dp)
     ) {
-        Text(
-            text = "¡Hola, $firstName!",
-            fontSize = 26.sp,
-            fontWeight = FontWeight.Bold,
-            color = TextDark
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Top
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "¡Hola, $firstName!",
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextDark
+                )
 
-        Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(10.dp)
-                    .background(if (user.isAvailable) ConnectedGreen else Color(0xFFBDBDBD), CircleShape)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = if (user.isAvailable) "Estás conectado" else "Estás desconectado",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                color = if (user.isAvailable) ConnectedGreen else TextMuted
-            )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .background(if (user.isAvailable) ConnectedGreen else Color(0xFFBDBDBD), CircleShape)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = if (user.isAvailable) "Estás conectado" else "Estás desconectado",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = if (user.isAvailable) ConnectedGreen else TextMuted
+                    )
+                }
+            }
+            NotificationsBell(count = unreadCount, onClick = onNotificationsClick)
         }
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -307,6 +322,37 @@ private fun AvailabilitySlider(
                     contentDescription = if (available) "Desconectar" else "Conectar",
                     tint = trackColor,
                     modifier = Modifier.size(22.dp)
+                )
+            }
+        }
+    }
+}
+
+// HU04 - Parte 4: campana con badge de no leídos (9+ si hay más de 9).
+@Composable
+private fun NotificationsBell(count: Int, onClick: () -> Unit) {
+    Box(contentAlignment = Alignment.TopEnd) {
+        Icon(
+            imageVector = Icons.Default.Notifications,
+            contentDescription = "Notificaciones",
+            tint = TextDark,
+            modifier = Modifier
+                .size(26.dp)
+                .clickable { onClick() }
+        )
+        if (count > 0) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .offset(x = 12.dp, y = (-6).dp)
+                    .size(16.dp)
+                    .background(Color(0xFFD32F2F), CircleShape)
+            ) {
+                Text(
+                    text = if (count > 9) "9+" else count.toString(),
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
                 )
             }
         }

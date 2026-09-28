@@ -23,6 +23,11 @@
 // HU04 - Parte 3 - cambios en este archivo:
 // 8. Con cada sesión activa se suscribe el dispositivo al topic FCM
 //    "rider_{uid}" para recibir pushes dirigidos a este repartidor.
+// HU04 - Parte 4 - cambios en este archivo:
+// 9. Nueva ruta Screen.Notifications con NotificationsScreen; se conecta la
+//    campana del Home y la fila "Notificaciones" del perfil. Al tocar una
+//    notificación push se abre MainActivity (NEW_TASK|CLEAR_TASK) y el
+//    routing existente deja en Home con sesión o en Access sin ella.
 package com.example.chaskirider.ui.navigation
 
 import android.content.Intent
@@ -41,6 +46,7 @@ import com.example.chaskirider.domain.model.*
 import com.example.chaskirider.ui.components.AppBottomBar
 import com.example.chaskirider.ui.screens.auth.*
 import com.example.chaskirider.ui.screens.home.*
+import com.example.chaskirider.ui.screens.notifications.*
 import com.example.chaskirider.ui.screens.onboarding.*
 import com.example.chaskirider.ui.screens.profile.*
 import com.google.firebase.messaging.FirebaseMessaging
@@ -160,6 +166,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
                         onAvailabilityChange = { available -> authViewModel.setAvailability(available) },
                         onError = authViewModel::reportError,
                         onConfigurePassword = { passwordDialog = true; authViewModel.clearError() },
+                        onNotificationsClick = { navController.navigate(Screen.Notifications.route) },
                         onLogout = { authViewModel.logout() },
                         isLoading = state.isLoading, errorMessage = state.errorMessage)
                 }
@@ -170,6 +177,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
                         onPersonalDataClick = { authViewModel.clearError(); navController.navigate(Screen.ProfilePersonalData.route) },
                         onVehicleClick = { authViewModel.clearError(); navController.navigate(Screen.ProfileVehicle.route) },
                         onDocumentsClick = { authViewModel.clearError(); navController.navigate(Screen.ProfileDocuments.route) },
+                        onNotificationsClick = { authViewModel.clearError(); navController.navigate(Screen.Notifications.route) },
                         onLogoutClick = { authViewModel.logout() })
                 }
             }
@@ -205,6 +213,9 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
                         } },
                         isLoading = state.isLoading, errorMessage = state.errorMessage)
                 }
+            }
+            composable(Screen.Notifications.route) {
+                NotificationsScreen(onNavigateBack = { navController.popBackStack() })
             }
         }
     }

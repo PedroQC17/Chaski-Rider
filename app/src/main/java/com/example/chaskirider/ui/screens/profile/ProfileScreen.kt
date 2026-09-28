@@ -2,11 +2,12 @@
 // HU03 - Parte 2: "Datos personales" queda habilitado (navega a ProfilePersonalData).
 // HU03 - Parte 3: "Vehículos" queda habilitado (navega a ProfileVehicle).
 // HU03 - Parte 4: "Documentos" queda habilitado (navega a ProfileDocuments).
+// HU04 - Parte 4: "Notificaciones" queda habilitado (navega a Notifications).
 // - Tarjeta naranja con avatar (inicial), nombre y rol "Repartidor".
 // - Tarjeta "Estado de cuenta" con chip según RegistrationStatus
 //   (Firestore no guarda estado por documento, se usa el estado del registro).
 // - Menú: cada opción se habilita pasando su callback (null = "Próximamente").
-// - Métodos de pago, Notificaciones y Ayuda quedan deshabilitados (fuera de HU03).
+// - Métodos de pago y Ayuda quedan deshabilitados (fuera del alcance).
 // - Se omite el rating 4.8 del mockup porque no existe dato en el backend.
 package com.example.chaskirider.ui.screens.profile
 
@@ -101,6 +102,7 @@ fun ProfileScreen(
     onPersonalDataClick: (() -> Unit)? = null,
     onVehicleClick: (() -> Unit)? = null,
     onDocumentsClick: (() -> Unit)? = null,
+    onNotificationsClick: (() -> Unit)? = null,
     onLogoutClick: () -> Unit = {}
 ) {
     Column(
@@ -155,8 +157,9 @@ fun ProfileScreen(
                 label = "Métodos de pago"
             )
             ProfileMenuRow(
-                icon = { Icon(Icons.Default.Notifications, null, tint = TextMuted, modifier = Modifier.size(22.dp)) },
-                label = "Notificaciones"
+                icon = { Icon(Icons.Default.Notifications, null, tint = if (onNotificationsClick != null) TextDark else TextMuted, modifier = Modifier.size(22.dp)) },
+                label = "Notificaciones",
+                onClick = onNotificationsClick
             )
             ProfileMenuRow(
                 icon = { Icon(Icons.Default.Info, null, tint = TextMuted, modifier = Modifier.size(22.dp)) },

@@ -20,11 +20,21 @@ object NotificationsStore {
     private val _notifications = MutableStateFlow<List<ChaskiNotification>>(emptyList())
     val notifications: StateFlow<List<ChaskiNotification>> = _notifications.asStateFlow()
 
+    private val _unreadCount = MutableStateFlow(0)
+    val unreadCount: StateFlow<Int> = _unreadCount.asStateFlow()
+
     fun add(notification: ChaskiNotification) {
         _notifications.update { (listOf(notification) + it).take(MAX_NOTIFICATIONS) }
+        _unreadCount.update { it + 1 }
+    }
+
+    // Parte 4: el badge de la campana se limpia al abrir la pantalla.
+    fun markSeen() {
+        _unreadCount.value = 0
     }
 
     fun clear() {
         _notifications.value = emptyList()
+        _unreadCount.value = 0
     }
 }
