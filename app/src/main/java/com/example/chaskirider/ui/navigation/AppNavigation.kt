@@ -20,6 +20,9 @@
 //    chip de estado, tarjeta de disponibilidad con slider, permiso de
 //    ubicación al activarse); conecta setAvailability/reportError y conserva
 //    Configurar contraseña y Cerrar sesión.
+// HU04 - Parte 3 - cambios en este archivo:
+// 8. Con cada sesión activa se suscribe el dispositivo al topic FCM
+//    "rider_{uid}" para recibir pushes dirigidos a este repartidor.
 package com.example.chaskirider.ui.navigation
 
 import android.content.Intent
@@ -40,6 +43,7 @@ import com.example.chaskirider.ui.screens.auth.*
 import com.example.chaskirider.ui.screens.home.*
 import com.example.chaskirider.ui.screens.onboarding.*
 import com.example.chaskirider.ui.screens.profile.*
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
@@ -207,6 +211,13 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
     LaunchedEffect(user?.id) {
         if (state.initialized && user == null) {
             try { google.clear(context) } catch (e: CancellationException) { throw e } catch (_: Exception) { }
+        }
+    }
+    // HU04 - Parte 3: pushes dirigidos a este repartidor (topic por uid).
+    LaunchedEffect(user?.id) {
+        if (state.initialized && user != null) {
+            try { FirebaseMessaging.getInstance().subscribeToTopic("rider_${user.id}") }
+            catch (e: CancellationException) { throw e } catch (_: Exception) { }
         }
     }
     if (recovery) AlertDialog(onDismissRequest = { if (!state.isLoading) recovery = false },

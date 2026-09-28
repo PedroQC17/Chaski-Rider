@@ -6,6 +6,8 @@
 //   ACCESS_FINE_LOCATION en runtime solo si el repartidor está habilitado;
 //   si se niega, se muestra el error y no se activa.
 // - Se conservan los accesos a Configurar contraseña y Cerrar sesión.
+// - Permisos: también se pide POST_NOTIFICATIONS (SDK 33+) al entrar al Home
+//   para que los pushes de FCM se muestren en la barra de estado (Parte 3).
 // - La campana de notificaciones se agrega en la Parte 4.
 package com.example.chaskirider.ui.screens.home
 
@@ -124,6 +126,15 @@ fun HomeScreen(
     val locationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) onAvailabilityChange(true)
         else onError("Se requiere el permiso de ubicación para activarte como disponible.")
+    }
+    // HU04 - Parte 3: permiso de notificaciones para mostrar los pushes de FCM.
+    val notificationsPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    LaunchedEffect(Unit) {
+        if (android.os.Build.VERSION.SDK_INT >= 33 &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationsPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
     }
     // Criterio HU04: al activarse se pide ubicación; quien no esté habilitado
     // recibe el error del validador sin llegar a pedir el permiso.
