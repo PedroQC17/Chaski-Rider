@@ -6,6 +6,8 @@
 //   ACCESS_FINE_LOCATION en runtime solo si el repartidor está habilitado;
 //   si se niega, se muestra el error y no se activa.
 // - Se conservan los accesos a Configurar contraseña y Cerrar sesión.
+// - Colores: se reutilizan los del tema (Color.kt); el tono claro de la
+//   tarjeta naranja se deriva con Orange.copy(alpha) en vez de hex nuevos.
 // - Permisos: también se pide POST_NOTIFICATIONS (SDK 33+) al entrar al Home
 //   para que los pushes de FCM se muestren en la barra de estado (Parte 3).
 // HU04 - Parte 4: campana con badge de no leídos en la esquina superior
@@ -73,18 +75,16 @@ import com.example.chaskirider.data.notifications.NotificationsStore
 import com.example.chaskirider.domain.model.RegistrationStatus
 import com.example.chaskirider.domain.model.RiderUser
 import com.example.chaskirider.ui.theme.BackgroundLight
+import com.example.chaskirider.ui.theme.BorderLight
 import com.example.chaskirider.ui.theme.ChaskiRiderTheme
+import com.example.chaskirider.ui.theme.DangerRed
 import com.example.chaskirider.ui.theme.Orange
+import com.example.chaskirider.ui.theme.SuccessGreen
 import com.example.chaskirider.ui.theme.TextDark
 import com.example.chaskirider.ui.theme.TextMuted
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
-private val ConnectedGreen = Color(0xFF2E7D32)
-private val CardOrangeBg = Color(0xFFFFF7F2)
-private val CardOrangeBorder = Color(0xFFFFE0D6)
-
-@Preview(name = "Home - Desconectado", showBackground = true, showSystemUi = true)
 @Composable
 fun HomeDisconnectedPreview() {
     ChaskiRiderTheme {
@@ -184,14 +184,14 @@ fun HomeScreen(
                     Box(
                         modifier = Modifier
                             .size(10.dp)
-                            .background(if (user.isAvailable) ConnectedGreen else Color(0xFFBDBDBD), CircleShape)
+                            .background(if (user.isAvailable) SuccessGreen else BorderLight, CircleShape)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = if (user.isAvailable) "Estás conectado" else "Estás desconectado",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
-                        color = if (user.isAvailable) ConnectedGreen else TextMuted
+                        color = if (user.isAvailable) SuccessGreen else TextMuted
                     )
                 }
             }
@@ -203,8 +203,8 @@ fun HomeScreen(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .border(1.dp, CardOrangeBorder, RoundedCornerShape(16.dp))
-                .background(CardOrangeBg, RoundedCornerShape(16.dp))
+                .border(1.dp, Orange.copy(alpha = 0.19f), RoundedCornerShape(16.dp))
+                .background(Orange.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
                 .padding(18.dp)
         ) {
             Text(
@@ -231,13 +231,13 @@ fun HomeScreen(
 
         errorMessage?.let {
             Spacer(modifier = Modifier.height(12.dp))
-            Text(text = it, color = Color.Red, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+            Text(text = it, color = DangerRed, fontSize = 13.sp, fontWeight = FontWeight.Medium)
         }
 
         Spacer(modifier = Modifier.height(48.dp))
 
         TextButton(onClick = onConfigurePassword) { Text("Configurar contraseña") }
-        TextButton(onClick = onLogout) { Text("Cerrar sesión", color = Color(0xFFD32F2F)) }
+        TextButton(onClick = onLogout) { Text("Cerrar sesión", color = DangerRed) }
 
         Spacer(modifier = Modifier.height(16.dp))
     }
@@ -259,7 +259,7 @@ private fun AvailabilitySlider(
     // regreso animado a la base se ejecuta en un Job cancelable.
     var dragPx by remember { mutableFloatStateOf(0f) }
     var snapJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
-    val trackColor = if (available) ConnectedGreen else Orange
+    val trackColor = if (available) SuccessGreen else Orange
 
     LaunchedEffect(available) { snapJob?.cancel(); dragPx = 0f }
 
@@ -346,7 +346,7 @@ private fun NotificationsBell(count: Int, onClick: () -> Unit) {
                 modifier = Modifier
                     .offset(x = 12.dp, y = (-6).dp)
                     .size(16.dp)
-                    .background(Color(0xFFD32F2F), CircleShape)
+                    .background(DangerRed, CircleShape)
             ) {
                 Text(
                     text = if (count > 9) "9+" else count.toString(),

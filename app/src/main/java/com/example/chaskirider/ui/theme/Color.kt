@@ -17,3 +17,7 @@ val TextDark = Color(0xFF212121)
 val TextMuted = Color(0xFF757575)
 val BorderLight = Color(0xFFE0E0E0)
 val BackgroundLight = Color.White
+
+// Colores semánticos compartidos (estado y alertas)
+val SuccessGreen = Color(0xFF2E7D32)
+val DangerRed = Color(0xFFD32F2F)
