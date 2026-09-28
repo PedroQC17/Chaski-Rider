@@ -13,3 +13,9 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+/functions/node_modules/
+/functions/.pnpm-store/
+/.firebase/
+*-debug.log
+

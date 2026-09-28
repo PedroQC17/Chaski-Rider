@@ -11,6 +11,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        com.example.chaskirider.di.AppContainer.initialize(applicationContext)
         enableEdgeToEdge()
 
         setContent {

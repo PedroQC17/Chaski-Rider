@@ -23,9 +23,9 @@
               <option name="connection">
                 <ConnectionSetting>
                   <option name="appId" value="com.example.chaskirider" />
-                  <option name="mobileSdkAppId" value="1:123456789012:android:abcdef1234567890" />
-                  <option name="projectId" value="chaski-rider-dev" />
-                  <option name="projectNumber" value="123456789012" />
+                  <option name="mobileSdkAppId" value="1:634578215837:android:8d03c5f934dcb13ea38574" />
+                  <option name="projectId" value="chaski-rider" />
+                  <option name="projectNumber" value="634578215837" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />
