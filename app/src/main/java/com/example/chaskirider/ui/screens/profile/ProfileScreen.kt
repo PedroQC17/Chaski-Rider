@@ -9,6 +9,8 @@
 // - Menú: cada opción se habilita pasando su callback (null = "Próximamente").
 // - Métodos de pago y Ayuda quedan deshabilitados (fuera del alcance).
 // - Se omite el rating 4.8 del mockup porque no existe dato en el backend.
+// - Colores: DangerRed/SuccessGreen/WarningAmber ahora provienen del tema
+//   (Color.kt) en lugar de valores privados locales.
 package com.example.chaskirider.ui.screens.profile
 
 import androidx.compose.foundation.Image
@@ -55,13 +57,12 @@ import com.example.chaskirider.ui.components.ChevronRightIcon
 import com.example.chaskirider.ui.theme.BackgroundLight
 import com.example.chaskirider.ui.theme.BorderLight
 import com.example.chaskirider.ui.theme.ChaskiRiderTheme
+import com.example.chaskirider.ui.theme.DangerRed
 import com.example.chaskirider.ui.theme.Orange
+import com.example.chaskirider.ui.theme.SuccessGreen
 import com.example.chaskirider.ui.theme.TextDark
 import com.example.chaskirider.ui.theme.TextMuted
-
-private val DangerRed = Color(0xFFD32F2F)
-private val ApprovedGreen = Color(0xFF2E7D32)
-private val WarningAmber = Color(0xFFF57C00)
+import com.example.chaskirider.ui.theme.WarningAmber
 
 @Preview(name = "Perfil - En revisión", showBackground = true, showSystemUi = true)
 @Composable
@@ -214,7 +215,7 @@ private fun AccountStatusCard(user: RiderUser) {
     when (user.status) {
         RegistrationStatus.APPROVED -> {
             chipLabel = "Aprobado"
-            chipColor = ApprovedGreen
+            chipColor = SuccessGreen
             subtitle = if (user.isEnabled) "¡Ya puedes recibir pedidos!" else "Cuenta aprobada. Espera a que esté habilitada."
         }
         RegistrationStatus.PENDING_REVIEW -> {
