@@ -1,3 +1,5 @@
+// HU03 - Parte 3: nextStep ahora acepta VehicleType.CAR (bicicleta, motocicleta
+// o automóvil). Los automóviles piden los mismos documentos que la bicicleta.
 package com.example.chaskirider.domain.model
 
 object RegistrationValidation {
@@ -30,7 +32,7 @@ object RegistrationValidation {
     )
     fun nextStep(user: RiderUser): Int = when {
         personalError(user.name, user.lastName, user.dni, user.phone, user.termsAccepted) != null -> 1
-        user.vehicleType !in listOf(VehicleType.BICYCLE, VehicleType.MOTORCYCLE) -> 2
+        user.vehicleType !in listOf(VehicleType.BICYCLE, VehicleType.MOTORCYCLE, VehicleType.CAR) -> 2
         else -> 3
     }
 }

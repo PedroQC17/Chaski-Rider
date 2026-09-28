@@ -2,6 +2,8 @@
 // desde Mi perfil (reutiliza la acción "personal" de la Cloud Function y la misma
 // validación que el onboarding; se omite la validación de términos porque ya fue
 // aceptada durante el registro).
+// HU03 - Parte 3: saveStep2VehicleType ahora acepta CAR y se agrega updateVehicle()
+// para cambiar el vehículo desde Mi perfil (acción "vehicle").
 package com.example.chaskirider.ui.screens.auth
 
 import android.net.Uri
@@ -92,8 +94,14 @@ class AuthViewModel(private val repository: AuthRepository = AppContainer.authRe
         userAction({ repository.savePersonalData(name, lastName, dni, phone, terms) }) { onSuccess() }
     }
     fun saveStep2VehicleType(vehicleType: VehicleType, onSuccess: () -> Unit) {
-        if (vehicleType !in listOf(VehicleType.BICYCLE, VehicleType.MOTORCYCLE)) {
-            reportError("Selecciona bicicleta o motocicleta"); return
+        if (vehicleType !in listOf(VehicleType.BICYCLE, VehicleType.MOTORCYCLE, VehicleType.CAR)) {
+            reportError("Selecciona bicicleta, motocicleta o automóvil"); return
+        }
+        userAction({ repository.saveVehicle(vehicleType) }) { onSuccess() }
+    }
+    fun updateVehicle(vehicleType: VehicleType, onSuccess: () -> Unit) {
+        if (vehicleType !in listOf(VehicleType.BICYCLE, VehicleType.MOTORCYCLE, VehicleType.CAR)) {
+            reportError("Selecciona un vehículo"); return
         }
         userAction({ repository.saveVehicle(vehicleType) }) { onSuccess() }
     }

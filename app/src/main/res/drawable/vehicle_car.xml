@@ -1,0 +1,28 @@
+<!-- HU03 - Parte 3: ilustración de automóvil para la selección de vehículo
+     (mismo estilo 120x88 que vehicle_bicycle y vehicle_motorcycle). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="88dp"
+    android:viewportWidth="120"
+    android:viewportHeight="88">
+    <path
+        android:fillColor="#FFF5ED"
+        android:pathData="M0,0h120v88h-120z" />
+    <path
+        android:strokeColor="#28313B"
+        android:strokeWidth="5"
+        android:fillColor="#FFFFFF"
+        android:pathData="M8,60a16,16 0,1 0,32 0a16,16 0,1 0,-32 0M80,60a16,16 0,1 0,32 0a16,16 0,1 0,-32 0" />
+    <path
+        android:fillColor="#FF5A1F"
+        android:pathData="M12,58L12,46Q12,42 16,41L34,37L44,25Q46,22 50,22L76,22Q80,22 82,25L90,37L104,41Q108,42 108,46L108,58Z" />
+    <path
+        android:fillColor="#28313B"
+        android:pathData="M46,37L54,26L66,26L66,37Z" />
+    <path
+        android:fillColor="#28313B"
+        android:pathData="M70,26L78,26L86,37L70,37Z" />
+    <path
+        android:fillColor="#FFBB70"
+        android:pathData="M14,46L24,44L24,50L14,52Z" />
+</vector>

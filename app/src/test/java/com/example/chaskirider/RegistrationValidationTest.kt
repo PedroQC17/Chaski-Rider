@@ -1,5 +1,7 @@
 package com.example.chaskirider
 
+// HU03 - Parte 3: se valida que el automóvil avance al paso 3 y pida los
+// mismos documentos que la bicicleta (sin licencia ni SOAT).
 import com.example.chaskirider.domain.model.*
 import org.junit.Assert.*
 import org.junit.Test
@@ -18,6 +20,11 @@ class RegistrationValidationTest {
     @Test fun motorcycleRequiresLicenseAndSoat() {
         assertEquals(3, RegistrationValidation.requiredDocuments(VehicleType.BICYCLE).size)
         assertTrue(RegistrationValidation.requiredDocuments(VehicleType.MOTORCYCLE).containsAll(listOf("driverLicense", "soat")))
+    }
+    @Test fun carIsAcceptedAndRequiresBicycleDocuments() {
+        val personal = RiderUser(name = "Ana", lastName = "Perez", dni = "00123456", phone = "+51987654321", termsAccepted = true)
+        assertEquals(3, RegistrationValidation.nextStep(personal.copy(vehicleType = VehicleType.CAR)))
+        assertEquals(3, RegistrationValidation.requiredDocuments(VehicleType.CAR).size)
     }
     @Test fun invalidDniAndMissingConsentAreRejected() {
         assertNotNull(RegistrationValidation.personalError("Ana", "Perez", "123", "987654321", true))

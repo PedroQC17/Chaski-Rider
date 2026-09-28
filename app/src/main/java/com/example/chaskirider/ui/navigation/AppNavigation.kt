@@ -8,6 +8,9 @@
 // HU03 - Parte 2 - cambios en este archivo:
 // 4. Nueva ruta Screen.ProfilePersonalData con ProfilePersonalDataScreen y
 //    ProfileScreen.onPersonalDataClick conectado a updatePersonalData.
+// HU03 - Parte 3 - cambios en este archivo:
+// 5. Nueva ruta Screen.ProfileVehicle con ProfileVehicleScreen y
+//    ProfileScreen.onVehicleClick conectado a updateVehicle.
 package com.example.chaskirider.ui.navigation
 
 import android.content.Intent
@@ -151,9 +154,10 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
             }
             composable(Screen.Profile.route) {
                 user?.let {
-                    // Parte 1: Cerrar sesión. Parte 2: Datos personales. Partes 3-4: vehículo y documentos.
+                    // Parte 1: Cerrar sesión. Parte 2: Datos personales. Parte 3: Vehículos. Parte 4: Documentos.
                     ProfileScreen(user = it,
                         onPersonalDataClick = { authViewModel.clearError(); navController.navigate(Screen.ProfilePersonalData.route) },
+                        onVehicleClick = { authViewModel.clearError(); navController.navigate(Screen.ProfileVehicle.route) },
                         onLogoutClick = { authViewModel.logout() })
                 }
             }
@@ -163,6 +167,16 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
                         onNavigateBack = { authViewModel.clearError(); navController.popBackStack() },
                         onSaveClick = { n, l, d, p ->
                             authViewModel.updatePersonalData(n, l, d, p) { navController.popBackStack() }
+                        },
+                        isLoading = state.isLoading, errorMessage = state.errorMessage)
+                }
+            }
+            composable(Screen.ProfileVehicle.route) {
+                user?.let {
+                    ProfileVehicleScreen(user = it,
+                        onNavigateBack = { authViewModel.clearError(); navController.popBackStack() },
+                        onSaveClick = { vehicle ->
+                            authViewModel.updateVehicle(vehicle) { navController.popBackStack() }
                         },
                         isLoading = state.isLoading, errorMessage = state.errorMessage)
                 }
