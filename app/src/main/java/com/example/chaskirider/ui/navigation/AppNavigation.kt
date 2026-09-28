@@ -15,6 +15,11 @@
 // 6. Nueva ruta Screen.ProfileDocuments con ProfileDocumentsScreen; reutiliza
 //    uploadDocument/openDocument (cámara + picker) y se conecta
 //    ProfileScreen.onDocumentsClick.
+// HU04 - Parte 2 - cambios en este archivo:
+// 7. El Home deja de ser una columna de texto y pasa a HomeScreen (saludo,
+//    chip de estado, tarjeta de disponibilidad con slider, permiso de
+//    ubicación al activarse); conecta setAvailability/reportError y conserva
+//    Configurar contraseña y Cerrar sesión.
 package com.example.chaskirider.ui.navigation
 
 import android.content.Intent
@@ -32,6 +37,7 @@ import com.example.chaskirider.data.auth.GoogleSignInClient
 import com.example.chaskirider.domain.model.*
 import com.example.chaskirider.ui.components.AppBottomBar
 import com.example.chaskirider.ui.screens.auth.*
+import com.example.chaskirider.ui.screens.home.*
 import com.example.chaskirider.ui.screens.onboarding.*
 import com.example.chaskirider.ui.screens.profile.*
 import kotlinx.coroutines.CancellationException
@@ -144,16 +150,14 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
                 }
             }
             composable(Screen.Home.route) {
-                // The project has no orders screen yet. Do not invent operational functionality.
-                Column(Modifier.fillMaxSize().systemBarsPadding().padding(24.dp)) {
-                    Text("Mi cuenta", style = MaterialTheme.typography.headlineMedium)
-                    Spacer(Modifier.height(20.dp))
-                    Text(if (user?.status == RegistrationStatus.APPROVED && user.isEnabled)
-                        "Tu registro está aprobado. El módulo de pedidos aún no está implementado en este proyecto."
-                        else "Tu cuenta aún no está habilitada para recibir pedidos.")
-                    TextButton(onClick = { navController.navigate(Screen.Profile.route) { launchSingleTop = true } }) { Text("Mi perfil") }
-                    TextButton(onClick = { passwordDialog = true; authViewModel.clearError() }) { Text("Configurar contraseña") }
-                    TextButton(onClick = { authViewModel.logout() }) { Text("Cerrar sesión") }
+                // HU04: Home con disponibilidad. El módulo de pedidos sigue sin existir.
+                user?.let {
+                    HomeScreen(user = it,
+                        onAvailabilityChange = { available -> authViewModel.setAvailability(available) },
+                        onError = authViewModel::reportError,
+                        onConfigurePassword = { passwordDialog = true; authViewModel.clearError() },
+                        onLogout = { authViewModel.logout() },
+                        isLoading = state.isLoading, errorMessage = state.errorMessage)
                 }
             }
             composable(Screen.Profile.route) {
