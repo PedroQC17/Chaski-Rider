@@ -1,9 +1,10 @@
 // HU03 - Parte 1: pantalla "Mi perfil" (mockup "Mi perfil").
+// HU03 - Parte 2: "Datos personales" queda habilitado (navega a ProfilePersonalData);
+//   Vehículos y Documentos se habilitan en las Partes 3 y 4 (null = Próximamente).
 // - Tarjeta naranja con avatar (inicial), nombre y rol "Repartidor".
 // - Tarjeta "Estado de cuenta" con chip según RegistrationStatus
 //   (Firestore no guarda estado por documento, se usa el estado del registro).
-// - Menú: Datos personales / Vehículos / Documentos se habilitan en las
-//   Partes 2, 3 y 4 (se habilitan pasando su callback, null = Próximamente).
+// - Menú: cada opción se habilita pasando su callback (null = "Próximamente").
 // - Métodos de pago, Notificaciones y Ayuda quedan deshabilitados (fuera de HU03).
 // - Se omite el rating 4.8 del mockup porque no existe dato en el backend.
 package com.example.chaskirider.ui.screens.profile

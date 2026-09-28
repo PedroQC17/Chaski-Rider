@@ -1,3 +1,7 @@
+// HU03 - Parte 2: se agrega updatePersonalData() para editar los datos personales
+// desde Mi perfil (reutiliza la acción "personal" de la Cloud Function y la misma
+// validación que el onboarding; se omite la validación de términos porque ya fue
+// aceptada durante el registro).
 package com.example.chaskirider.ui.screens.auth
 
 import android.net.Uri
@@ -81,6 +85,11 @@ class AuthViewModel(private val repository: AuthRepository = AppContainer.authRe
     fun saveStep1PersonalData(name: String, lastName: String, dni: String, phone: String, termsAccepted: Boolean, onSuccess: () -> Unit) {
         RegistrationValidation.personalError(name, lastName, dni, phone, termsAccepted)?.let { reportError(it); return }
         userAction({ repository.savePersonalData(name, lastName, dni, phone, termsAccepted) }) { onSuccess() }
+    }
+    fun updatePersonalData(name: String, lastName: String, dni: String, phone: String, onSuccess: () -> Unit) {
+        RegistrationValidation.personalError(name, lastName, dni, phone, true)?.let { reportError(it); return }
+        val terms = _uiState.value.currentUser?.termsAccepted ?: true
+        userAction({ repository.savePersonalData(name, lastName, dni, phone, terms) }) { onSuccess() }
     }
     fun saveStep2VehicleType(vehicleType: VehicleType, onSuccess: () -> Unit) {
         if (vehicleType !in listOf(VehicleType.BICYCLE, VehicleType.MOTORCYCLE)) {

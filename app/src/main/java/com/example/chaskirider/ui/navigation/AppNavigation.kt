@@ -5,6 +5,9 @@
 // 2. Nueva ruta Screen.Profile que muestra ProfileScreen (en esta parte solo
 //    Cerrar sesión está habilitado; el resto se habilita en las Partes 2-4).
 // 3. En el Home se agregó el botón "Mi perfil".
+// HU03 - Parte 2 - cambios en este archivo:
+// 4. Nueva ruta Screen.ProfilePersonalData con ProfilePersonalDataScreen y
+//    ProfileScreen.onPersonalDataClick conectado a updatePersonalData.
 package com.example.chaskirider.ui.navigation
 
 import android.content.Intent
@@ -23,7 +26,7 @@ import com.example.chaskirider.domain.model.*
 import com.example.chaskirider.ui.components.AppBottomBar
 import com.example.chaskirider.ui.screens.auth.*
 import com.example.chaskirider.ui.screens.onboarding.*
-import com.example.chaskirider.ui.screens.profile.ProfileScreen
+import com.example.chaskirider.ui.screens.profile.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
@@ -148,8 +151,20 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
             }
             composable(Screen.Profile.route) {
                 user?.let {
-                    // Parte 1: solo Cerrar sesión habilitado. Partes 2-4 conectan el resto de opciones.
-                    ProfileScreen(user = it, onLogoutClick = { authViewModel.logout() })
+                    // Parte 1: Cerrar sesión. Parte 2: Datos personales. Partes 3-4: vehículo y documentos.
+                    ProfileScreen(user = it,
+                        onPersonalDataClick = { authViewModel.clearError(); navController.navigate(Screen.ProfilePersonalData.route) },
+                        onLogoutClick = { authViewModel.logout() })
+                }
+            }
+            composable(Screen.ProfilePersonalData.route) {
+                user?.let {
+                    ProfilePersonalDataScreen(user = it,
+                        onNavigateBack = { authViewModel.clearError(); navController.popBackStack() },
+                        onSaveClick = { n, l, d, p ->
+                            authViewModel.updatePersonalData(n, l, d, p) { navController.popBackStack() }
+                        },
+                        isLoading = state.isLoading, errorMessage = state.errorMessage)
                 }
             }
         }
