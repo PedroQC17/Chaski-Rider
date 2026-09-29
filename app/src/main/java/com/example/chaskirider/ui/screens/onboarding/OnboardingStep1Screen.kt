@@ -92,24 +92,6 @@ fun OnboardingStep1Screen(
     isLoading: Boolean = false,
     errorMessage: String? = null
 ) {
-    val dni_label = stringResource(R.string.dni_label)
-
-    val text_datos_personales = stringResource(R.string.text_datos_personales)
-    val text_nombres = stringResource(R.string.text_nombres)
-    val text_apellidos = stringResource(R.string.text_apellidos)
-    val text_dni_8_digitos = stringResource(R.string.text_dni_8_digitos)
-    val text_numero_de_celular = stringResource(R.string.text_numero_de_celular)
-    val text_celular = stringResource(R.string.text_celular)
-    val text_51 = stringResource(R.string.text_51)
-    val text_correo_electronico_cuenta_autenticada = stringResource(R.string.text_correo_electronico_cuenta_autenticada)
-    val text_correo = stringResource(R.string.text_correo)
-    val text_al_registrarte_aceptas_los = stringResource(R.string.text_al_registrarte_aceptas_los)
-    val text_terminos_y_condiciones = stringResource(R.string.text_terminos_y_condiciones)
-    val text_y_la = stringResource(R.string.text_y_la)
-    val text_politica_de_privacidad = stringResource(R.string.text_politica_de_privacidad)
-    val text_period = stringResource(R.string.text_period)
-    val text_continuar = stringResource(R.string.text_continuar)
-
     var name by rememberSaveable { mutableStateOf(user.name) }
     var lastName by rememberSaveable { mutableStateOf(user.lastName) }
     var dni by rememberSaveable { mutableStateOf(user.dni) }
@@ -132,7 +114,7 @@ fun OnboardingStep1Screen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = text_datos_personales,
+            text = stringResource(R.string.text_datos_personales),
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
             color = TextDark
@@ -143,11 +125,11 @@ fun OnboardingStep1Screen(
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
-            label = { Text(text_nombres) },
+            label = { Text(stringResource(R.string.text_nombres)) },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Person,
-                    contentDescription = text_nombres,
+                    contentDescription = stringResource(R.string.text_nombres),
                     tint = TextMuted
                 )
             },
@@ -166,11 +148,11 @@ fun OnboardingStep1Screen(
         OutlinedTextField(
             value = lastName,
             onValueChange = { lastName = it },
-            label = { Text(text_apellidos) },
+            label = { Text(stringResource(R.string.text_apellidos)) },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Person,
-                    contentDescription = text_apellidos,
+                    contentDescription = stringResource(R.string.text_apellidos),
                     tint = TextMuted
                 )
             },
@@ -193,11 +175,11 @@ fun OnboardingStep1Screen(
                     dni = it
                 }
             },
-            label = { Text(text_dni_8_digitos) },
+            label = { Text(stringResource(R.string.text_dni_8_digitos)) },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Lock,
-                    contentDescription = dni_label,
+                    contentDescription = stringResource(R.string.dni_label),
                     tint = TextMuted
                 )
             },
@@ -223,7 +205,7 @@ fun OnboardingStep1Screen(
                     phone = it
                 }
             },
-            label = { Text(text_numero_de_celular) },
+            label = { Text(stringResource(R.string.text_numero_de_celular)) },
             leadingIcon = {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -231,12 +213,12 @@ fun OnboardingStep1Screen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Phone,
-                        contentDescription = text_celular,
+                        contentDescription = stringResource(R.string.text_celular),
                         tint = TextMuted,
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
-                        text = text_51,
+                        text = stringResource(R.string.text_51),
                         color = TextDark,
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp
@@ -263,11 +245,11 @@ fun OnboardingStep1Screen(
             onValueChange = {},
             readOnly = true,
             enabled = false,
-            label = { Text(text_correo_electronico_cuenta_autenticada) },
+            label = { Text(stringResource(R.string.text_correo_electronico_cuenta_autenticada)) },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Email,
-                    contentDescription = text_correo,
+                    contentDescription = stringResource(R.string.text_correo),
                     tint = TextMuted
                 )
             },
@@ -303,15 +285,15 @@ fun OnboardingStep1Screen(
 
             Text(
                 text = buildAnnotatedString {
-                    append(text_al_registrarte_aceptas_los)
+                    append(stringResource(R.string.text_al_registrarte_aceptas_los))
                     withStyle(SpanStyle(color = Orange, fontWeight = FontWeight.Bold)) {
-                        append(text_terminos_y_condiciones)
+                        append(stringResource(R.string.text_terminos_y_condiciones))
                     }
-                    append(text_y_la)
+                    append(stringResource(R.string.text_y_la))
                     withStyle(SpanStyle(color = Orange, fontWeight = FontWeight.Bold)) {
-                        append(text_politica_de_privacidad)
+                        append(stringResource(R.string.text_politica_de_privacidad))
                     }
-                    append(text_period)
+                    append(stringResource(R.string.text_period))
                 },
                 fontSize = 12.sp,
                 color = TextDark,
@@ -363,7 +345,7 @@ fun OnboardingStep1Screen(
                 )
             } else {
                 Text(
-                    text = text_continuar,
+                    text = stringResource(R.string.text_continuar),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )

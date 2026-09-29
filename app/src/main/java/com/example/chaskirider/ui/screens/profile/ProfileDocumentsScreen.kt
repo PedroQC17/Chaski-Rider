@@ -2,6 +2,7 @@
 package com.example.chaskirider.ui.screens.profile
 
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import android.Manifest
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -110,20 +111,7 @@ fun ProfileDocumentsScreen(
     isLoading: Boolean = false,
     errorMessage: String? = null
 ) {
-    val docLabels = docLabelResources.mapValues { (_, resource) -> stringResource(resource) }
-    val text_permiso_de_camara_denegado_puedes_elegir_un = stringResource(R.string.text_permiso_de_camara_denegado_puedes_elegir_un)
-    val text_previsualizacion = stringResource(R.string.text_previsualizacion)
-    val text_foto_del_documento = stringResource(R.string.text_foto_del_documento)
-    val text_verifica_que_el_documento_se_vea_claro = stringResource(R.string.text_verifica_que_el_documento_se_vea_claro)
-    val text_usar_fotografia = stringResource(R.string.text_usar_fotografia)
-    val text_tomar_otra_foto = stringResource(R.string.text_tomar_otra_foto)
-    val text_volver = stringResource(R.string.text_volver)
-    val text_documentos = stringResource(R.string.text_documentos)
-    val text_cada_documento_muestra_su_estado_de_revision = stringResource(R.string.text_cada_documento_muestra_su_estado_de_revision)
-    val text_tomar_foto = stringResource(R.string.text_tomar_foto)
-    val text_elegir_archivo = stringResource(R.string.text_elegir_archivo)
-    val text_ver_documento = stringResource(R.string.text_ver_documento)
-    val text_cerrar = stringResource(R.string.text_cerrar)
+    val context = LocalContext.current
 
     var actionsDoc by remember { mutableStateOf<String?>(null) }
     var cameraDoc by remember { mutableStateOf<String?>(null) }
@@ -153,7 +141,7 @@ fun ProfileDocumentsScreen(
                 }
             }
         } else {
-            permissionMessage = text_permiso_de_camara_denegado_puedes_elegir_un
+            permissionMessage = context.getString(R.string.text_permiso_de_camara_denegado_puedes_elegir_un)
         }
     }
 
@@ -172,21 +160,21 @@ fun ProfileDocumentsScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = text_previsualizacion,
+                text = stringResource(R.string.text_previsualizacion),
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextDark
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = docLabels[doc.orEmpty()] ?: "",
+                text = stringResource(docLabelResources[doc.orEmpty()] ?: R.string.text_documentos),
                 fontSize = 14.sp,
                 color = TextMuted
             )
             Spacer(modifier = Modifier.height(16.dp))
             AsyncImage(
                 model = preview,
-                contentDescription = text_foto_del_documento,
+                contentDescription = stringResource(R.string.text_foto_del_documento),
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -195,7 +183,7 @@ fun ProfileDocumentsScreen(
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = text_verifica_que_el_documento_se_vea_claro,
+                text = stringResource(R.string.text_verifica_que_el_documento_se_vea_claro),
                 fontSize = 13.sp,
                 color = TextMuted,
                 lineHeight = 18.sp
@@ -214,7 +202,7 @@ fun ProfileDocumentsScreen(
                     .fillMaxWidth()
                     .height(52.dp)
             ) {
-                Text(text_usar_fotografia, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.text_usar_fotografia), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
             }
             Spacer(modifier = Modifier.height(10.dp))
             OutlinedButton(
@@ -229,7 +217,7 @@ fun ProfileDocumentsScreen(
                     .fillMaxWidth()
                     .height(52.dp)
             ) {
-                Text(text_tomar_otra_foto, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = TextDark)
+                Text(stringResource(R.string.text_tomar_otra_foto), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = TextDark)
             }
         }
         return
@@ -248,12 +236,12 @@ fun ProfileDocumentsScreen(
             IconButton(onClick = onNavigateBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = text_volver,
+                    contentDescription = stringResource(R.string.text_volver),
                     tint = TextDark
                 )
             }
             Text(
-                text = text_documentos,
+                text = stringResource(R.string.text_documentos),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextDark
@@ -263,7 +251,7 @@ fun ProfileDocumentsScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = text_cada_documento_muestra_su_estado_de_revision,
+            text = stringResource(R.string.text_cada_documento_muestra_su_estado_de_revision),
             fontSize = 13.sp,
             color = TextMuted,
             lineHeight = 18.sp
@@ -275,7 +263,7 @@ fun ProfileDocumentsScreen(
             val path = paths[doc].orEmpty()
             val uploading = documentsMap[doc]?.uploadState == DocumentUploadState.UPLOADING
             DocumentOptionRow(
-                label = docLabels[doc] ?: doc,
+                label = stringResource(docLabelResources[doc] ?: R.string.text_documentos),
                 state = documentState(user, path),
                 uploading = uploading,
                 onClick = {
@@ -307,7 +295,7 @@ fun ProfileDocumentsScreen(
         val canReplace = path.isBlank() || state == DocState.OBSERVED
         AlertDialog(
             onDismissRequest = { actionsDoc = null },
-            title = { Text(docLabels[doc] ?: doc) },
+            title = { Text(stringResource(docLabelResources[doc] ?: R.string.text_documentos)) },
             text = {
                 Column {
                     DocumentStateChip(state = state, uploading = false)
@@ -324,23 +312,23 @@ fun ProfileDocumentsScreen(
                             cameraDoc = doc
                             actionsDoc = null
                             cameraPermission.launch(Manifest.permission.CAMERA)
-                        }) { Text(text_tomar_foto) }
+                        }) { Text(stringResource(R.string.text_tomar_foto)) }
                         TextButton(onClick = {
                             cameraDoc = doc
                             actionsDoc = null
                             picker.launch(RegistrationValidation.mimeTypes)
-                        }) { Text(text_elegir_archivo) }
+                        }) { Text(stringResource(R.string.text_elegir_archivo)) }
                     }
                     if (path.isNotBlank()) {
                         TextButton(onClick = {
                             actionsDoc = null
                             onDocumentView(doc)
-                        }) { Text(text_ver_documento) }
+                        }) { Text(stringResource(R.string.text_ver_documento)) }
                     }
                 }
             },
             confirmButton = {
-                TextButton(onClick = { actionsDoc = null }) { Text(text_cerrar) }
+                TextButton(onClick = { actionsDoc = null }) { Text(stringResource(R.string.text_cerrar)) }
             }
         )
     }
@@ -355,18 +343,13 @@ private fun documentState(user: RiderUser, path: String): DocState = when {
 
 @Composable
 private fun stateDescription(user: RiderUser, path: String, state: DocState): String {
-    val text_el_revisor_observo_este_documento_reemplazalo_para = stringResource(R.string.text_el_revisor_observo_este_documento_reemplazalo_para)
-    val text_aun_no_lo_has_subido = stringResource(R.string.text_aun_no_lo_has_subido)
-    val text_documento_aprobado_por_el_revisor = stringResource(R.string.text_documento_aprobado_por_el_revisor)
-    val text_en_revision_te_avisaremos_cuando_sea_aprobado = stringResource(R.string.text_en_revision_te_avisaremos_cuando_sea_aprobado)
-    val text_listo_para_enviarse_con_tu_registro = stringResource(R.string.text_listo_para_enviarse_con_tu_registro)
 
     return when {
-    state == DocState.OBSERVED -> text_el_revisor_observo_este_documento_reemplazalo_para
-    path.isBlank() -> text_aun_no_lo_has_subido
-    state == DocState.APPROVED -> text_documento_aprobado_por_el_revisor
-    user.status == RegistrationStatus.PENDING_REVIEW -> text_en_revision_te_avisaremos_cuando_sea_aprobado
-    else -> text_listo_para_enviarse_con_tu_registro
+    state == DocState.OBSERVED -> stringResource(R.string.text_el_revisor_observo_este_documento_reemplazalo_para)
+    path.isBlank() -> stringResource(R.string.text_aun_no_lo_has_subido)
+    state == DocState.APPROVED -> stringResource(R.string.text_documento_aprobado_por_el_revisor)
+    user.status == RegistrationStatus.PENDING_REVIEW -> stringResource(R.string.text_en_revision_te_avisaremos_cuando_sea_aprobado)
+    else -> stringResource(R.string.text_listo_para_enviarse_con_tu_registro)
 }
 }
 
@@ -408,28 +391,23 @@ private fun DocumentOptionRow(
 
 @Composable
 private fun DocumentStateChip(state: DocState, uploading: Boolean) {
-    val text_subiendo = stringResource(R.string.text_subiendo)
-    val text_aprobado = stringResource(R.string.text_aprobado)
-    val text_observado = stringResource(R.string.text_observado)
-    val text_pendiente = stringResource(R.string.text_pendiente)
-
     val label: String
     val color: Color
     when {
         uploading -> {
-            label = text_subiendo
+            label = stringResource(R.string.text_subiendo)
             color = Orange
         }
         state == DocState.APPROVED -> {
-            label = text_aprobado
+            label = stringResource(R.string.text_aprobado)
             color = SuccessGreen
         }
         state == DocState.OBSERVED -> {
-            label = text_observado
+            label = stringResource(R.string.text_observado)
             color = DangerRed
         }
         else -> {
-            label = text_pendiente
+            label = stringResource(R.string.text_pendiente)
             color = WarningAmber
         }
     }

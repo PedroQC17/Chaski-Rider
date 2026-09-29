@@ -50,11 +50,6 @@ fun AvailabilitySlider(
     enabled: Boolean,
     onToggle: () -> Unit
 ) {
-    val text_desliza_para_desconectar = stringResource(R.string.text_desliza_para_desconectar)
-    val text_desliza_para_estar_disponible = stringResource(R.string.text_desliza_para_estar_disponible)
-    val text_desconectar = stringResource(R.string.text_desconectar)
-    val text_conectar = stringResource(R.string.text_conectar)
-
     val thumbSize = 44.dp
     val scope = rememberCoroutineScope()
     var innerWidth by remember { mutableIntStateOf(0) }
@@ -106,7 +101,7 @@ fun AvailabilitySlider(
                 }
         ) {
             Text(
-                text = if (available) text_desliza_para_desconectar else text_desliza_para_estar_disponible,
+                text = if (available) stringResource(R.string.text_desliza_para_desconectar) else stringResource(R.string.text_desliza_para_estar_disponible),
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = Color.White,
@@ -124,7 +119,7 @@ fun AvailabilitySlider(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                    contentDescription = if (available) text_desconectar else text_conectar,
+                    contentDescription = if (available) stringResource(R.string.text_desconectar) else stringResource(R.string.text_conectar),
                     tint = trackColor,
                     modifier = Modifier.size(22.dp)
                 )

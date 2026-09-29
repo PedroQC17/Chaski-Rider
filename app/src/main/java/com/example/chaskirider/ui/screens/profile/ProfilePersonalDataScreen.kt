@@ -80,21 +80,6 @@ fun ProfilePersonalDataScreen(
     isLoading: Boolean = false,
     errorMessage: String? = null
 ) {
-    val dni_label = stringResource(R.string.dni_label)
-
-    val text_volver = stringResource(R.string.text_volver)
-    val text_datos_personales = stringResource(R.string.text_datos_personales)
-    val text_actualiza_tu_informacion_de_contacto_el_correo = stringResource(R.string.text_actualiza_tu_informacion_de_contacto_el_correo)
-    val text_nombres = stringResource(R.string.text_nombres)
-    val text_apellidos = stringResource(R.string.text_apellidos)
-    val text_dni_8_digitos = stringResource(R.string.text_dni_8_digitos)
-    val text_numero_de_celular = stringResource(R.string.text_numero_de_celular)
-    val text_celular = stringResource(R.string.text_celular)
-    val text_51 = stringResource(R.string.text_51)
-    val text_correo_electronico_cuenta_autenticada = stringResource(R.string.text_correo_electronico_cuenta_autenticada)
-    val text_correo = stringResource(R.string.text_correo)
-    val text_guardar_cambios = stringResource(R.string.text_guardar_cambios)
-
     var name by rememberSaveable { mutableStateOf(user.name) }
     var lastName by rememberSaveable { mutableStateOf(user.lastName) }
     var dni by rememberSaveable { mutableStateOf(user.dni) }
@@ -113,12 +98,12 @@ fun ProfilePersonalDataScreen(
             IconButton(onClick = onNavigateBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = text_volver,
+                    contentDescription = stringResource(R.string.text_volver),
                     tint = TextDark
                 )
             }
             Text(
-                text = text_datos_personales,
+                text = stringResource(R.string.text_datos_personales),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextDark
@@ -128,7 +113,7 @@ fun ProfilePersonalDataScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = text_actualiza_tu_informacion_de_contacto_el_correo,
+            text = stringResource(R.string.text_actualiza_tu_informacion_de_contacto_el_correo),
             fontSize = 13.sp,
             color = TextMuted,
             lineHeight = 18.sp
@@ -139,9 +124,9 @@ fun ProfilePersonalDataScreen(
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
-            label = { Text(text_nombres) },
+            label = { Text(stringResource(R.string.text_nombres)) },
             leadingIcon = {
-                Icon(Icons.Default.Person, contentDescription = text_nombres, tint = TextMuted)
+                Icon(Icons.Default.Person, contentDescription = stringResource(R.string.text_nombres), tint = TextMuted)
             },
             singleLine = true,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
@@ -158,9 +143,9 @@ fun ProfilePersonalDataScreen(
         OutlinedTextField(
             value = lastName,
             onValueChange = { lastName = it },
-            label = { Text(text_apellidos) },
+            label = { Text(stringResource(R.string.text_apellidos)) },
             leadingIcon = {
-                Icon(Icons.Default.Person, contentDescription = text_apellidos, tint = TextMuted)
+                Icon(Icons.Default.Person, contentDescription = stringResource(R.string.text_apellidos), tint = TextMuted)
             },
             singleLine = true,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
@@ -179,9 +164,9 @@ fun ProfilePersonalDataScreen(
             onValueChange = {
                 if (it.length <= 8 && it.all { char -> char.isDigit() }) dni = it
             },
-            label = { Text(text_dni_8_digitos) },
+            label = { Text(stringResource(R.string.text_dni_8_digitos)) },
             leadingIcon = {
-                Icon(Icons.Default.Lock, contentDescription = dni_label, tint = TextMuted)
+                Icon(Icons.Default.Lock, contentDescription = stringResource(R.string.dni_label), tint = TextMuted)
             },
             singleLine = true,
             keyboardOptions = KeyboardOptions(
@@ -203,7 +188,7 @@ fun ProfilePersonalDataScreen(
             onValueChange = {
                 if (it.length <= 9 && it.all { char -> char.isDigit() }) phone = it
             },
-            label = { Text(text_numero_de_celular) },
+            label = { Text(stringResource(R.string.text_numero_de_celular)) },
             leadingIcon = {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -211,12 +196,12 @@ fun ProfilePersonalDataScreen(
                 ) {
                     Icon(
                         Icons.Default.Phone,
-                        contentDescription = text_celular,
+                        contentDescription = stringResource(R.string.text_celular),
                         tint = TextMuted,
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
-                        text = text_51,
+                        text = stringResource(R.string.text_51),
                         color = TextDark,
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp
@@ -243,9 +228,9 @@ fun ProfilePersonalDataScreen(
             onValueChange = {},
             readOnly = true,
             enabled = false,
-            label = { Text(text_correo_electronico_cuenta_autenticada) },
+            label = { Text(stringResource(R.string.text_correo_electronico_cuenta_autenticada)) },
             leadingIcon = {
-                Icon(Icons.Default.Email, contentDescription = text_correo, tint = TextMuted)
+                Icon(Icons.Default.Email, contentDescription = stringResource(R.string.text_correo), tint = TextMuted)
             },
             singleLine = true,
             shape = RoundedCornerShape(12.dp),
@@ -299,7 +284,7 @@ fun ProfilePersonalDataScreen(
                 )
             } else {
                 Text(
-                    text = text_guardar_cambios,
+                    text = stringResource(R.string.text_guardar_cambios),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )

@@ -29,13 +29,6 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun AppNavigation(navController: NavHostController = rememberNavController(), authViewModel: AuthViewModel = viewModel { AuthViewModel(AppContainer.textProvider, AppContainer.authRepository, AppContainer.riderSession) }) {
-    val text_no_se_pudo_iniciar_sesion_con_google = stringResource(R.string.text_no_se_pudo_iniciar_sesion_con_google)
-    val text_no_hay_una_aplicacion_disponible_para_abrir = stringResource(R.string.text_no_hay_una_aplicacion_disponible_para_abrir)
-    val text_recuperar_contrasena = stringResource(R.string.text_recuperar_contrasena)
-    val text_ingresa_el_correo_con_el_que_configuraste = stringResource(R.string.text_ingresa_el_correo_con_el_que_configuraste)
-    val text_correo_electronico = stringResource(R.string.text_correo_electronico)
-    val text_enviar_enlace = stringResource(R.string.text_enviar_enlace)
-    val text_cerrar = stringResource(R.string.text_cerrar)
 
     val state by authViewModel.uiState.collectAsStateWithLifecycle()
 
@@ -85,7 +78,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
                                 try { authViewModel.loginWithGoogle(google.getIdToken(context)) }
                                 catch (_: GetCredentialCancellationException) {  }
                                 catch (e: CancellationException) { throw e }
-                                catch (_: Exception) { authViewModel.reportError(text_no_se_pudo_iniciar_sesion_con_google) }
+                                catch (_: Exception) { authViewModel.reportError(context.getString(R.string.text_no_se_pudo_iniciar_sesion_con_google)) }
                                 finally { googleBusy = false }
                             }
                         }
@@ -126,7 +119,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
                         onDocumentPick = documentsViewModel::uploadDocument,
                         onDocumentView = { type -> documentsViewModel.openDocument(type) { uri ->
                             try { context.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(uri, context.contentResolver.getType(uri)).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)) }
-                            catch (_: Exception) { documentsViewModel.reportError(text_no_hay_una_aplicacion_disponible_para_abrir) }
+                            catch (_: Exception) { documentsViewModel.reportError(context.getString(R.string.text_no_hay_una_aplicacion_disponible_para_abrir)) }
                         } },
                         onSaveBank = profileViewModel::saveBank,
                         onFinishRegistrationClick = { b,h,a,c -> profileViewModel.finishRegistration(b,h,a,c) {
@@ -148,7 +141,6 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
                 }
             }
             composable(Screen.Home.route) {
-
                 user?.let {
                     HomeScreen(user = it,
                         onAvailabilityChange = { available -> profileViewModel.setAvailability(available) },
@@ -199,7 +191,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
                         onDocumentPick = documentsViewModel::uploadDocument,
                         onDocumentView = { type -> documentsViewModel.openDocument(type) { uri ->
                             try { context.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(uri, context.contentResolver.getType(uri)).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)) }
-                            catch (_: Exception) { documentsViewModel.reportError(text_no_hay_una_aplicacion_disponible_para_abrir) }
+                            catch (_: Exception) { documentsViewModel.reportError(context.getString(R.string.text_no_hay_una_aplicacion_disponible_para_abrir)) }
                         } },
                         isLoading = profileState.isLoading || documentsState.isLoading, errorMessage = documentsState.errorMessage ?: profileState.errorMessage)
                 }
@@ -219,14 +211,14 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
 
 
     if (recovery) AlertDialog(onDismissRequest = { if (!state.isLoading) recovery = false },
-        title = { Text(text_recuperar_contrasena) },
+        title = { Text(stringResource(R.string.text_recuperar_contrasena)) },
         text = { Column {
-            Text(text_ingresa_el_correo_con_el_que_configuraste)
-            OutlinedTextField(resetEmail, { resetEmail = it }, label = { Text(text_correo_electronico) }, singleLine = true)
+            Text(stringResource(R.string.text_ingresa_el_correo_con_el_que_configuraste))
+            OutlinedTextField(resetEmail, { resetEmail = it }, label = { Text(stringResource(R.string.text_correo_electronico)) }, singleLine = true)
             state.message?.let { Text(it) }; state.errorMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         } },
-        confirmButton = { TextButton(onClick = { authViewModel.sendPasswordResetEmail(resetEmail) }, enabled = !state.isLoading) { Text(text_enviar_enlace) } },
-        dismissButton = { TextButton(onClick = { recovery = false; authViewModel.clearError() }) { Text(text_cerrar) } })
+        confirmButton = { TextButton(onClick = { authViewModel.sendPasswordResetEmail(resetEmail) }, enabled = !state.isLoading) { Text(stringResource(R.string.text_enviar_enlace)) } },
+        dismissButton = { TextButton(onClick = { recovery = false; authViewModel.clearError() }) { Text(stringResource(R.string.text_cerrar)) } })
     if (passwordDialog && user != null) PasswordSetupDialog(
         email = user.email, isLoading = state.isLoading, error = state.errorMessage, message = state.message,
         onSave = authViewModel::linkPassword, onDismiss = { passwordDialog = false; authViewModel.clearError() })

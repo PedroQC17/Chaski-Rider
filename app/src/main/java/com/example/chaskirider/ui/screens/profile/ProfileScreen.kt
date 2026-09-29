@@ -95,15 +95,6 @@ fun ProfileScreen(
     onNotificationsClick: (() -> Unit)? = null,
     onLogoutClick: () -> Unit = {}
 ) {
-    val text_mi_perfil = stringResource(R.string.text_mi_perfil)
-    val text_datos_personales = stringResource(R.string.text_datos_personales)
-    val text_vehiculos = stringResource(R.string.text_vehiculos)
-    val text_documentos = stringResource(R.string.text_documentos)
-    val text_metodos_de_pago = stringResource(R.string.text_metodos_de_pago)
-    val text_notificaciones = stringResource(R.string.text_notificaciones)
-    val text_ayuda_y_soporte = stringResource(R.string.text_ayuda_y_soporte)
-    val text_cerrar_sesion = stringResource(R.string.text_cerrar_sesion)
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -113,7 +104,7 @@ fun ProfileScreen(
             .padding(horizontal = 24.dp, vertical = 24.dp)
     ) {
         Text(
-            text = text_mi_perfil,
+            text = stringResource(R.string.text_mi_perfil),
             fontSize = 26.sp,
             fontWeight = FontWeight.Bold,
             color = TextDark
@@ -137,37 +128,37 @@ fun ProfileScreen(
         ) {
             ProfileMenuRow(
                 icon = { Icon(Icons.Default.Person, null, tint = TextDark, modifier = Modifier.size(22.dp)) },
-                label = text_datos_personales,
+                label = stringResource(R.string.text_datos_personales),
                 onClick = onPersonalDataClick
             )
             ProfileMenuRow(
                 icon = { Icon(painterResource(R.drawable.ic_menu_vehicle), null, tint = TextDark, modifier = Modifier.size(22.dp)) },
-                label = text_vehiculos,
+                label = stringResource(R.string.text_vehiculos),
                 onClick = onVehicleClick
             )
             ProfileMenuRow(
                 icon = { Icon(painterResource(R.drawable.ic_menu_document), null, tint = TextDark, modifier = Modifier.size(22.dp)) },
-                label = text_documentos,
+                label = stringResource(R.string.text_documentos),
                 onClick = onDocumentsClick
             )
             HorizontalDivider(color = BorderLight)
             ProfileMenuRow(
                 icon = { Icon(painterResource(R.drawable.ic_menu_payment), null, tint = TextMuted, modifier = Modifier.size(22.dp)) },
-                label = text_metodos_de_pago
+                label = stringResource(R.string.text_metodos_de_pago)
             )
             ProfileMenuRow(
                 icon = { Icon(Icons.Default.Notifications, null, tint = if (onNotificationsClick != null) TextDark else TextMuted, modifier = Modifier.size(22.dp)) },
-                label = text_notificaciones,
+                label = stringResource(R.string.text_notificaciones),
                 onClick = onNotificationsClick
             )
             ProfileMenuRow(
                 icon = { Icon(Icons.Default.Info, null, tint = TextMuted, modifier = Modifier.size(22.dp)) },
-                label = text_ayuda_y_soporte
+                label = stringResource(R.string.text_ayuda_y_soporte)
             )
             HorizontalDivider(color = BorderLight)
             ProfileMenuRow(
                 icon = { Icon(Icons.AutoMirrored.Filled.ExitToApp, null, tint = DangerRed, modifier = Modifier.size(22.dp)) },
-                label = text_cerrar_sesion,
+                label = stringResource(R.string.text_cerrar_sesion),
                 danger = true,
                 onClick = onLogoutClick
             )

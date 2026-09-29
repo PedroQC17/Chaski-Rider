@@ -27,13 +27,10 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun NotificationsBell(count: Int, onClick: () -> Unit) {
-    val text_notificaciones = stringResource(R.string.text_notificaciones)
-    val text_9 = stringResource(R.string.text_9)
-
     Box(contentAlignment = Alignment.TopEnd) {
         Icon(
             imageVector = Icons.Default.Notifications,
-            contentDescription = text_notificaciones,
+            contentDescription = stringResource(R.string.text_notificaciones),
             tint = TextDark,
             modifier = Modifier
                 .size(26.dp)
@@ -48,7 +45,7 @@ fun NotificationsBell(count: Int, onClick: () -> Unit) {
                     .background(DangerRed, CircleShape)
             ) {
                 Text(
-                    text = if (count > 9) text_9 else count.toString(),
+                    text = if (count > 9) stringResource(R.string.text_9) else count.toString(),
                     fontSize = 9.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White

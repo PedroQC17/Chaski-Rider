@@ -69,14 +69,6 @@ fun ProfileVehicleScreen(
     isLoading: Boolean = false,
     errorMessage: String? = null
 ) {
-    val text_volver = stringResource(R.string.text_volver)
-    val text_vehiculos = stringResource(R.string.text_vehiculos)
-    val text_selecciona_el_vehiculo_con_el_que_realizaras = stringResource(R.string.text_selecciona_el_vehiculo_con_el_que_realizaras)
-    val text_bicicleta = stringResource(R.string.text_bicicleta)
-    val text_motocicleta = stringResource(R.string.text_motocicleta)
-    val text_automovil = stringResource(R.string.text_automovil)
-    val text_guardar_cambios = stringResource(R.string.text_guardar_cambios)
-
     var selectedVehicle by rememberSaveable { mutableStateOf(user.vehicleType) }
 
     Column(
@@ -92,12 +84,12 @@ fun ProfileVehicleScreen(
             IconButton(onClick = onNavigateBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = text_volver,
+                    contentDescription = stringResource(R.string.text_volver),
                     tint = TextDark
                 )
             }
             Text(
-                text = text_vehiculos,
+                text = stringResource(R.string.text_vehiculos),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextDark
@@ -116,7 +108,7 @@ fun ProfileVehicleScreen(
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = text_selecciona_el_vehiculo_con_el_que_realizaras,
+            text = stringResource(R.string.text_selecciona_el_vehiculo_con_el_que_realizaras),
             fontSize = 14.sp,
             color = TextMuted
         )
@@ -124,7 +116,7 @@ fun ProfileVehicleScreen(
         Spacer(modifier = Modifier.height(20.dp))
 
         VehicleOptionCard(
-            title = text_bicicleta,
+            title = stringResource(R.string.text_bicicleta),
             imageRes = com.example.chaskirider.R.drawable.vehicle_bicycle,
             isSelected = selectedVehicle == VehicleType.BICYCLE,
             onClick = { selectedVehicle = VehicleType.BICYCLE }
@@ -133,7 +125,7 @@ fun ProfileVehicleScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         VehicleOptionCard(
-            title = text_motocicleta,
+            title = stringResource(R.string.text_motocicleta),
             imageRes = com.example.chaskirider.R.drawable.vehicle_motorcycle,
             isSelected = selectedVehicle == VehicleType.MOTORCYCLE,
             onClick = { selectedVehicle = VehicleType.MOTORCYCLE }
@@ -142,7 +134,7 @@ fun ProfileVehicleScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         VehicleOptionCard(
-            title = text_automovil,
+            title = stringResource(R.string.text_automovil),
             imageRes = com.example.chaskirider.R.drawable.vehicle_car,
             isSelected = selectedVehicle == VehicleType.CAR,
             onClick = { selectedVehicle = VehicleType.CAR }
@@ -181,7 +173,7 @@ fun ProfileVehicleScreen(
                 )
             } else {
                 Text(
-                    text = text_guardar_cambios,
+                    text = stringResource(R.string.text_guardar_cambios),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -194,15 +186,11 @@ fun ProfileVehicleScreen(
 
 @Composable
 private fun vehicleLabel(vehicle: VehicleType): String {
-    val text_bicicleta = stringResource(R.string.text_bicicleta)
-    val text_motocicleta = stringResource(R.string.text_motocicleta)
-    val text_automovil = stringResource(R.string.text_automovil)
-    val text_sin_vehiculo = stringResource(R.string.text_sin_vehiculo)
 
     return when (vehicle) {
-    VehicleType.BICYCLE -> text_bicicleta
-    VehicleType.MOTORCYCLE -> text_motocicleta
-    VehicleType.CAR -> text_automovil
-    VehicleType.NONE -> text_sin_vehiculo
+    VehicleType.BICYCLE -> stringResource(R.string.text_bicicleta)
+    VehicleType.MOTORCYCLE -> stringResource(R.string.text_motocicleta)
+    VehicleType.CAR -> stringResource(R.string.text_automovil)
+    VehicleType.NONE -> stringResource(R.string.text_sin_vehiculo)
 }
 }

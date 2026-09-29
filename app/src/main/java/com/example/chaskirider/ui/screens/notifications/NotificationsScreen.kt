@@ -57,16 +57,11 @@ fun NotificationsEmptyPreview() {
 @Preview(name = "Notificaciones - Lista", showBackground = true, showSystemUi = true)
 @Composable
 fun NotificationsListPreview() {
-    val text_nuevo_pedido_disponible = stringResource(R.string.text_nuevo_pedido_disponible)
-    val text_recogida_en_miraflores_a_1_2_km = stringResource(R.string.text_recogida_en_miraflores_a_1_2_km)
-    val text_registro_aprobado = stringResource(R.string.text_registro_aprobado)
-    val text_ya_puedes_empezar_a_recibir_pedidos = stringResource(R.string.text_ya_puedes_empezar_a_recibir_pedidos)
-
     ChaskiRiderTheme {
         NotificationsScreen(
             state = NotificationsUiState(notifications = listOf(
-                ChaskiNotification(text_nuevo_pedido_disponible, text_recogida_en_miraflores_a_1_2_km),
-                ChaskiNotification(text_registro_aprobado, text_ya_puedes_empezar_a_recibir_pedidos)
+                ChaskiNotification(stringResource(R.string.text_nuevo_pedido_disponible), stringResource(R.string.text_recogida_en_miraflores_a_1_2_km)),
+                ChaskiNotification(stringResource(R.string.text_registro_aprobado), stringResource(R.string.text_ya_puedes_empezar_a_recibir_pedidos))
             ))
         )
     }
@@ -77,9 +72,6 @@ fun NotificationsScreen(
     onNavigateBack: () -> Unit = {},
     state: NotificationsUiState = NotificationsUiState()
 ) {
-    val text_volver = stringResource(R.string.text_volver)
-    val text_notificaciones = stringResource(R.string.text_notificaciones)
-
     val notifications = state.notifications
 
     Column(
@@ -104,13 +96,13 @@ fun NotificationsScreen(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = text_volver,
+                    contentDescription = stringResource(R.string.text_volver),
                     tint = TextDark,
                     modifier = Modifier.size(22.dp)
                 )
             }
             Spacer(modifier = Modifier.width(12.dp))
-            Text(text = text_notificaciones, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextDark)
+            Text(text = stringResource(R.string.text_notificaciones), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextDark)
         }
 
         if (notifications.isEmpty()) {
@@ -175,9 +167,6 @@ private fun rememberDateFormat(): DateFormat =
 
 @Composable
 private fun EmptyNotifications() {
-    val text_aun_no_tienes_notificaciones = stringResource(R.string.text_aun_no_tienes_notificaciones)
-    val text_cuando_llegue_un_pedido_o_haya_una = stringResource(R.string.text_cuando_llegue_un_pedido_o_haya_una)
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -200,14 +189,14 @@ private fun EmptyNotifications() {
         }
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = text_aun_no_tienes_notificaciones,
+            text = stringResource(R.string.text_aun_no_tienes_notificaciones),
             fontSize = 17.sp,
             fontWeight = FontWeight.SemiBold,
             color = TextDark
         )
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = text_cuando_llegue_un_pedido_o_haya_una,
+            text = stringResource(R.string.text_cuando_llegue_un_pedido_o_haya_una),
             fontSize = 14.sp,
             color = TextMuted,
             lineHeight = 20.sp,

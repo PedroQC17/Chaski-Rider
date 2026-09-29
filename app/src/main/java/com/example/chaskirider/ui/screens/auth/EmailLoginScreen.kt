@@ -72,19 +72,6 @@ fun EmailLoginScreen(
     errorMessage: String? = null,
     successMessage: String? = null
 ) {
-    val text_volver = stringResource(R.string.text_volver)
-    val text_ingresar_con_correo = stringResource(R.string.text_ingresar_con_correo)
-    val text_ingresa_tus_credenciales_registradas_para_acceder_a = stringResource(R.string.text_ingresa_tus_credenciales_registradas_para_acceder_a)
-    val text_correo_electronico = stringResource(R.string.text_correo_electronico)
-    val text_correo = stringResource(R.string.text_correo)
-    val text_contrasena = stringResource(R.string.text_contrasena)
-    val text_olvidaste_tu_contrasena = stringResource(R.string.text_olvidaste_tu_contrasena)
-    val text_iniciar_sesion = stringResource(R.string.text_iniciar_sesion)
-    val text_recuperar_contrasena = stringResource(R.string.text_recuperar_contrasena)
-    val text_ingresa_tu_correo_registrado_para_enviarte_un = stringResource(R.string.text_ingresa_tu_correo_registrado_para_enviarte_un)
-    val text_enviar_enlace = stringResource(R.string.text_enviar_enlace)
-    val text_cancelar = stringResource(R.string.text_cancelar)
-
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -100,14 +87,13 @@ fun EmailLoginScreen(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 12.dp)
     ) {
-
         IconButton(
             onClick = onNavigateBack,
             modifier = Modifier.padding(top = 8.dp)
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = text_volver,
+                contentDescription = stringResource(R.string.text_volver),
                 tint = TextDark
             )
         }
@@ -115,7 +101,7 @@ fun EmailLoginScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = text_ingresar_con_correo,
+            text = stringResource(R.string.text_ingresar_con_correo),
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             color = TextDark
@@ -124,7 +110,7 @@ fun EmailLoginScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = text_ingresa_tus_credenciales_registradas_para_acceder_a,
+            text = stringResource(R.string.text_ingresa_tus_credenciales_registradas_para_acceder_a),
             fontSize = 14.sp,
             color = TextMuted
         )
@@ -134,11 +120,11 @@ fun EmailLoginScreen(
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
-            label = { Text(text_correo_electronico) },
+            label = { Text(stringResource(R.string.text_correo_electronico)) },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Email,
-                    contentDescription = text_correo,
+                    contentDescription = stringResource(R.string.text_correo),
                     tint = TextMuted
                 )
             },
@@ -160,11 +146,11 @@ fun EmailLoginScreen(
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text(text_contrasena) },
+            label = { Text(stringResource(R.string.text_contrasena)) },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Lock,
-                    contentDescription = text_contrasena,
+                    contentDescription = stringResource(R.string.text_contrasena),
                     tint = TextMuted
                 )
             },
@@ -202,7 +188,7 @@ fun EmailLoginScreen(
                 showResetDialog = true
             }) {
                 Text(
-                    text = text_olvidaste_tu_contrasena,
+                    text = stringResource(R.string.text_olvidaste_tu_contrasena),
                     fontSize = 13.sp,
                     color = Orange,
                     fontWeight = FontWeight.Medium
@@ -243,7 +229,7 @@ fun EmailLoginScreen(
                 )
             } else {
                 Text(
-                    text = text_iniciar_sesion,
+                    text = stringResource(R.string.text_iniciar_sesion),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -254,11 +240,11 @@ fun EmailLoginScreen(
     if (showResetDialog) {
         AlertDialog(
             onDismissRequest = { showResetDialog = false },
-            title = { Text(text_recuperar_contrasena) },
+            title = { Text(stringResource(R.string.text_recuperar_contrasena)) },
             text = {
                 Column {
                     Text(
-                        text = text_ingresa_tu_correo_registrado_para_enviarte_un,
+                        text = stringResource(R.string.text_ingresa_tu_correo_registrado_para_enviarte_un),
                         fontSize = 14.sp,
                         color = TextMuted
                     )
@@ -266,7 +252,7 @@ fun EmailLoginScreen(
                     OutlinedTextField(
                         value = resetEmail,
                         onValueChange = { resetEmail = it },
-                        label = { Text(text_correo_electronico) },
+                        label = { Text(stringResource(R.string.text_correo_electronico)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -282,12 +268,12 @@ fun EmailLoginScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Orange)
                 ) {
-                    Text(text_enviar_enlace)
+                    Text(stringResource(R.string.text_enviar_enlace))
                 }
             },
             dismissButton = {
                 TextButton(enabled = !isLoading, onClick = { showResetDialog = false }) {
-                    Text(text_cancelar)
+                    Text(stringResource(R.string.text_cancelar))
                 }
             }
         )

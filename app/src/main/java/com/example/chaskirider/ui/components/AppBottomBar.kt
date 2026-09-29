@@ -23,9 +23,6 @@ fun AppBottomBar(
     currentRoute: String?,
     onNavigate: (String) -> Unit
 ) {
-    val text_inicio = stringResource(R.string.text_inicio)
-    val text_perfil = stringResource(R.string.text_perfil)
-
     NavigationBar(containerColor = Color.White) {
         val colors = NavigationBarItemDefaults.colors(
             selectedIconColor = Orange,
@@ -37,16 +34,16 @@ fun AppBottomBar(
         NavigationBarItem(
             selected = currentRoute == Screen.Home.route,
             onClick = { onNavigate(Screen.Home.route) },
-            icon = { Icon(Icons.Default.Home, contentDescription = text_inicio) },
-            label = { Text(text_inicio, fontSize = 12.sp) },
+            icon = { Icon(Icons.Default.Home, contentDescription = stringResource(R.string.text_inicio)) },
+            label = { Text(stringResource(R.string.text_inicio), fontSize = 12.sp) },
             alwaysShowLabel = true,
             colors = colors
         )
         NavigationBarItem(
             selected = currentRoute == Screen.Profile.route,
             onClick = { onNavigate(Screen.Profile.route) },
-            icon = { Icon(Icons.Default.Person, contentDescription = text_perfil) },
-            label = { Text(text_perfil, fontSize = 12.sp) },
+            icon = { Icon(Icons.Default.Person, contentDescription = stringResource(R.string.text_perfil)) },
+            label = { Text(stringResource(R.string.text_perfil), fontSize = 12.sp) },
             alwaysShowLabel = true,
             colors = colors
         )

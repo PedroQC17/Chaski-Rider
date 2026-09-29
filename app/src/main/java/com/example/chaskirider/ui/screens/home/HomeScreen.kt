@@ -81,19 +81,10 @@ fun HomeScreen(
     errorMessage: String? = null,
     unreadCount: Int = 0
 ) {
-    val text_se_requiere_el_permiso_de_ubicacion_para = stringResource(R.string.text_se_requiere_el_permiso_de_ubicacion_para)
-    val text_repartidor = stringResource(R.string.text_repartidor)
-    val text_estas_conectado = stringResource(R.string.text_estas_conectado)
-    val text_estas_desconectado = stringResource(R.string.text_estas_desconectado)
-    val text_conectate_para_recibir_pedidos_en_tu_zona = stringResource(R.string.text_conectate_para_recibir_pedidos_en_tu_zona)
-    val text_activa_tu_disponibilidad_y_empieza_a_ganar = stringResource(R.string.text_activa_tu_disponibilidad_y_empieza_a_ganar)
-    val text_configurar_contrasena = stringResource(R.string.text_configurar_contrasena)
-    val text_cerrar_sesion = stringResource(R.string.text_cerrar_sesion)
-
     val context = LocalContext.current
     val locationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) onAvailabilityChange(true)
-        else onError(text_se_requiere_el_permiso_de_ubicacion_para)
+        else onError(context.getString(R.string.text_se_requiere_el_permiso_de_ubicacion_para))
     }
 
     val notificationsPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
@@ -115,7 +106,7 @@ fun HomeScreen(
         else locationPermission.launch(Manifest.permission.ACCESS_FINE_LOCATION)
     }
 
-    val fullName = stringResource(R.string.text_value_value, user.name, user.lastName).trim().ifBlank { text_repartidor }
+    val fullName = stringResource(R.string.text_value_value, user.name, user.lastName).trim().ifBlank { stringResource(R.string.text_repartidor) }
     val firstName = fullName.substringBefore(" ")
 
     Column(
@@ -148,7 +139,7 @@ fun HomeScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = if (user.isAvailable) text_estas_conectado else text_estas_desconectado,
+                        text = if (user.isAvailable) stringResource(R.string.text_estas_conectado) else stringResource(R.string.text_estas_desconectado),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
                         color = if (user.isAvailable) SuccessGreen else TextMuted
@@ -168,7 +159,7 @@ fun HomeScreen(
                 .padding(18.dp)
         ) {
             Text(
-                text = text_conectate_para_recibir_pedidos_en_tu_zona,
+                text = stringResource(R.string.text_conectate_para_recibir_pedidos_en_tu_zona),
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextDark,
@@ -176,7 +167,7 @@ fun HomeScreen(
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = text_activa_tu_disponibilidad_y_empieza_a_ganar,
+                text = stringResource(R.string.text_activa_tu_disponibilidad_y_empieza_a_ganar),
                 fontSize = 14.sp,
                 color = TextMuted,
                 lineHeight = 19.sp
@@ -197,8 +188,8 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(48.dp))
 
-        TextButton(onClick = onConfigurePassword) { Text(text_configurar_contrasena) }
-        TextButton(onClick = onLogout) { Text(text_cerrar_sesion, color = DangerRed) }
+        TextButton(onClick = onConfigurePassword) { Text(stringResource(R.string.text_configurar_contrasena)) }
+        TextButton(onClick = onLogout) { Text(stringResource(R.string.text_cerrar_sesion), color = DangerRed) }
 
         Spacer(modifier = Modifier.height(16.dp))
     }

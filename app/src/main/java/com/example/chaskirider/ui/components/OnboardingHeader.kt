@@ -37,18 +37,13 @@ fun OnboardingHeader(
     currentStep: Int,
     onNavigateBack: () -> Unit = {}
 ) {
-    val text_atras = stringResource(R.string.text_atras)
-    val text_crear_cuenta = stringResource(R.string.text_crear_cuenta)
-    val text_completado = stringResource(R.string.text_completado)
-
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
-
         IconButton(onClick = onNavigateBack) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = text_atras,
+                contentDescription = stringResource(R.string.text_atras),
                 tint = TextDark
             )
         }
@@ -56,7 +51,7 @@ fun OnboardingHeader(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = text_crear_cuenta,
+            text = stringResource(R.string.text_crear_cuenta),
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             color = TextDark
@@ -102,7 +97,7 @@ fun OnboardingHeader(
                     if (isCompleted) {
                         Icon(
                             imageVector = Icons.Default.Check,
-                            contentDescription = text_completado,
+                            contentDescription = stringResource(R.string.text_completado),
                             tint = Color.White,
                             modifier = Modifier.size(18.dp)
                         )
