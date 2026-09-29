@@ -1,6 +1,7 @@
 
 package com.example.chaskirider.data.notifications
 
+import com.example.chaskirider.domain.model.ChaskiNotification
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager

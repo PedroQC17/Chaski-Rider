@@ -17,7 +17,6 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        manifestPlaceholders["MAPS_API_KEY"] = "YOUR_API_KEY_HERE"
     }
 
     buildTypes {
@@ -47,6 +46,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
 
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -58,14 +58,10 @@ dependencies {
     implementation(libs.firebase.functions)
     implementation(libs.firebase.messaging)
 
-    implementation(libs.play.services.auth)
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services)
     implementation(libs.googleid)
 
-    implementation(libs.play.services.maps)
-    implementation(libs.play.services.location)
-    implementation(libs.maps.compose)
 
     implementation(libs.coil.compose)
 

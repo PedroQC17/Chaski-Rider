@@ -1,4 +1,4 @@
-package com.example.chaskirider.data.auth
+package com.example.chaskirider.ui.platform
 
 import android.content.Context
 import androidx.credentials.CredentialManager

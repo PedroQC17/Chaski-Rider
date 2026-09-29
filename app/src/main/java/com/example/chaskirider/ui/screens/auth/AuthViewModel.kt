@@ -1,37 +1,25 @@
-
 package com.example.chaskirider.ui.screens.auth
 
-import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.chaskirider.di.AppContainer
-import com.example.chaskirider.domain.model.*
-import com.example.chaskirider.domain.repository.AuthRepository
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.example.chaskirider.domain.model.*
+import com.example.chaskirider.domain.repository.AuthRepository
+import com.example.chaskirider.domain.repository.RiderSession
 
-data class AuthUiState(
-    val currentUser: RiderUser? = null,
-    val isLoading: Boolean = false,
-    val initialized: Boolean = false,
-    val errorMessage: String? = null,
-    val message: String? = null,
-    val documentsMap: Map<String, DocumentFile> = emptyMap()
-)
-
-class AuthViewModel(private val repository: AuthRepository = AppContainer.authRepository) : ViewModel() {
+class AuthViewModel(private val repository: AuthRepository, session: RiderSession) : ViewModel() {
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState = _uiState.asStateFlow()
-    init { checkCurrentUser() }
-
+    init {
+        viewModelScope.launch { session.user.collect { user -> _uiState.update { it.copy(currentUser = user) } } }
+        checkCurrentUser()
+    }
     private fun acceptUser(user: RiderUser?) {
-        val docs = user?.let { RegistrationValidation.documentPaths(it) }.orEmpty()
-            .filterValues { it.isNotBlank() }.mapValues { (key, path) ->
-                DocumentFile(id = key, name = key, url = path, uploadState = DocumentUploadState.UPLOADED)
-            }
-        _uiState.update { it.copy(currentUser = user, documentsMap = docs, isLoading = false, initialized = true) }
+        _uiState.update { it.copy(currentUser = user, isLoading = false, initialized = true) }
     }
     fun checkCurrentUser() {
         if (_uiState.value.isLoading) return
@@ -78,71 +66,6 @@ class AuthViewModel(private val repository: AuthRepository = AppContainer.authRe
                 _uiState.update { it.copy(isLoading = false, message = "Contraseña configurada. Ya puedes ingresar con tu correo.") }
             }.onFailure { failure(it) }
         }
-    }
-    fun saveStep1PersonalData(name: String, lastName: String, dni: String, phone: String, termsAccepted: Boolean, onSuccess: () -> Unit) {
-        RegistrationValidation.personalError(name, lastName, dni, phone, termsAccepted)?.let { reportError(it); return }
-        userAction({ repository.savePersonalData(name, lastName, dni, phone, termsAccepted) }) { onSuccess() }
-    }
-    fun updatePersonalData(name: String, lastName: String, dni: String, phone: String, onSuccess: () -> Unit) {
-        RegistrationValidation.personalError(name, lastName, dni, phone, true)?.let { reportError(it); return }
-        val terms = _uiState.value.currentUser?.termsAccepted ?: true
-        userAction({ repository.savePersonalData(name, lastName, dni, phone, terms) }) { onSuccess() }
-    }
-    fun saveStep2VehicleType(vehicleType: VehicleType, onSuccess: () -> Unit) {
-        if (vehicleType !in listOf(VehicleType.BICYCLE, VehicleType.MOTORCYCLE, VehicleType.CAR)) {
-            reportError("Selecciona bicicleta, motocicleta o automóvil"); return
-        }
-        userAction({ repository.saveVehicle(vehicleType) }) { onSuccess() }
-    }
-    fun updateVehicle(vehicleType: VehicleType, onSuccess: () -> Unit) {
-        if (vehicleType !in listOf(VehicleType.BICYCLE, VehicleType.MOTORCYCLE, VehicleType.CAR)) {
-            reportError("Selecciona un vehículo"); return
-        }
-        userAction({ repository.saveVehicle(vehicleType) }) { onSuccess() }
-    }
-    fun setAvailability(available: Boolean, onSuccess: () -> Unit = {}) {
-        val user = _uiState.value.currentUser
-        if (user == null) { reportError("No hay una sesión activa"); return }
-        RegistrationValidation.availabilityError(user, activating = available)?.let { reportError(it); return }
-        userAction({ repository.setAvailability(available) }) { onSuccess() }
-    }
-    fun saveBank(bank: BankInfo) {
-        RegistrationValidation.bankError(bank)?.let { reportError(it); return }
-        userAction({ repository.saveBankInfo(bank) }) { _uiState.update { s -> s.copy(message = "Datos bancarios guardados") } }
-    }
-    fun uploadDocument(docType: String, uri: Uri) {
-        if (_uiState.value.isLoading) return
-        _uiState.update { it.copy(isLoading = true, errorMessage = null, documentsMap = it.documentsMap +
-            (docType to DocumentFile(id = docType, uploadState = DocumentUploadState.UPLOADING))) }
-        viewModelScope.launch {
-            repository.uploadDocument(docType, uri).onSuccess { acceptUser(it) }.onFailure { error ->
-                failure(error)
-                _uiState.update { it.copy(documentsMap = it.documentsMap +
-                    (docType to DocumentFile(id = docType, uploadState = DocumentUploadState.ERROR, errorMessage = error.message))) }
-            }
-        }
-    }
-    fun openDocument(docType: String, onReady: (Uri) -> Unit) {
-        if (_uiState.value.isLoading) return
-        _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-        viewModelScope.launch {
-            repository.getDocument(docType).onSuccess { uri ->
-                _uiState.update { it.copy(isLoading = false) }; onReady(uri)
-            }.onFailure { failure(it) }
-        }
-    }
-    fun finishRegistration(bankName: String, holder: String, account: String, cci: String, onSuccess: () -> Unit) {
-        val bank = BankInfo(bankName, holder, account, cci)
-        RegistrationValidation.bankError(bank)?.let { reportError(it); return }
-        val user = _uiState.value.currentUser ?: return
-        val required = RegistrationValidation.requiredDocuments(user.vehicleType)
-        if (required.any { _uiState.value.documentsMap[it]?.uploadState != DocumentUploadState.UPLOADED }) {
-            reportError("Sube todos los documentos obligatorios antes de enviar"); return
-        }
-        userAction({
-            val saved = repository.saveBankInfo(bank)
-            if (saved.isFailure) Result.failure(saved.exceptionOrNull()!!) else repository.submitRegistration()
-        }) { onSuccess() }
     }
     fun logout() {
         if (_uiState.value.isLoading) return

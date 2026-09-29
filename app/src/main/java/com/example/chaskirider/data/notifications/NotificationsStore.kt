@@ -1,16 +1,11 @@
 
 package com.example.chaskirider.data.notifications
 
+import com.example.chaskirider.domain.model.ChaskiNotification
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-
-data class ChaskiNotification(
-    val title: String,
-    val body: String,
-    val timestamp: Long = System.currentTimeMillis()
-)
 
 object NotificationsStore {
     private const val MAX_NOTIFICATIONS = 50

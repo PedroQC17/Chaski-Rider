@@ -25,8 +25,6 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -37,8 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.chaskirider.data.notifications.ChaskiNotification
-import com.example.chaskirider.data.notifications.NotificationsStore
+import com.example.chaskirider.domain.model.ChaskiNotification
 import com.example.chaskirider.ui.theme.BackgroundLight
 import com.example.chaskirider.ui.theme.BorderLight
 import com.example.chaskirider.ui.theme.ChaskiRiderTheme
@@ -60,10 +57,10 @@ fun NotificationsEmptyPreview() {
 fun NotificationsListPreview() {
     ChaskiRiderTheme {
         NotificationsScreen(
-            previewList = listOf(
+            state = NotificationsUiState(notifications = listOf(
                 ChaskiNotification("Nuevo pedido disponible", "Recogida en Miraflores a 1.2 km de tu ubicación."),
                 ChaskiNotification("Registro aprobado", "¡Ya puedes empezar a recibir pedidos!")
-            )
+            ))
         )
     }
 }
@@ -71,12 +68,9 @@ fun NotificationsListPreview() {
 @Composable
 fun NotificationsScreen(
     onNavigateBack: () -> Unit = {},
-    previewList: List<ChaskiNotification>? = null
+    state: NotificationsUiState = NotificationsUiState()
 ) {
-    val stored by NotificationsStore.notifications.collectAsState()
-    val notifications = previewList ?: stored
-
-    LaunchedEffect(Unit) { if (previewList == null) NotificationsStore.markSeen() }
+    val notifications = state.notifications
 
     Column(
         modifier = Modifier

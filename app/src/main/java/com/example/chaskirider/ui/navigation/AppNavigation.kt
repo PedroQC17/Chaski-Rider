@@ -7,12 +7,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.*
 import androidx.navigation.NavHostController
-import com.example.chaskirider.data.auth.GoogleSignInClient
+import com.example.chaskirider.ui.platform.GoogleSignInClient
 import com.example.chaskirider.di.AppContainer
 import com.example.chaskirider.domain.model.*
 import com.example.chaskirider.ui.components.AppBottomBar
@@ -20,18 +20,21 @@ import com.example.chaskirider.ui.screens.auth.*
 import com.example.chaskirider.ui.screens.home.*
 import com.example.chaskirider.ui.screens.notifications.*
 import com.example.chaskirider.ui.screens.onboarding.*
-import com.example.chaskirider.ui.screens.orders.*
 import com.example.chaskirider.ui.screens.profile.*
-import com.google.firebase.messaging.FirebaseMessaging
+import com.example.chaskirider.ui.screens.profile.documents.DocumentsViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 @Composable
-fun AppNavigation(navController: NavHostController = rememberNavController(), authViewModel: AuthViewModel = viewModel()) {
-    val state by authViewModel.uiState.collectAsState()
+fun AppNavigation(navController: NavHostController = rememberNavController(), authViewModel: AuthViewModel = viewModel { AuthViewModel(AppContainer.authRepository, AppContainer.riderSession) }) {
+    val state by authViewModel.uiState.collectAsStateWithLifecycle()
     
-    val ordersViewModel: OrdersViewModel = viewModel { OrdersViewModel(AppContainer.orderRepository) }
-    val ordersState by ordersViewModel.uiState.collectAsState()
+    val profileViewModel: RiderProfileViewModel = viewModel { RiderProfileViewModel(AppContainer.riderProfileRepository, AppContainer.riderSession) }
+    val profileState by profileViewModel.uiState.collectAsStateWithLifecycle()
+    val documentsViewModel: DocumentsViewModel = viewModel { DocumentsViewModel(AppContainer.documentRepository, AppContainer.riderSession) }
+    val documentsState by documentsViewModel.uiState.collectAsStateWithLifecycle()
+    val notificationsViewModel: NotificationsViewModel = viewModel { NotificationsViewModel(AppContainer.notificationsRepository) }
+    val notificationsState by notificationsViewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val google = remember { GoogleSignInClient() }
@@ -52,7 +55,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
         }
     }
 
-    val mainRoutes = listOf(Screen.Home.route, Screen.Profile.route, Screen.Orders.route)
+    val mainRoutes = listOf(Screen.Home.route, Screen.Profile.route)
     Scaffold(
         bottomBar = {
             if (route in mainRoutes) AppBottomBar(currentRoute = route, onNavigate = { target ->
@@ -94,39 +97,39 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
                     OnboardingStep1Screen(user = it,
                         onNavigateBack = { authViewModel.logout() },
                         onContinueClick = { n, l, d, p, t ->
-                            authViewModel.saveStep1PersonalData(n,l,d,p,t) { navController.navigate(Screen.OnboardingStep2.route) }
-                        }, isLoading = state.isLoading, errorMessage = state.errorMessage)
+                            profileViewModel.saveStep1PersonalData(n,l,d,p,t) { navController.navigate(Screen.OnboardingStep2.route) }
+                        }, isLoading = profileState.isLoading, errorMessage = profileState.errorMessage)
                 }
             }
             composable(Screen.OnboardingStep2.route) {
                 user?.let {
                     OnboardingStep2Screen(currentVehicle = it.vehicleType,
-                        onNavigateBack = { authViewModel.clearError(); navController.navigate(Screen.OnboardingStep1.route) { launchSingleTop = true } },
-                        onContinueClick = { vehicle -> authViewModel.saveStep2VehicleType(vehicle) { navController.navigate(Screen.OnboardingStep3.route) } },
-                        isLoading = state.isLoading, errorMessage = state.errorMessage)
+                        onNavigateBack = { profileViewModel.clearError(); navController.navigate(Screen.OnboardingStep1.route) { launchSingleTop = true } },
+                        onContinueClick = { vehicle -> profileViewModel.saveStep2VehicleType(vehicle) { navController.navigate(Screen.OnboardingStep3.route) } },
+                        isLoading = profileState.isLoading, errorMessage = profileState.errorMessage)
                 }
             }
             composable(Screen.OnboardingStep3.route) {
                 user?.let {
                     OnboardingStep3Screen(vehicleType = it.vehicleType, initialBankInfo = it.bankInfo,
-                        onNavigateBack = { authViewModel.clearError(); navController.navigate(Screen.OnboardingStep2.route) { launchSingleTop = true } },
-                        onDocumentPick = authViewModel::uploadDocument,
-                        onDocumentView = { type -> authViewModel.openDocument(type) { uri ->
+                        onNavigateBack = { profileViewModel.clearError(); documentsViewModel.clearError(); navController.navigate(Screen.OnboardingStep2.route) { launchSingleTop = true } },
+                        onDocumentPick = documentsViewModel::uploadDocument,
+                        onDocumentView = { type -> documentsViewModel.openDocument(type) { uri ->
                             try { context.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(uri, context.contentResolver.getType(uri)).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)) }
-                            catch (_: Exception) { authViewModel.reportError("No hay una aplicación disponible para abrir este archivo") }
+                            catch (_: Exception) { documentsViewModel.reportError("No hay una aplicación disponible para abrir este archivo") }
                         } },
-                        onSaveBank = authViewModel::saveBank,
-                        onFinishRegistrationClick = { b,h,a,c -> authViewModel.finishRegistration(b,h,a,c) {
+                        onSaveBank = profileViewModel::saveBank,
+                        onFinishRegistrationClick = { b,h,a,c -> profileViewModel.finishRegistration(b,h,a,c) {
                             navController.navigate(Screen.RegistrationStatus.route) { popUpTo(navController.graph.id) { inclusive = true } }
                         } },
-                        documentsMap = state.documentsMap, isLoading = state.isLoading,
-                        errorMessage = state.errorMessage, successMessage = state.message)
+                        documentsMap = documentsState.documentsMap, isLoading = profileState.isLoading || documentsState.isLoading,
+                        errorMessage = documentsState.errorMessage ?: profileState.errorMessage, successMessage = profileState.message)
                 }
             }
             composable(Screen.RegistrationStatus.route) {
                 user?.let {
                     RegistrationStatusScreen(user = it,
-                        onResumeRegistrationClick = { authViewModel.clearError(); navController.navigate(Screen.OnboardingStep1.route) },
+                        onResumeRegistrationClick = { profileViewModel.clearError(); navController.navigate(Screen.OnboardingStep1.route) },
                         onGoToHomeClick = { if (it.status == RegistrationStatus.APPROVED && it.isEnabled) navController.navigate(Screen.Home.route) },
                         onLogoutClick = { authViewModel.logout() },
                         onRefresh = authViewModel::checkCurrentUser,
@@ -138,96 +141,73 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
                 
                 user?.let {
                     HomeScreen(user = it,
-                        onAvailabilityChange = { available -> authViewModel.setAvailability(available) },
-                        onError = authViewModel::reportError,
+                        onAvailabilityChange = { available -> profileViewModel.setAvailability(available) },
+                        onError = profileViewModel::reportError,
                         onConfigurePassword = { passwordDialog = true; authViewModel.clearError() },
                         onNotificationsClick = { navController.navigate(Screen.Notifications.route) },
                         onLogout = { authViewModel.logout() },
-                        isLoading = state.isLoading, errorMessage = state.errorMessage,
-                        ordersState = ordersState, onSimulateOffer = { ordersViewModel.simulateOffer() })
+                        isLoading = profileState.isLoading, errorMessage = profileState.errorMessage,
+                        unreadCount = notificationsState.unreadCount)
                 }
             }
             composable(Screen.Profile.route) {
                 user?.let {
                     ProfileScreen(user = it,
-                        onPersonalDataClick = { authViewModel.clearError(); navController.navigate(Screen.ProfilePersonalData.route) },
-                        onVehicleClick = { authViewModel.clearError(); navController.navigate(Screen.ProfileVehicle.route) },
-                        onDocumentsClick = { authViewModel.clearError(); navController.navigate(Screen.ProfileDocuments.route) },
-                        onNotificationsClick = { authViewModel.clearError(); navController.navigate(Screen.Notifications.route) },
+                        onPersonalDataClick = { profileViewModel.clearError(); navController.navigate(Screen.ProfilePersonalData.route) },
+                        onVehicleClick = { profileViewModel.clearError(); navController.navigate(Screen.ProfileVehicle.route) },
+                        onDocumentsClick = { profileViewModel.clearError(); navController.navigate(Screen.ProfileDocuments.route) },
+                        onNotificationsClick = { profileViewModel.clearError(); navController.navigate(Screen.Notifications.route) },
                         onLogoutClick = { authViewModel.logout() })
                 }
             }
             composable(Screen.ProfilePersonalData.route) {
                 user?.let {
                     ProfilePersonalDataScreen(user = it,
-                        onNavigateBack = { authViewModel.clearError(); navController.popBackStack() },
+                        onNavigateBack = { profileViewModel.clearError(); navController.popBackStack() },
                         onSaveClick = { n, l, d, p ->
-                            authViewModel.updatePersonalData(n, l, d, p) { navController.popBackStack() }
+                            profileViewModel.updatePersonalData(n, l, d, p) { navController.popBackStack() }
                         },
-                        isLoading = state.isLoading, errorMessage = state.errorMessage)
+                        isLoading = profileState.isLoading, errorMessage = profileState.errorMessage)
                 }
             }
             composable(Screen.ProfileVehicle.route) {
                 user?.let {
                     ProfileVehicleScreen(user = it,
-                        onNavigateBack = { authViewModel.clearError(); navController.popBackStack() },
+                        onNavigateBack = { profileViewModel.clearError(); navController.popBackStack() },
                         onSaveClick = { vehicle ->
-                            authViewModel.updateVehicle(vehicle) { navController.popBackStack() }
+                            profileViewModel.updateVehicle(vehicle) { navController.popBackStack() }
                         },
-                        isLoading = state.isLoading, errorMessage = state.errorMessage)
+                        isLoading = profileState.isLoading, errorMessage = profileState.errorMessage)
                 }
             }
             composable(Screen.ProfileDocuments.route) {
                 user?.let {
                     ProfileDocumentsScreen(user = it,
-                        documentsMap = state.documentsMap,
-                        onNavigateBack = { authViewModel.clearError(); navController.popBackStack() },
-                        onDocumentPick = authViewModel::uploadDocument,
-                        onDocumentView = { type -> authViewModel.openDocument(type) { uri ->
+                        onPrepareCapture = documentsViewModel::prepareCapture,
+                        documentsMap = documentsState.documentsMap,
+                        onNavigateBack = { profileViewModel.clearError(); documentsViewModel.clearError(); navController.popBackStack() },
+                        onDocumentPick = documentsViewModel::uploadDocument,
+                        onDocumentView = { type -> documentsViewModel.openDocument(type) { uri ->
                             try { context.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(uri, context.contentResolver.getType(uri)).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)) }
-                            catch (_: Exception) { authViewModel.reportError("No hay una aplicación disponible para abrir este archivo") }
+                            catch (_: Exception) { documentsViewModel.reportError("No hay una aplicación disponible para abrir este archivo") }
                         } },
-                        isLoading = state.isLoading, errorMessage = state.errorMessage)
+                        isLoading = profileState.isLoading || documentsState.isLoading, errorMessage = documentsState.errorMessage ?: profileState.errorMessage)
                 }
             }
             composable(Screen.Notifications.route) {
-                NotificationsScreen(onNavigateBack = { navController.popBackStack() })
+                LaunchedEffect(Unit) { notificationsViewModel.markSeen() }
+                NotificationsScreen(state = notificationsState, onNavigateBack = { navController.popBackStack() })
             }
-            composable(Screen.Offer.route) {
-                OfferScreen(
-                    state = ordersState,
-                    onAccept = { ordersViewModel.accept() },
-                    onReject = { ordersViewModel.reject() }
-                )
-            }
-            composable(Screen.Orders.route) {
-                OrdersScreen(state = ordersState)
-            }
+
         }
     }
-    LaunchedEffect(user?.id) {
+    LaunchedEffect(state.initialized, user?.id) {
         if (state.initialized && user == null) {
             try { google.clear(context) } catch (e: CancellationException) { throw e } catch (_: Exception) { }
         }
     }
     
-    LaunchedEffect(user?.id) {
-        if (state.initialized && user != null) {
-            try { FirebaseMessaging.getInstance().subscribeToTopic("rider_${user.id}") }
-            catch (e: CancellationException) { throw e } catch (_: Exception) { }
-        }
-    }
     
-    LaunchedEffect(user?.id, user?.isAvailable) { ordersViewModel.bindUser(user) }
-    
-    LaunchedEffect(ordersState.status, route) {
-        when {
-            ordersState.status == OrderUiStatus.OFFER_ACTIVE && route != Screen.Offer.route ->
-                navController.navigate(Screen.Offer.route) { launchSingleTop = true }
-            route == Screen.Offer.route && ordersState.status != OrderUiStatus.OFFER_ACTIVE ->
-                navController.popBackStack()
-        }
-    }
     if (recovery) AlertDialog(onDismissRequest = { if (!state.isLoading) recovery = false },
         title = { Text("Recuperar contraseña") },
         text = { Column {

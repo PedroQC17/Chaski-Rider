@@ -4,8 +4,6 @@ package com.example.chaskirider.ui.components
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -38,22 +36,6 @@ fun AppBottomBar(
             label = { Text("Inicio", fontSize = 12.sp) },
             alwaysShowLabel = true,
             colors = colors
-        )
-        NavigationBarItem(
-            selected = currentRoute == Screen.Orders.route,
-            onClick = { onNavigate(Screen.Orders.route) },
-            icon = { Icon(Icons.Default.ShoppingCart, contentDescription = "Pedidos") },
-            label = { Text("Pedidos", fontSize = 12.sp) },
-            alwaysShowLabel = true,
-            colors = colors
-        )
-        NavigationBarItem(
-            selected = false,
-            onClick = { },
-            enabled = false,
-            icon = { Icon(Icons.Default.Star, contentDescription = "Ganancias") },
-            label = { Text("Ganancias", fontSize = 12.sp) },
-            alwaysShowLabel = true
         )
         NavigationBarItem(
             selected = currentRoute == Screen.Profile.route,

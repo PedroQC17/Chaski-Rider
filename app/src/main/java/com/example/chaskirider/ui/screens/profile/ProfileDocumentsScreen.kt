@@ -5,7 +5,6 @@ import android.Manifest
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -44,13 +43,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
 import com.example.chaskirider.R
 import com.example.chaskirider.domain.model.DocumentFile
@@ -69,7 +66,6 @@ import com.example.chaskirider.ui.theme.SuccessGreen
 import com.example.chaskirider.ui.theme.TextDark
 import com.example.chaskirider.ui.theme.TextMuted
 import com.example.chaskirider.ui.theme.WarningAmber
-import java.io.File
 
 private enum class DocState { PENDING, APPROVED, OBSERVED }
 
@@ -108,11 +104,11 @@ fun ProfileDocumentsScreen(
     onNavigateBack: () -> Unit = {},
     onDocumentPick: (docType: String, uri: Uri) -> Unit = { _, _ -> },
     onDocumentView: (docType: String) -> Unit = {},
+    onPrepareCapture: ((Uri) -> Unit) -> Unit = {},
     documentsMap: Map<String, DocumentFile> = emptyMap(),
     isLoading: Boolean = false,
     errorMessage: String? = null
 ) {
-    val context = LocalContext.current
     var actionsDoc by remember { mutableStateOf<String?>(null) }
     var cameraDoc by remember { mutableStateOf<String?>(null) }
     var captureUri by remember { mutableStateOf<Uri?>(null) }
@@ -134,12 +130,11 @@ fun ProfileDocumentsScreen(
     val cameraPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) {
             permissionMessage = null
-            cameraDoc?.let { doc ->
-                val dir = File(context.cacheDir, "captures").apply { mkdirs() }
-                val file = File(dir, "capture-${System.currentTimeMillis()}.jpg")
-                val uri = FileProvider.getUriForFile(context, "${context.packageName}.files", file)
-                captureUri = uri
-                cameraLauncher.launch(uri)
+            cameraDoc?.let {
+                onPrepareCapture { uri ->
+                    captureUri = uri
+                    cameraLauncher.launch(uri)
+                }
             }
         } else {
             permissionMessage = "Permiso de cámara denegado. Puedes elegir un archivo en su lugar."
