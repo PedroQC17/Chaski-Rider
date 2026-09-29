@@ -1,5 +1,6 @@
 package com.example.chaskirider.ui.screens.profile.components
 
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -52,8 +53,12 @@ import com.example.chaskirider.ui.theme.WarningAmber
 
 @Composable
 fun ProfileHeaderCard(user: RiderUser) {
-    val fullName = "${user.name} ${user.lastName}".trim().ifBlank { "Repartidor" }
-    val initial = user.name.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "?"
+    val profile_initial_fallback = stringResource(R.string.profile_initial_fallback)
+
+    val text_repartidor = stringResource(R.string.text_repartidor)
+
+    val fullName = stringResource(R.string.text_value_value, user.name, user.lastName).trim().ifBlank { text_repartidor }
+    val initial = user.name.trim().firstOrNull()?.uppercaseChar()?.toString() ?: profile_initial_fallback
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -73,37 +78,49 @@ fun ProfileHeaderCard(user: RiderUser) {
         Column {
             Text(text = fullName, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.White)
             Spacer(modifier = Modifier.height(4.dp))
-            Text(text = "Repartidor", fontSize = 14.sp, color = Color.White.copy(alpha = 0.85f))
+            Text(text = text_repartidor, fontSize = 14.sp, color = Color.White.copy(alpha = 0.85f))
         }
     }
 }
 
 @Composable
 fun AccountStatusCard(user: RiderUser) {
+    val status_incomplete = stringResource(R.string.status_incomplete)
+
+    val text_aprobado = stringResource(R.string.text_aprobado)
+    val text_ya_puedes_recibir_pedidos = stringResource(R.string.text_ya_puedes_recibir_pedidos)
+    val text_cuenta_aprobada_espera_a_que_este_habilitada = stringResource(R.string.text_cuenta_aprobada_espera_a_que_este_habilitada)
+    val text_en_revision = stringResource(R.string.text_en_revision)
+    val text_estamos_revisando_tu_registro_te_avisaremos_cuando = stringResource(R.string.text_estamos_revisando_tu_registro_te_avisaremos_cuando)
+    val text_observado = stringResource(R.string.text_observado)
+    val text_un_revisor_encontro_inconsistencias_corrige_tu_informacion = stringResource(R.string.text_un_revisor_encontro_inconsistencias_corrige_tu_informacion)
+    val text_completa_tus_datos_y_documentos_para_continuar = stringResource(R.string.text_completa_tus_datos_y_documentos_para_continuar)
+    val text_estado_de_cuenta = stringResource(R.string.text_estado_de_cuenta)
+
     val chipLabel: String
     val chipColor: Color
     val subtitle: String
     when (user.status) {
         RegistrationStatus.APPROVED -> {
-            chipLabel = "Aprobado"
+            chipLabel = text_aprobado
             chipColor = SuccessGreen
-            subtitle = if (user.isEnabled) "¡Ya puedes recibir pedidos!" else "Cuenta aprobada. Espera a que esté habilitada."
+            subtitle = if (user.isEnabled) text_ya_puedes_recibir_pedidos else text_cuenta_aprobada_espera_a_que_este_habilitada
         }
         RegistrationStatus.PENDING_REVIEW -> {
-            chipLabel = "En revisión"
+            chipLabel = text_en_revision
             chipColor = Orange
-            subtitle = "Estamos revisando tu registro. Te avisaremos cuando esté listo."
+            subtitle = text_estamos_revisando_tu_registro_te_avisaremos_cuando
         }
         RegistrationStatus.NEEDS_CORRECTION -> {
-            chipLabel = "Observado"
+            chipLabel = text_observado
             chipColor = DangerRed
-            subtitle = if (user.rejectionReason.isNotBlank()) "Motivo: ${user.rejectionReason}"
-            else "Un revisor encontró inconsistencias. Corrige tu información."
+            subtitle = if (user.rejectionReason.isNotBlank()) stringResource(R.string.text_motivo_value, user.rejectionReason)
+            else text_un_revisor_encontro_inconsistencias_corrige_tu_informacion
         }
         RegistrationStatus.INCOMPLETE -> {
-            chipLabel = "Incompleto"
+            chipLabel = status_incomplete
             chipColor = WarningAmber
-            subtitle = "Completa tus datos y documentos para continuar."
+            subtitle = text_completa_tus_datos_y_documentos_para_continuar
         }
     }
     Column(
@@ -118,7 +135,7 @@ fun AccountStatusCard(user: RiderUser) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = "Estado de cuenta", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
+            Text(text = text_estado_de_cuenta, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
             StatusChip(label = chipLabel, color = chipColor)
         }
         Spacer(modifier = Modifier.height(8.dp))
@@ -144,6 +161,8 @@ fun ProfileMenuRow(
     danger: Boolean = false,
     onClick: (() -> Unit)? = null
 ) {
+    val text_proximamente = stringResource(R.string.text_proximamente)
+
     val enabled = onClick != null
     Row(
         modifier = Modifier
@@ -168,7 +187,7 @@ fun ProfileMenuRow(
         if (enabled) {
             ChevronRightIcon(color = TextMuted)
         } else {
-            Text(text = "Próximamente", fontSize = 11.sp, color = TextMuted)
+            Text(text = text_proximamente, fontSize = 11.sp, color = TextMuted)
         }
     }
 }

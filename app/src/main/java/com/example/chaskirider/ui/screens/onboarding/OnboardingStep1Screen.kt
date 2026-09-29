@@ -1,5 +1,7 @@
 package com.example.chaskirider.ui.screens.onboarding
 
+import com.example.chaskirider.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -90,6 +92,24 @@ fun OnboardingStep1Screen(
     isLoading: Boolean = false,
     errorMessage: String? = null
 ) {
+    val dni_label = stringResource(R.string.dni_label)
+
+    val text_datos_personales = stringResource(R.string.text_datos_personales)
+    val text_nombres = stringResource(R.string.text_nombres)
+    val text_apellidos = stringResource(R.string.text_apellidos)
+    val text_dni_8_digitos = stringResource(R.string.text_dni_8_digitos)
+    val text_numero_de_celular = stringResource(R.string.text_numero_de_celular)
+    val text_celular = stringResource(R.string.text_celular)
+    val text_51 = stringResource(R.string.text_51)
+    val text_correo_electronico_cuenta_autenticada = stringResource(R.string.text_correo_electronico_cuenta_autenticada)
+    val text_correo = stringResource(R.string.text_correo)
+    val text_al_registrarte_aceptas_los = stringResource(R.string.text_al_registrarte_aceptas_los)
+    val text_terminos_y_condiciones = stringResource(R.string.text_terminos_y_condiciones)
+    val text_y_la = stringResource(R.string.text_y_la)
+    val text_politica_de_privacidad = stringResource(R.string.text_politica_de_privacidad)
+    val text_period = stringResource(R.string.text_period)
+    val text_continuar = stringResource(R.string.text_continuar)
+
     var name by rememberSaveable { mutableStateOf(user.name) }
     var lastName by rememberSaveable { mutableStateOf(user.lastName) }
     var dni by rememberSaveable { mutableStateOf(user.dni) }
@@ -112,7 +132,7 @@ fun OnboardingStep1Screen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Datos personales",
+            text = text_datos_personales,
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
             color = TextDark
@@ -123,11 +143,11 @@ fun OnboardingStep1Screen(
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
-            label = { Text("Nombres") },
+            label = { Text(text_nombres) },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Person,
-                    contentDescription = "Nombres",
+                    contentDescription = text_nombres,
                     tint = TextMuted
                 )
             },
@@ -146,11 +166,11 @@ fun OnboardingStep1Screen(
         OutlinedTextField(
             value = lastName,
             onValueChange = { lastName = it },
-            label = { Text("Apellidos") },
+            label = { Text(text_apellidos) },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Person,
-                    contentDescription = "Apellidos",
+                    contentDescription = text_apellidos,
                     tint = TextMuted
                 )
             },
@@ -173,11 +193,11 @@ fun OnboardingStep1Screen(
                     dni = it
                 }
             },
-            label = { Text("DNI (8 dígitos)") },
+            label = { Text(text_dni_8_digitos) },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Lock,
-                    contentDescription = "DNI",
+                    contentDescription = dni_label,
                     tint = TextMuted
                 )
             },
@@ -203,7 +223,7 @@ fun OnboardingStep1Screen(
                     phone = it
                 }
             },
-            label = { Text("Número de celular") },
+            label = { Text(text_numero_de_celular) },
             leadingIcon = {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -211,12 +231,12 @@ fun OnboardingStep1Screen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Phone,
-                        contentDescription = "Celular",
+                        contentDescription = text_celular,
                         tint = TextMuted,
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
-                        text = " +51 ",
+                        text = text_51,
                         color = TextDark,
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp
@@ -243,11 +263,11 @@ fun OnboardingStep1Screen(
             onValueChange = {},
             readOnly = true,
             enabled = false,
-            label = { Text("Correo electrónico (Cuenta autenticada)") },
+            label = { Text(text_correo_electronico_cuenta_autenticada) },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Email,
-                    contentDescription = "Correo",
+                    contentDescription = text_correo,
                     tint = TextMuted
                 )
             },
@@ -283,15 +303,15 @@ fun OnboardingStep1Screen(
 
             Text(
                 text = buildAnnotatedString {
-                    append("Al registrarte aceptas los ")
+                    append(text_al_registrarte_aceptas_los)
                     withStyle(SpanStyle(color = Orange, fontWeight = FontWeight.Bold)) {
-                        append("Términos y Condiciones")
+                        append(text_terminos_y_condiciones)
                     }
-                    append(" y la ")
+                    append(text_y_la)
                     withStyle(SpanStyle(color = Orange, fontWeight = FontWeight.Bold)) {
-                        append("Política de Privacidad")
+                        append(text_politica_de_privacidad)
                     }
-                    append(".")
+                    append(text_period)
                 },
                 fontSize = 12.sp,
                 color = TextDark,
@@ -343,7 +363,7 @@ fun OnboardingStep1Screen(
                 )
             } else {
                 Text(
-                    text = "Continuar",
+                    text = text_continuar,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )

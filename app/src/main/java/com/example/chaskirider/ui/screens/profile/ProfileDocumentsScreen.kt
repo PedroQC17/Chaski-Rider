@@ -1,6 +1,7 @@
 
 package com.example.chaskirider.ui.screens.profile
 
+import androidx.compose.ui.res.stringResource
 import android.Manifest
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -69,12 +70,12 @@ import com.example.chaskirider.ui.theme.WarningAmber
 
 private enum class DocState { PENDING, APPROVED, OBSERVED }
 
-private val docLabels = mapOf(
-    "dniFront" to "DNI · Frente",
-    "dniBack" to "DNI · Reverso",
-    "driverLicense" to "Licencia de conducir",
-    "soat" to "SOAT",
-    "bankStatement" to "Estado de cuenta"
+private val docLabelResources = mapOf(
+    "dniFront" to R.string.text_dni_frente,
+    "dniBack" to R.string.text_dni_reverso,
+    "driverLicense" to R.string.text_licencia_de_conducir,
+    "soat" to R.string.text_soat,
+    "bankStatement" to R.string.text_estado_de_cuenta
 )
 
 @Preview(name = "Perfil - Documentos", showBackground = true, showSystemUi = true)
@@ -109,6 +110,21 @@ fun ProfileDocumentsScreen(
     isLoading: Boolean = false,
     errorMessage: String? = null
 ) {
+    val docLabels = docLabelResources.mapValues { (_, resource) -> stringResource(resource) }
+    val text_permiso_de_camara_denegado_puedes_elegir_un = stringResource(R.string.text_permiso_de_camara_denegado_puedes_elegir_un)
+    val text_previsualizacion = stringResource(R.string.text_previsualizacion)
+    val text_foto_del_documento = stringResource(R.string.text_foto_del_documento)
+    val text_verifica_que_el_documento_se_vea_claro = stringResource(R.string.text_verifica_que_el_documento_se_vea_claro)
+    val text_usar_fotografia = stringResource(R.string.text_usar_fotografia)
+    val text_tomar_otra_foto = stringResource(R.string.text_tomar_otra_foto)
+    val text_volver = stringResource(R.string.text_volver)
+    val text_documentos = stringResource(R.string.text_documentos)
+    val text_cada_documento_muestra_su_estado_de_revision = stringResource(R.string.text_cada_documento_muestra_su_estado_de_revision)
+    val text_tomar_foto = stringResource(R.string.text_tomar_foto)
+    val text_elegir_archivo = stringResource(R.string.text_elegir_archivo)
+    val text_ver_documento = stringResource(R.string.text_ver_documento)
+    val text_cerrar = stringResource(R.string.text_cerrar)
+
     var actionsDoc by remember { mutableStateOf<String?>(null) }
     var cameraDoc by remember { mutableStateOf<String?>(null) }
     var captureUri by remember { mutableStateOf<Uri?>(null) }
@@ -137,7 +153,7 @@ fun ProfileDocumentsScreen(
                 }
             }
         } else {
-            permissionMessage = "Permiso de cámara denegado. Puedes elegir un archivo en su lugar."
+            permissionMessage = text_permiso_de_camara_denegado_puedes_elegir_un
         }
     }
 
@@ -156,7 +172,7 @@ fun ProfileDocumentsScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Previsualización",
+                text = text_previsualizacion,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextDark
@@ -170,7 +186,7 @@ fun ProfileDocumentsScreen(
             Spacer(modifier = Modifier.height(16.dp))
             AsyncImage(
                 model = preview,
-                contentDescription = "Foto del documento",
+                contentDescription = text_foto_del_documento,
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -179,7 +195,7 @@ fun ProfileDocumentsScreen(
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = "Verifica que el documento se vea claro y completo antes de enviarlo.",
+                text = text_verifica_que_el_documento_se_vea_claro,
                 fontSize = 13.sp,
                 color = TextMuted,
                 lineHeight = 18.sp
@@ -198,7 +214,7 @@ fun ProfileDocumentsScreen(
                     .fillMaxWidth()
                     .height(52.dp)
             ) {
-                Text("Usar fotografía", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                Text(text_usar_fotografia, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
             }
             Spacer(modifier = Modifier.height(10.dp))
             OutlinedButton(
@@ -213,7 +229,7 @@ fun ProfileDocumentsScreen(
                     .fillMaxWidth()
                     .height(52.dp)
             ) {
-                Text("Tomar otra foto", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = TextDark)
+                Text(text_tomar_otra_foto, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = TextDark)
             }
         }
         return
@@ -232,12 +248,12 @@ fun ProfileDocumentsScreen(
             IconButton(onClick = onNavigateBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Volver",
+                    contentDescription = text_volver,
                     tint = TextDark
                 )
             }
             Text(
-                text = "Documentos",
+                text = text_documentos,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextDark
@@ -247,7 +263,7 @@ fun ProfileDocumentsScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Cada documento muestra su estado de revisión. Los documentos observados pueden reemplazarse.",
+            text = text_cada_documento_muestra_su_estado_de_revision,
             fontSize = 13.sp,
             color = TextMuted,
             lineHeight = 18.sp
@@ -308,23 +324,23 @@ fun ProfileDocumentsScreen(
                             cameraDoc = doc
                             actionsDoc = null
                             cameraPermission.launch(Manifest.permission.CAMERA)
-                        }) { Text("Tomar foto") }
+                        }) { Text(text_tomar_foto) }
                         TextButton(onClick = {
                             cameraDoc = doc
                             actionsDoc = null
                             picker.launch(RegistrationValidation.mimeTypes)
-                        }) { Text("Elegir archivo") }
+                        }) { Text(text_elegir_archivo) }
                     }
                     if (path.isNotBlank()) {
                         TextButton(onClick = {
                             actionsDoc = null
                             onDocumentView(doc)
-                        }) { Text("Ver documento") }
+                        }) { Text(text_ver_documento) }
                     }
                 }
             },
             confirmButton = {
-                TextButton(onClick = { actionsDoc = null }) { Text("Cerrar") }
+                TextButton(onClick = { actionsDoc = null }) { Text(text_cerrar) }
             }
         )
     }
@@ -337,12 +353,21 @@ private fun documentState(user: RiderUser, path: String): DocState = when {
     else -> DocState.PENDING
 }
 
-private fun stateDescription(user: RiderUser, path: String, state: DocState): String = when {
-    state == DocState.OBSERVED -> "El revisor observó este documento. Reemplázalo para volver a enviarlo."
-    path.isBlank() -> "Aún no lo has subido."
-    state == DocState.APPROVED -> "Documento aprobado por el revisor."
-    user.status == RegistrationStatus.PENDING_REVIEW -> "En revisión. Te avisaremos cuando sea aprobado."
-    else -> "Listo para enviarse con tu registro."
+@Composable
+private fun stateDescription(user: RiderUser, path: String, state: DocState): String {
+    val text_el_revisor_observo_este_documento_reemplazalo_para = stringResource(R.string.text_el_revisor_observo_este_documento_reemplazalo_para)
+    val text_aun_no_lo_has_subido = stringResource(R.string.text_aun_no_lo_has_subido)
+    val text_documento_aprobado_por_el_revisor = stringResource(R.string.text_documento_aprobado_por_el_revisor)
+    val text_en_revision_te_avisaremos_cuando_sea_aprobado = stringResource(R.string.text_en_revision_te_avisaremos_cuando_sea_aprobado)
+    val text_listo_para_enviarse_con_tu_registro = stringResource(R.string.text_listo_para_enviarse_con_tu_registro)
+
+    return when {
+    state == DocState.OBSERVED -> text_el_revisor_observo_este_documento_reemplazalo_para
+    path.isBlank() -> text_aun_no_lo_has_subido
+    state == DocState.APPROVED -> text_documento_aprobado_por_el_revisor
+    user.status == RegistrationStatus.PENDING_REVIEW -> text_en_revision_te_avisaremos_cuando_sea_aprobado
+    else -> text_listo_para_enviarse_con_tu_registro
+}
 }
 
 @Composable
@@ -383,23 +408,28 @@ private fun DocumentOptionRow(
 
 @Composable
 private fun DocumentStateChip(state: DocState, uploading: Boolean) {
+    val text_subiendo = stringResource(R.string.text_subiendo)
+    val text_aprobado = stringResource(R.string.text_aprobado)
+    val text_observado = stringResource(R.string.text_observado)
+    val text_pendiente = stringResource(R.string.text_pendiente)
+
     val label: String
     val color: Color
     when {
         uploading -> {
-            label = "Subiendo…"
+            label = text_subiendo
             color = Orange
         }
         state == DocState.APPROVED -> {
-            label = "Aprobado"
+            label = text_aprobado
             color = SuccessGreen
         }
         state == DocState.OBSERVED -> {
-            label = "Observado"
+            label = text_observado
             color = DangerRed
         }
         else -> {
-            label = "Pendiente"
+            label = text_pendiente
             color = WarningAmber
         }
     }

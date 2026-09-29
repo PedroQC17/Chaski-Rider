@@ -28,6 +28,14 @@ deslizadores y texto aún no guardado) puede mantenerse con remember en Compose.
 Credential Manager y la apertura externa de archivos necesitan el contexto de la UI;
 Firebase Authentication y las operaciones de datos quedan en data.
 
+Los textos visibles están en res/values/strings.xml. Compose los obtiene mediante
+stringResource. Las validaciones devuelven TextKey; los ViewModel y repositorios
+reciben TextProvider por constructor. AndroidTextProvider resuelve esas claves en
+recursos Android y evita exponer mensajes técnicos desconocidos como errores de UI.
+El dominio no importa Context ni R. Los mensajes conocidos del backend también se
+encuentran en el catálogo local. Los datos de usuarios y mensajes entrantes de FCM
+siguen siendo contenido dinámico, no recursos traducibles.
+
 ## Dominio y datos
 
 `domain/model` contiene los modelos y validaciones. `domain/repository` declara

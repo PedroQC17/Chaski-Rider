@@ -68,7 +68,7 @@ class ChaskiFirebaseMessagingService : FirebaseMessagingService() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val channel = NotificationChannel(
                     CHANNEL_ID,
-                    "Notificaciones de Chaski Rider",
+                    context.getString(R.string.text_notificaciones_de_chaski_rider),
                     NotificationManager.IMPORTANCE_HIGH
                 )
                 val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

@@ -1,5 +1,7 @@
 package com.example.chaskirider.ui.screens.profile.documents
 
+import com.example.chaskirider.domain.text.TextProvider
+import com.example.chaskirider.domain.text.TextKey
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,7 +14,9 @@ import com.example.chaskirider.domain.model.*
 import com.example.chaskirider.domain.repository.DocumentRepository
 import com.example.chaskirider.domain.repository.RiderSession
 
-class DocumentsViewModel(private val repository: DocumentRepository, session: RiderSession) : ViewModel() {
+class DocumentsViewModel(
+    private val texts: TextProvider,
+    private val repository: DocumentRepository, session: RiderSession) : ViewModel() {
     private val _uiState = MutableStateFlow(DocumentsUiState())
     val uiState = _uiState.asStateFlow()
     init { viewModelScope.launch { session.user.collect { acceptUser(it) } } }
@@ -25,7 +29,7 @@ class DocumentsViewModel(private val repository: DocumentRepository, session: Ri
         else _uiState.update { it.copy(documentsMap = docs) }
     }
     private fun failure(error: Throwable) {
-        _uiState.update { it.copy(isLoading = false, errorMessage = error.message ?: "No se pudo completar la operación") }
+        _uiState.update { it.copy(isLoading = false, errorMessage = texts.resolveError(error.message, TextKey.TEXT_NO_SE_PUDO_COMPLETAR_LA_OPERACION)) }
     }
     fun reportError(message: String) { _uiState.update { it.copy(errorMessage = message) } }
     fun clearError() { _uiState.update { it.copy(errorMessage = null, message = null) } }
@@ -49,7 +53,7 @@ class DocumentsViewModel(private val repository: DocumentRepository, session: Ri
             repository.uploadDocument(docType, uri).onSuccess { acceptUser(it); _uiState.update { state -> state.copy(isLoading = false) } }.onFailure { error ->
                 failure(error)
                 _uiState.update { it.copy(documentsMap = it.documentsMap +
-                    (docType to DocumentFile(id = docType, uploadState = DocumentUploadState.ERROR, errorMessage = error.message))) }
+                    (docType to DocumentFile(id = docType, uploadState = DocumentUploadState.ERROR, errorMessage = texts.resolveError(error.message, TextKey.TEXT_NO_SE_PUDO_COMPLETAR_LA_OPERACION)))) }
             }
         }
     }

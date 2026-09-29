@@ -1,6 +1,8 @@
 
 package com.example.chaskirider.domain.model
 
+import com.example.chaskirider.domain.text.TextKey
+
 object RegistrationValidation {
     const val MAX_FILE_BYTES = 10L * 1024 * 1024
     val mimeTypes = arrayOf("application/pdf", "image/jpeg", "image/png")
@@ -8,17 +10,17 @@ object RegistrationValidation {
         val clean = phone.replace(Regex("[\\s()-]"), "")
         return if (clean.matches(Regex("9[0-9]{8}"))) "+51$clean" else clean
     }
-    fun personalError(name: String, last: String, dni: String, phone: String, terms: Boolean): String? = when {
-        name.isBlank() || last.isBlank() -> "Completa tus nombres y apellidos"
-        !dni.matches(Regex("[0-9]{8}")) -> "El DNI debe tener 8 dígitos"
-        !normalizePhone(phone).matches(Regex("\\+[1-9][0-9]{7,14}")) -> "Ingresa un celular válido con código de país"
-        !terms -> "Debes aceptar los términos y la política de privacidad"
+    fun personalError(name: String, last: String, dni: String, phone: String, terms: Boolean): TextKey? = when {
+        name.isBlank() || last.isBlank() -> TextKey.TEXT_COMPLETA_TUS_NOMBRES_Y_APELLIDOS
+        !dni.matches(Regex("[0-9]{8}")) -> TextKey.TEXT_EL_DNI_DEBE_TENER_8_DIGITOS
+        !normalizePhone(phone).matches(Regex("\\+[1-9][0-9]{7,14}")) -> TextKey.TEXT_INGRESA_UN_CELULAR_VALIDO_CON_CODIGO_DE
+        !terms -> TextKey.TEXT_DEBES_ACEPTAR_LOS_TERMINOS_Y_LA_POLITICA
         else -> null
     }
-    fun bankError(bank: BankInfo): String? = when {
-        bank.bankName.isBlank() || bank.holderName.isBlank() -> "Completa el banco y el titular"
-        bank.accountNumber.isBlank() && bank.cci.isBlank() -> "Ingresa un número de cuenta o CCI"
-        bank.cci.isNotBlank() && !bank.cci.matches(Regex("[0-9]{20}")) -> "El CCI debe tener 20 dígitos"
+    fun bankError(bank: BankInfo): TextKey? = when {
+        bank.bankName.isBlank() || bank.holderName.isBlank() -> TextKey.TEXT_COMPLETA_EL_BANCO_Y_EL_TITULAR
+        bank.accountNumber.isBlank() && bank.cci.isBlank() -> TextKey.TEXT_INGRESA_UN_NUMERO_DE_CUENTA_O_CCI
+        bank.cci.isNotBlank() && !bank.cci.matches(Regex("[0-9]{20}")) -> TextKey.TEXT_EL_CCI_DEBE_TENER_20_DIGITOS
         else -> null
     }
     fun requiredDocuments(vehicle: VehicleType) =
@@ -29,10 +31,10 @@ object RegistrationValidation {
         "bankStatement" to user.bankStatementUrl, "driverLicense" to user.driverLicenseUrl,
         "soat" to user.soatUrl
     )
-    fun availabilityError(user: RiderUser, activating: Boolean): String? = when {
+    fun availabilityError(user: RiderUser, activating: Boolean): TextKey? = when {
         !activating -> null
         user.status != RegistrationStatus.APPROVED || !user.isEnabled ->
-            "Solo los repartidores habilitados pueden activarse"
+            TextKey.TEXT_SOLO_LOS_REPARTIDORES_HABILITADOS_PUEDEN_ACTIVARSE
         else -> null
     }
     fun nextStep(user: RiderUser): Int = when {

@@ -1,6 +1,8 @@
 
 package com.example.chaskirider.ui.screens.profile
 
+import com.example.chaskirider.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -67,6 +69,14 @@ fun ProfileVehicleScreen(
     isLoading: Boolean = false,
     errorMessage: String? = null
 ) {
+    val text_volver = stringResource(R.string.text_volver)
+    val text_vehiculos = stringResource(R.string.text_vehiculos)
+    val text_selecciona_el_vehiculo_con_el_que_realizaras = stringResource(R.string.text_selecciona_el_vehiculo_con_el_que_realizaras)
+    val text_bicicleta = stringResource(R.string.text_bicicleta)
+    val text_motocicleta = stringResource(R.string.text_motocicleta)
+    val text_automovil = stringResource(R.string.text_automovil)
+    val text_guardar_cambios = stringResource(R.string.text_guardar_cambios)
+
     var selectedVehicle by rememberSaveable { mutableStateOf(user.vehicleType) }
 
     Column(
@@ -82,12 +92,12 @@ fun ProfileVehicleScreen(
             IconButton(onClick = onNavigateBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Volver",
+                    contentDescription = text_volver,
                     tint = TextDark
                 )
             }
             Text(
-                text = "Vehículos",
+                text = text_vehiculos,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextDark
@@ -97,7 +107,7 @@ fun ProfileVehicleScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Vinculado a tu cuenta: ${vehicleLabel(user.vehicleType)}",
+            text = stringResource(R.string.text_vinculado_a_tu_cuenta_value, vehicleLabel(user.vehicleType)),
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
             color = Orange
@@ -106,7 +116,7 @@ fun ProfileVehicleScreen(
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = "Selecciona el vehículo con el que realizarás tus repartos",
+            text = text_selecciona_el_vehiculo_con_el_que_realizaras,
             fontSize = 14.sp,
             color = TextMuted
         )
@@ -114,7 +124,7 @@ fun ProfileVehicleScreen(
         Spacer(modifier = Modifier.height(20.dp))
 
         VehicleOptionCard(
-            title = "Bicicleta",
+            title = text_bicicleta,
             imageRes = com.example.chaskirider.R.drawable.vehicle_bicycle,
             isSelected = selectedVehicle == VehicleType.BICYCLE,
             onClick = { selectedVehicle = VehicleType.BICYCLE }
@@ -123,7 +133,7 @@ fun ProfileVehicleScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         VehicleOptionCard(
-            title = "Motocicleta",
+            title = text_motocicleta,
             imageRes = com.example.chaskirider.R.drawable.vehicle_motorcycle,
             isSelected = selectedVehicle == VehicleType.MOTORCYCLE,
             onClick = { selectedVehicle = VehicleType.MOTORCYCLE }
@@ -132,7 +142,7 @@ fun ProfileVehicleScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         VehicleOptionCard(
-            title = "Automóvil",
+            title = text_automovil,
             imageRes = com.example.chaskirider.R.drawable.vehicle_car,
             isSelected = selectedVehicle == VehicleType.CAR,
             onClick = { selectedVehicle = VehicleType.CAR }
@@ -171,7 +181,7 @@ fun ProfileVehicleScreen(
                 )
             } else {
                 Text(
-                    text = "Guardar cambios",
+                    text = text_guardar_cambios,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -182,9 +192,17 @@ fun ProfileVehicleScreen(
     }
 }
 
-private fun vehicleLabel(vehicle: VehicleType): String = when (vehicle) {
-    VehicleType.BICYCLE -> "Bicicleta"
-    VehicleType.MOTORCYCLE -> "Motocicleta"
-    VehicleType.CAR -> "Automóvil"
-    VehicleType.NONE -> "Sin vehículo"
+@Composable
+private fun vehicleLabel(vehicle: VehicleType): String {
+    val text_bicicleta = stringResource(R.string.text_bicicleta)
+    val text_motocicleta = stringResource(R.string.text_motocicleta)
+    val text_automovil = stringResource(R.string.text_automovil)
+    val text_sin_vehiculo = stringResource(R.string.text_sin_vehiculo)
+
+    return when (vehicle) {
+    VehicleType.BICYCLE -> text_bicicleta
+    VehicleType.MOTORCYCLE -> text_motocicleta
+    VehicleType.CAR -> text_automovil
+    VehicleType.NONE -> text_sin_vehiculo
+}
 }

@@ -1,5 +1,7 @@
 package com.example.chaskirider.ui.screens.home.components
 
+import com.example.chaskirider.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -25,10 +27,13 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun NotificationsBell(count: Int, onClick: () -> Unit) {
+    val text_notificaciones = stringResource(R.string.text_notificaciones)
+    val text_9 = stringResource(R.string.text_9)
+
     Box(contentAlignment = Alignment.TopEnd) {
         Icon(
             imageVector = Icons.Default.Notifications,
-            contentDescription = "Notificaciones",
+            contentDescription = text_notificaciones,
             tint = TextDark,
             modifier = Modifier
                 .size(26.dp)
@@ -43,7 +48,7 @@ fun NotificationsBell(count: Int, onClick: () -> Unit) {
                     .background(DangerRed, CircleShape)
             ) {
                 Text(
-                    text = if (count > 9) "9+" else count.toString(),
+                    text = if (count > 9) text_9 else count.toString(),
                     fontSize = 9.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White

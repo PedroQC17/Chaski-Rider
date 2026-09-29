@@ -18,7 +18,7 @@ class GoogleSignInClient {
         val credential = response.credential
         require(credential is CustomCredential &&
             credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
-            "Google no devolvió una credencial válida"
+            context.getString(R.string.text_google_no_devolvio_una_credencial_valida)
         }
         return GoogleIdTokenCredential.createFrom(credential.data).idToken
     }

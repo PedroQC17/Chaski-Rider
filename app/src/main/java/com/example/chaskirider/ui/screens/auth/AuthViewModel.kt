@@ -1,5 +1,7 @@
 package com.example.chaskirider.ui.screens.auth
 
+import com.example.chaskirider.domain.text.TextProvider
+import com.example.chaskirider.domain.text.TextKey
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.collect
@@ -11,7 +13,9 @@ import com.example.chaskirider.domain.model.*
 import com.example.chaskirider.domain.repository.AuthRepository
 import com.example.chaskirider.domain.repository.RiderSession
 
-class AuthViewModel(private val repository: AuthRepository, session: RiderSession) : ViewModel() {
+class AuthViewModel(
+    private val texts: TextProvider,
+    private val repository: AuthRepository, session: RiderSession) : ViewModel() {
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState = _uiState.asStateFlow()
     init {
@@ -29,7 +33,7 @@ class AuthViewModel(private val repository: AuthRepository, session: RiderSessio
         }
     }
     private fun failure(error: Throwable) {
-        _uiState.update { it.copy(isLoading = false, errorMessage = error.message ?: "No se pudo completar la operación") }
+        _uiState.update { it.copy(isLoading = false, errorMessage = texts.resolveError(error.message, TextKey.TEXT_NO_SE_PUDO_COMPLETAR_LA_OPERACION)) }
     }
     fun reportError(message: String) { _uiState.update { it.copy(errorMessage = message) } }
     fun clearError() { _uiState.update { it.copy(errorMessage = null, message = null) } }
@@ -46,24 +50,24 @@ class AuthViewModel(private val repository: AuthRepository, session: RiderSessio
     fun sendPasswordResetEmail(email: String) {
         if (_uiState.value.isLoading) return
         if (!email.matches(Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"))) {
-            reportError("Ingresa un correo válido"); return
+            reportError(texts.get(TextKey.TEXT_INGRESA_UN_CORREO_VALIDO)); return
         }
         _uiState.update { it.copy(isLoading = true, errorMessage = null, message = null) }
         viewModelScope.launch {
             repository.sendPasswordResetEmail(email).onSuccess {
-                _uiState.update { it.copy(isLoading = false, message = "Si el correo corresponde a una cuenta, recibirás instrucciones para recuperar el acceso.") }
+                _uiState.update { it.copy(isLoading = false, message = texts.get(TextKey.TEXT_SI_EL_CORREO_CORRESPONDE_A_UNA_CUENTA)) }
             }.onFailure { failure(it) }
         }
     }
     fun linkPassword(password: String, confirmation: String) {
         if (_uiState.value.isLoading) return
         if (password.length < 8 || password != confirmation) {
-            reportError("Usa al menos 8 caracteres y confirma la misma contraseña"); return
+            reportError(texts.get(TextKey.TEXT_USA_AL_MENOS_8_CARACTERES_Y_CONFIRMA)); return
         }
         _uiState.update { it.copy(isLoading = true, errorMessage = null, message = null) }
         viewModelScope.launch {
             repository.linkPassword(password).onSuccess {
-                _uiState.update { it.copy(isLoading = false, message = "Contraseña configurada. Ya puedes ingresar con tu correo.") }
+                _uiState.update { it.copy(isLoading = false, message = texts.get(TextKey.TEXT_CONTRASENA_CONFIGURADA_YA_PUEDES_INGRESAR_CON_TU)) }
             }.onFailure { failure(it) }
         }
     }

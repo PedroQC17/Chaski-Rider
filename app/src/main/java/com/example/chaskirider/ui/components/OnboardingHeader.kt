@@ -1,5 +1,7 @@
 package com.example.chaskirider.ui.components
 
+import com.example.chaskirider.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -35,14 +37,18 @@ fun OnboardingHeader(
     currentStep: Int,
     onNavigateBack: () -> Unit = {}
 ) {
+    val text_atras = stringResource(R.string.text_atras)
+    val text_crear_cuenta = stringResource(R.string.text_crear_cuenta)
+    val text_completado = stringResource(R.string.text_completado)
+
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
-        
+
         IconButton(onClick = onNavigateBack) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Atrás",
+                contentDescription = text_atras,
                 tint = TextDark
             )
         }
@@ -50,7 +56,7 @@ fun OnboardingHeader(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Crear cuenta",
+            text = text_crear_cuenta,
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             color = TextDark
@@ -59,7 +65,7 @@ fun OnboardingHeader(
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = "Paso $currentStep de 3",
+            text = stringResource(R.string.text_paso_value_de_3, currentStep),
             fontSize = 14.sp,
             color = TextMuted,
             fontWeight = FontWeight.Medium
@@ -96,13 +102,13 @@ fun OnboardingHeader(
                     if (isCompleted) {
                         Icon(
                             imageVector = Icons.Default.Check,
-                            contentDescription = "Completado",
+                            contentDescription = text_completado,
                             tint = Color.White,
                             modifier = Modifier.size(18.dp)
                         )
                     } else {
                         Text(
-                            text = "$step",
+                            text = step.toString(),
                             color = if (isCurrent) Color.White else TextMuted,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold

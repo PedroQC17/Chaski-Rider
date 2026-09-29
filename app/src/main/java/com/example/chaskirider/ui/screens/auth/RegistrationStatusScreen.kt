@@ -1,5 +1,7 @@
 package com.example.chaskirider.ui.screens.auth
 
+import com.example.chaskirider.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -86,6 +88,26 @@ fun RegistrationStatusScreen(
     isLoading: Boolean = false,
     errorMessage: String? = null
 ) {
+    val status_incomplete = stringResource(R.string.status_incomplete)
+
+    val text_pendiente = stringResource(R.string.text_pendiente)
+    val text_registro_en_revision = stringResource(R.string.text_registro_en_revision)
+    val text_recibimos_tu_informacion_revisaremos_tus_documentos_y = stringResource(R.string.text_recibimos_tu_informacion_revisaremos_tus_documentos_y)
+    val text_observado = stringResource(R.string.text_observado)
+    val text_tu_registro_requiere_correcciones = stringResource(R.string.text_tu_registro_requiere_correcciones)
+    val text_un_revisor_ha_detectado_inconsistencias_en_tus = stringResource(R.string.text_un_revisor_ha_detectado_inconsistencias_en_tus)
+    val text_corregir_informacion = stringResource(R.string.text_corregir_informacion)
+    val text_aprobado = stringResource(R.string.text_aprobado)
+    val text_cuenta_aprobada = stringResource(R.string.text_cuenta_aprobada)
+    val text_felicidades_tu_perfil_ha_sido_verificado_ya = stringResource(R.string.text_felicidades_tu_perfil_ha_sido_verificado_ya)
+    val text_ir_al_panel_principal = stringResource(R.string.text_ir_al_panel_principal)
+    val text_registro_incompleto = stringResource(R.string.text_registro_incompleto)
+    val text_aun_tienes_datos_o_documentos_pendientes_por = stringResource(R.string.text_aun_tienes_datos_o_documentos_pendientes_por)
+    val text_continuar_registro = stringResource(R.string.text_continuar_registro)
+    val text_actualizar_estado = stringResource(R.string.text_actualizar_estado)
+    val text_configurar_contrasena = stringResource(R.string.text_configurar_contrasena)
+    val text_cerrar_sesion = stringResource(R.string.text_cerrar_sesion)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -106,7 +128,7 @@ fun RegistrationStatusScreen(
                 RegistrationStatus.PENDING_REVIEW -> {
                     Icon(
                         imageVector = Icons.Default.Info,
-                        contentDescription = "Pendiente",
+                        contentDescription = text_pendiente,
                         tint = Orange,
                         modifier = Modifier.size(80.dp)
                     )
@@ -114,7 +136,7 @@ fun RegistrationStatusScreen(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Text(
-                        text = "Registro en revisión",
+                        text = text_registro_en_revision,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextDark,
@@ -124,7 +146,7 @@ fun RegistrationStatusScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        text = "Recibimos tu información. Revisaremos tus documentos y podrás consultar el resultado en la app.",
+                        text = text_recibimos_tu_informacion_revisaremos_tus_documentos_y,
                         fontSize = 15.sp,
                         color = TextMuted,
                         textAlign = TextAlign.Center,
@@ -135,7 +157,7 @@ fun RegistrationStatusScreen(
                 RegistrationStatus.NEEDS_CORRECTION -> {
                     Icon(
                         imageVector = Icons.Default.Info,
-                        contentDescription = "Observado",
+                        contentDescription = text_observado,
                         tint = Color(0xFFD32F2F),
                         modifier = Modifier.size(80.dp)
                     )
@@ -143,7 +165,7 @@ fun RegistrationStatusScreen(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Text(
-                        text = "Tu registro requiere correcciones",
+                        text = text_tu_registro_requiere_correcciones,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextDark,
@@ -154,9 +176,9 @@ fun RegistrationStatusScreen(
 
                     Text(
                         text = if (user.rejectionReason.isNotBlank()) {
-                            "Motivo: ${user.rejectionReason}"
+                            stringResource(R.string.text_motivo_value, user.rejectionReason)
                         } else {
-                            "Un revisor ha detectado inconsistencias en tus documentos. Por favor actualiza la información solicitada."
+                            text_un_revisor_ha_detectado_inconsistencias_en_tus
                         },
                         fontSize = 15.sp,
                         color = TextMuted,
@@ -176,7 +198,7 @@ fun RegistrationStatusScreen(
                             .height(52.dp)
                     ) {
                         Text(
-                            text = "Corregir información",
+                            text = text_corregir_informacion,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -186,7 +208,7 @@ fun RegistrationStatusScreen(
                 RegistrationStatus.APPROVED -> {
                     Icon(
                         imageVector = Icons.Default.CheckCircle,
-                        contentDescription = "Aprobado",
+                        contentDescription = text_aprobado,
                         tint = Color(0xFF2E7D32),
                         modifier = Modifier.size(80.dp)
                     )
@@ -194,7 +216,7 @@ fun RegistrationStatusScreen(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Text(
-                        text = "¡Cuenta aprobada!",
+                        text = text_cuenta_aprobada,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextDark,
@@ -204,7 +226,7 @@ fun RegistrationStatusScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        text = "Felicidades, tu perfil ha sido verificado. Ya puedes conectarte y comenzar a recibir pedidos.",
+                        text = text_felicidades_tu_perfil_ha_sido_verificado_ya,
                         fontSize = 15.sp,
                         color = TextMuted,
                         textAlign = TextAlign.Center,
@@ -223,7 +245,7 @@ fun RegistrationStatusScreen(
                             .height(52.dp)
                     ) {
                         Text(
-                            text = "Ir al panel principal",
+                            text = text_ir_al_panel_principal,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -233,7 +255,7 @@ fun RegistrationStatusScreen(
                 RegistrationStatus.INCOMPLETE -> {
                     Icon(
                         imageVector = Icons.Default.Lock,
-                        contentDescription = "Incompleto",
+                        contentDescription = status_incomplete,
                         tint = Orange,
                         modifier = Modifier.size(80.dp)
                     )
@@ -241,7 +263,7 @@ fun RegistrationStatusScreen(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Text(
-                        text = "Registro incompleto",
+                        text = text_registro_incompleto,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextDark,
@@ -251,7 +273,7 @@ fun RegistrationStatusScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        text = "Aún tienes datos o documentos pendientes por completar.",
+                        text = text_aun_tienes_datos_o_documentos_pendientes_por,
                         fontSize = 15.sp,
                         color = TextMuted,
                         textAlign = TextAlign.Center
@@ -269,7 +291,7 @@ fun RegistrationStatusScreen(
                             .height(52.dp)
                     ) {
                         Text(
-                            text = "Continuar registro",
+                            text = text_continuar_registro,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -281,9 +303,9 @@ fun RegistrationStatusScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         errorMessage?.let { Text(it, color = Color.Red) }
-        androidx.compose.material3.TextButton(onClick = onRefresh, enabled = !isLoading) { Text("Actualizar estado") }
-        androidx.compose.material3.TextButton(onClick = onConfigurePassword, enabled = !isLoading) { Text("Configurar contraseña") }
-        
+        androidx.compose.material3.TextButton(onClick = onRefresh, enabled = !isLoading) { Text(text_actualizar_estado) }
+        androidx.compose.material3.TextButton(onClick = onConfigurePassword, enabled = !isLoading) { Text(text_configurar_contrasena) }
+
         OutlinedButton(
             onClick = onLogoutClick,
             enabled = !isLoading,
@@ -294,7 +316,7 @@ fun RegistrationStatusScreen(
                 .height(52.dp)
         ) {
             Text(
-                text = "Cerrar sesión",
+                text = text_cerrar_sesion,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium
             )

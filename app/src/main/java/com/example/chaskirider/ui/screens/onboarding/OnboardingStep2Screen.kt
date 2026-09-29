@@ -1,6 +1,7 @@
 
 package com.example.chaskirider.ui.screens.onboarding
 
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -70,6 +71,13 @@ fun OnboardingStep2Screen(
     isLoading: Boolean = false,
     errorMessage: String? = null
 ) {
+    val text_tipo_de_vehiculo = stringResource(R.string.text_tipo_de_vehiculo)
+    val text_selecciona_el_vehiculo_con_el_que_realizaras = stringResource(R.string.text_selecciona_el_vehiculo_con_el_que_realizaras)
+    val text_bicicleta = stringResource(R.string.text_bicicleta)
+    val text_motocicleta = stringResource(R.string.text_motocicleta)
+    val text_automovil = stringResource(R.string.text_automovil)
+    val text_continuar = stringResource(R.string.text_continuar)
+
     var selectedVehicle by rememberSaveable { mutableStateOf(currentVehicle) }
 
     Column(
@@ -88,7 +96,7 @@ fun OnboardingStep2Screen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Tipo de vehículo",
+            text = text_tipo_de_vehiculo,
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
             color = TextDark
@@ -97,7 +105,7 @@ fun OnboardingStep2Screen(
         Spacer(modifier = Modifier.height(6.dp))
 
         Text(
-            text = "Selecciona el vehículo con el que realizarás tus repartos",
+            text = text_selecciona_el_vehiculo_con_el_que_realizaras,
             fontSize = 14.sp,
             color = TextMuted
         )
@@ -105,7 +113,7 @@ fun OnboardingStep2Screen(
         Spacer(modifier = Modifier.height(24.dp))
 
         VehicleOptionCard(
-            title = "Bicicleta",
+            title = text_bicicleta,
             imageRes = R.drawable.vehicle_bicycle,
             isSelected = selectedVehicle == VehicleType.BICYCLE,
             onClick = { selectedVehicle = VehicleType.BICYCLE }
@@ -114,7 +122,7 @@ fun OnboardingStep2Screen(
         Spacer(modifier = Modifier.height(16.dp))
 
         VehicleOptionCard(
-            title = "Motocicleta",
+            title = text_motocicleta,
             imageRes = R.drawable.vehicle_motorcycle,
             isSelected = selectedVehicle == VehicleType.MOTORCYCLE,
             onClick = { selectedVehicle = VehicleType.MOTORCYCLE }
@@ -123,7 +131,7 @@ fun OnboardingStep2Screen(
         Spacer(modifier = Modifier.height(16.dp))
 
         VehicleOptionCard(
-            title = "Automóvil",
+            title = text_automovil,
             imageRes = R.drawable.vehicle_car,
             isSelected = selectedVehicle == VehicleType.CAR,
             onClick = { selectedVehicle = VehicleType.CAR }
@@ -160,7 +168,7 @@ fun OnboardingStep2Screen(
                 )
             } else {
                 Text(
-                    text = "Continuar",
+                    text = text_continuar,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -176,6 +184,8 @@ fun VehicleOptionCard(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    val selected = stringResource(R.string.selected)
+
     val borderColor = if (isSelected) Orange else BorderLight
     val backgroundColor = if (isSelected) Color(0xFFFFF7F2) else Color.White
 
@@ -230,7 +240,7 @@ fun VehicleOptionCard(
                 if (isSelected) {
                     Icon(
                         imageVector = Icons.Default.Check,
-                        contentDescription = "Seleccionado",
+                        contentDescription = selected,
                         tint = Color.White,
                         modifier = Modifier.size(16.dp)
                     )

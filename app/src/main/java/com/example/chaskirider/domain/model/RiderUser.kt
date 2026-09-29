@@ -15,7 +15,7 @@ data class RiderUser(
     val bankInfo: BankInfo = BankInfo(),
     val isAvailable: Boolean = false,
     val isEnabled: Boolean = true,
-    
+
     val dniFrontUrl: String = "",
     val dniBackUrl: String = "",
     val driverLicenseUrl: String = "",

@@ -1,5 +1,7 @@
 package com.example.chaskirider.ui.screens.home.components
 
+import com.example.chaskirider.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.spring
@@ -48,13 +50,18 @@ fun AvailabilitySlider(
     enabled: Boolean,
     onToggle: () -> Unit
 ) {
+    val text_desliza_para_desconectar = stringResource(R.string.text_desliza_para_desconectar)
+    val text_desliza_para_estar_disponible = stringResource(R.string.text_desliza_para_estar_disponible)
+    val text_desconectar = stringResource(R.string.text_desconectar)
+    val text_conectar = stringResource(R.string.text_conectar)
+
     val thumbSize = 44.dp
     val scope = rememberCoroutineScope()
     var innerWidth by remember { mutableIntStateOf(0) }
     val maxOffset = with(androidx.compose.ui.platform.LocalDensity.current) {
         (innerWidth - thumbSize.toPx()).coerceAtLeast(0f)
     }
-    
+
     var dragPx by remember { mutableFloatStateOf(0f) }
     var snapJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
     val trackColor = if (available) SuccessGreen else Orange
@@ -99,7 +106,7 @@ fun AvailabilitySlider(
                 }
         ) {
             Text(
-                text = if (available) "Desliza para desconectar" else "Desliza para estar disponible",
+                text = if (available) text_desliza_para_desconectar else text_desliza_para_estar_disponible,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = Color.White,
@@ -117,7 +124,7 @@ fun AvailabilitySlider(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                    contentDescription = if (available) "Desconectar" else "Conectar",
+                    contentDescription = if (available) text_desconectar else text_conectar,
                     tint = trackColor,
                     modifier = Modifier.size(22.dp)
                 )

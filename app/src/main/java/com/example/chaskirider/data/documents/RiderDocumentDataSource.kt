@@ -1,5 +1,7 @@
 package com.example.chaskirider.data.documents
 
+import com.example.chaskirider.domain.text.TextProvider
+import com.example.chaskirider.domain.text.TextKey
 import android.content.Context
 import android.net.Uri
 import androidx.core.content.FileProvider
@@ -17,28 +19,29 @@ import com.example.chaskirider.data.remote.RiderProfileRemoteDataSource
 import com.example.chaskirider.data.remote.firebaseResult
 
 class RiderDocumentDataSource(
+    private val texts: TextProvider,
     private val context: Context,
     private val profiles: RiderProfileRemoteDataSource,
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val storage: FirebaseStorage = FirebaseStorage.getInstance()
 ) {
-    suspend fun createCaptureUri(): Result<Uri> = firebaseResult {
+    suspend fun createCaptureUri(): Result<Uri> = firebaseResult(texts) {
         withContext(Dispatchers.IO) {
             val directory = File(context.cacheDir, "captures").apply { mkdirs() }
             val file = File.createTempFile("capture-", ".jpg", directory)
             FileProvider.getUriForFile(context, "${context.packageName}.files", file)
         }
     }
-    suspend fun uploadDocument(docType: String, uri: Uri) = firebaseResult {
-        val uid = auth.currentUser?.uid ?: error("No hay una sesión activa")
+    suspend fun uploadDocument(docType: String, uri: Uri) = firebaseResult(texts) {
+        val uid = auth.currentUser?.uid ?: error(texts.get(TextKey.TEXT_NO_HAY_UNA_SESION_ACTIVA))
         require(docType in listOf("dniFront", "dniBack", "bankStatement", "driverLicense", "soat"))
         val mime = context.contentResolver.getType(uri)
-        require(mime in RegistrationValidation.mimeTypes) { "Selecciona un PDF, JPG o PNG" }
+        require(mime in RegistrationValidation.mimeTypes) { texts.get(TextKey.TEXT_SELECCIONA_UN_PDF_JPG_O_PNG) }
         val temp = withContext(Dispatchers.IO) {
             val file = File.createTempFile("rider-upload-", ".tmp", context.cacheDir)
             try {
                 context.contentResolver.openInputStream(uri).use { input ->
-                    requireNotNull(input) { "No se pudo abrir el archivo" }
+                    requireNotNull(input) { texts.get(TextKey.TEXT_NO_SE_PUDO_ABRIR_EL_ARCHIVO) }
                     file.outputStream().use { output ->
                         val buffer = ByteArray(8192)
                         var total = 0L
@@ -46,17 +49,17 @@ class RiderDocumentDataSource(
                             val count = input.read(buffer)
                             if (count < 0) break
                             total += count
-                            require(total <= RegistrationValidation.MAX_FILE_BYTES) { "El archivo supera los 10 MB" }
+                            require(total <= RegistrationValidation.MAX_FILE_BYTES) { texts.get(TextKey.TEXT_EL_ARCHIVO_SUPERA_LOS_10_MB) }
                             output.write(buffer, 0, count)
                         }
-                        require(total > 0) { "El archivo está vacío" }
+                        require(total > 0) { texts.get(TextKey.TEXT_EL_ARCHIVO_ESTA_VACIO) }
                     }
                 }
                 file
             } catch (e: Exception) { file.delete(); throw e }
         }
         try {
-            
+
             val path = "riders/$uid/documents/$docType/${UUID.randomUUID()}"
             val metadata = StorageMetadata.Builder().setContentType(mime).build()
             storage.reference.child(path).putFile(Uri.fromFile(temp), metadata).await()
@@ -64,10 +67,10 @@ class RiderDocumentDataSource(
         } finally { temp.delete() }
     }
 
-    suspend fun getDocument(docType: String) = firebaseResult {
+    suspend fun getDocument(docType: String) = firebaseResult(texts) {
         val user = profiles.load()
         val path = RegistrationValidation.documentPaths(user)[docType].orEmpty()
-        require(path.startsWith("riders/${user.id}/documents/$docType/")) { "Vuelve a subir este documento para consultarlo de forma privada" }
+        require(path.startsWith("riders/${user.id}/documents/$docType/")) { texts.get(TextKey.TEXT_VUELVE_A_SUBIR_ESTE_DOCUMENTO_PARA_CONSULTARLO) }
         val ref = storage.reference.child(path)
         val metadata = ref.metadata.await()
         val extension = when (metadata.contentType) { "application/pdf" -> ".pdf"; "image/png" -> ".png"; else -> ".jpg" }

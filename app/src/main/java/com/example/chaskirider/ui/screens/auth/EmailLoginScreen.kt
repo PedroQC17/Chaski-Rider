@@ -1,5 +1,7 @@
 package com.example.chaskirider.ui.screens.auth
 
+import com.example.chaskirider.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -70,6 +72,19 @@ fun EmailLoginScreen(
     errorMessage: String? = null,
     successMessage: String? = null
 ) {
+    val text_volver = stringResource(R.string.text_volver)
+    val text_ingresar_con_correo = stringResource(R.string.text_ingresar_con_correo)
+    val text_ingresa_tus_credenciales_registradas_para_acceder_a = stringResource(R.string.text_ingresa_tus_credenciales_registradas_para_acceder_a)
+    val text_correo_electronico = stringResource(R.string.text_correo_electronico)
+    val text_correo = stringResource(R.string.text_correo)
+    val text_contrasena = stringResource(R.string.text_contrasena)
+    val text_olvidaste_tu_contrasena = stringResource(R.string.text_olvidaste_tu_contrasena)
+    val text_iniciar_sesion = stringResource(R.string.text_iniciar_sesion)
+    val text_recuperar_contrasena = stringResource(R.string.text_recuperar_contrasena)
+    val text_ingresa_tu_correo_registrado_para_enviarte_un = stringResource(R.string.text_ingresa_tu_correo_registrado_para_enviarte_un)
+    val text_enviar_enlace = stringResource(R.string.text_enviar_enlace)
+    val text_cancelar = stringResource(R.string.text_cancelar)
+
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -85,14 +100,14 @@ fun EmailLoginScreen(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 12.dp)
     ) {
-        
+
         IconButton(
             onClick = onNavigateBack,
             modifier = Modifier.padding(top = 8.dp)
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Volver",
+                contentDescription = text_volver,
                 tint = TextDark
             )
         }
@@ -100,7 +115,7 @@ fun EmailLoginScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Ingresar con correo",
+            text = text_ingresar_con_correo,
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             color = TextDark
@@ -109,7 +124,7 @@ fun EmailLoginScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Ingresa tus credenciales registradas para acceder a Chaski Rider.",
+            text = text_ingresa_tus_credenciales_registradas_para_acceder_a,
             fontSize = 14.sp,
             color = TextMuted
         )
@@ -119,11 +134,11 @@ fun EmailLoginScreen(
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
-            label = { Text("Correo electrónico") },
+            label = { Text(text_correo_electronico) },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Email,
-                    contentDescription = "Correo",
+                    contentDescription = text_correo,
                     tint = TextMuted
                 )
             },
@@ -145,11 +160,11 @@ fun EmailLoginScreen(
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("Contraseña") },
+            label = { Text(text_contrasena) },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Lock,
-                    contentDescription = "Contraseña",
+                    contentDescription = text_contrasena,
                     tint = TextMuted
                 )
             },
@@ -187,7 +202,7 @@ fun EmailLoginScreen(
                 showResetDialog = true
             }) {
                 Text(
-                    text = "¿Olvidaste tu contraseña?",
+                    text = text_olvidaste_tu_contrasena,
                     fontSize = 13.sp,
                     color = Orange,
                     fontWeight = FontWeight.Medium
@@ -228,7 +243,7 @@ fun EmailLoginScreen(
                 )
             } else {
                 Text(
-                    text = "Iniciar sesión",
+                    text = text_iniciar_sesion,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -239,11 +254,11 @@ fun EmailLoginScreen(
     if (showResetDialog) {
         AlertDialog(
             onDismissRequest = { showResetDialog = false },
-            title = { Text("Recuperar contraseña") },
+            title = { Text(text_recuperar_contrasena) },
             text = {
                 Column {
                     Text(
-                        text = "Ingresa tu correo registrado para enviarte un enlace de restablecimiento.",
+                        text = text_ingresa_tu_correo_registrado_para_enviarte_un,
                         fontSize = 14.sp,
                         color = TextMuted
                     )
@@ -251,7 +266,7 @@ fun EmailLoginScreen(
                     OutlinedTextField(
                         value = resetEmail,
                         onValueChange = { resetEmail = it },
-                        label = { Text("Correo electrónico") },
+                        label = { Text(text_correo_electronico) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -267,12 +282,12 @@ fun EmailLoginScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Orange)
                 ) {
-                    Text("Enviar enlace")
+                    Text(text_enviar_enlace)
                 }
             },
             dismissButton = {
                 TextButton(enabled = !isLoading, onClick = { showResetDialog = false }) {
-                    Text("Cancelar")
+                    Text(text_cancelar)
                 }
             }
         )
