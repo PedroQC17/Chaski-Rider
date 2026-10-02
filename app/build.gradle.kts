@@ -51,6 +51,8 @@ android {
 }
 
 dependencies {
+    implementation(libs.retrofit.core)
+    implementation(libs.retrofit.converter.gson)
     implementation(libs.maps.compose)
     implementation(libs.play.services.location)
     implementation(platform(libs.androidx.compose.bom))

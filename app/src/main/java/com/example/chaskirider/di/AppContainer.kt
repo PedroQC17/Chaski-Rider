@@ -19,6 +19,7 @@ object AppContainer {
     }
     private val sessionStore = RiderSessionStore()
     val riderSession: RiderSession = sessionStore
+    val demoOfferRepository: com.example.chaskirider.domain.orders.OfferRepository by lazy { com.example.chaskirider.data.orders.DemoOfferRepository() }
     val textProvider: TextProvider by lazy { AndroidTextProvider(applicationContext) }
     private val profiles by lazy { RiderProfileRemoteDataSource(textProvider, sessionStore) }
     private val documents by lazy { RiderDocumentDataSource(textProvider, applicationContext, profiles) }

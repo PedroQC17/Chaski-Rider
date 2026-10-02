@@ -29,7 +29,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 @Composable
-fun AppNavigation(navController: NavHostController = rememberNavController(), authViewModel: AuthViewModel = viewModel { AuthViewModel(AppContainer.textProvider, AppContainer.authRepository, AppContainer.riderSession) }) {
+fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = rememberNavController(), authViewModel: AuthViewModel = viewModel { AuthViewModel(AppContainer.textProvider, AppContainer.authRepository, AppContainer.riderSession) }) {
 
     val state by authViewModel.uiState.collectAsStateWithLifecycle()
     val homeViewModel: HomeViewModel = viewModel { HomeViewModel(AppContainer.riderProfileRepository,
@@ -68,7 +68,6 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
     val needsPhoto = user?.status == RegistrationStatus.APPROVED && user.isEnabled && user.profilePhotoPath.isBlank()
 
     LaunchedEffect(state.initialized, user?.id, user?.status, user?.isEnabled, user?.profilePhotoPath, route) {
-        if (!state.initialized) return@LaunchedEffect
         if (needsPhoto && route != Screen.ProfilePhoto.route) {
             navController.navigate(Screen.ProfilePhoto.route) { popUpTo(navController.graph.id) { inclusive = true }; launchSingleTop = true }
         } else if (user != null && route == Screen.ProfilePhoto.route && !needsPhoto) {
@@ -87,6 +86,21 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
     }
 
     val workArea = user?.status == RegistrationStatus.APPROVED && user.isEnabled && !needsPhoto
+    val ordersViewModel: com.example.chaskirider.ui.screens.orders.OrdersViewModel = viewModel {
+        com.example.chaskirider.ui.screens.orders.OrdersViewModel(AppContainer.demoOfferRepository, AppContainer.riderSession)
+    }
+    val offerNotifier = remember { com.example.chaskirider.data.orders.OfferNotifier(context.applicationContext) }
+    LaunchedEffect(ordersViewModel, workArea) {
+        if (!workArea) { offerNotifier.update(null, 0); return@LaunchedEffect }
+        ordersViewModel.uiState.collect { orders ->
+            offerNotifier.update(orders.snapshot?.offer?.id, orders.secondsLeft)
+        }
+    }
+    LaunchedEffect(demoRequest, workArea) {
+        if (demoRequest > 0 && workArea && com.example.chaskirider.BuildConfig.DEBUG) {
+            navController.navigate(Screen.DemoOrders.route) { launchSingleTop = true }
+        }
+    }
     LaunchedEffect(workArea) { if (!workArea) drawerState.close() }
     ModalNavigationDrawer(drawerState = drawerState, gesturesEnabled = workArea,
         drawerContent = {
@@ -173,6 +187,11 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
             composable(Screen.ProfilePhoto.route) {
                 if (needsPhoto) ProfilePhotoRoute(photoViewModel, onLogout = authViewModel::logout)
             }
+            composable(Screen.DemoOrders.route) {
+                if (workArea && com.example.chaskirider.BuildConfig.DEBUG)
+                    com.example.chaskirider.ui.screens.orders.OrdersRoute(ordersViewModel,
+                        onMenu = { scope.launch { drawerState.open() } })
+            }
             composable(Screen.Home.route) {
                 if (workArea) HomeRoute(homeViewModel, onOpenMenu = { scope.launch { drawerState.open() } })
             }
@@ -218,7 +237,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
     }
     }
     LaunchedEffect(state.initialized, user?.id) {
-        if (state.initialized && user == null) {
+        if (user == null) {
             try { google.clear(context) } catch (e: CancellationException) { throw e } catch (_: Exception) { }
         }
     }

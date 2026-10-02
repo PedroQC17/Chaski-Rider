@@ -188,7 +188,6 @@
     <string name="retry">Reintentar</string>
     <string name="attach_document">Adjuntar</string>
     <string name="dni_label">DNI</string>
-    <string name="profile_initial_fallback">?</string>
     <string name="server_este_registro_no_admite_cambios_en_su_estado_actual">"Este registro no admite cambios en su estado actual"</string>
     <string name="server_referencia_de_documento_no_valida">"Referencia de documento no válida"</string>
     <string name="server_el_contenido_no_corresponde_a_un_pdf_jpg_o">"El contenido no corresponde a un PDF, JPG o PNG válido"</string>
@@ -247,4 +246,39 @@
     <string name="preview_previous">Página anterior</string>
     <string name="preview_next">Página siguiente</string>
     <string name="profile_photo_settings">Abrir ajustes de cámara</string>
+
+    <string name="orders_demo">Demo de pedidos</string>
+    <string name="orders_demo_note">DEMOSTRACIÓN · Pedidos, ubicación y recorridos de ejemplo</string>
+    <string name="orders_menu">Abrir menú</string>
+    <string name="orders_store">Local de ejemplo · Centro de Lima</string>
+    <string name="orders_rider">Repartidor de ejemplo</string>
+    <string name="orders_delivery_marker">Entrega %1$s · ubicación aproximada de ejemplo</string>
+    <string name="orders_route_summary">%1$.2f km · %2$d min estimados</string>
+    <string name="orders_route_order">Orden de entrega: %1$s</string>
+    <string name="orders_approach">Hasta el local · %1$.2f km</string>
+    <string name="orders_deliveries">Ruta de entregas · %1$.2f km</string>
+    <string name="orders_guarantee">Garantía del monto aceptado</string>
+    <string name="orders_total">Total garantizado</string>
+    <string name="orders_additional">Este pedido añade S/ %1$.2f</string>
+    <string name="orders_money">S/ %1$.2f</string>
+    <string name="orders_new_offer">Nueva oferta</string>
+    <string name="orders_seconds">%1$d s</string>
+    <string name="orders_empty">Listo para recibir una oferta</string>
+    <string name="orders_accepted">Pedidos aceptados</string>
+    <string name="orders_picked_up">Recojo simulado · No se añaden más pedidos</string>
+    <string name="orders_accept">Aceptar</string>
+    <string name="orders_reject">Rechazar</string>
+    <string name="orders_generate">Recibir oferta de ejemplo</string>
+    <string name="orders_schedule">Recibir en 5 s y probar el aviso</string>
+    <string name="orders_scheduled">Oferta programada… Puedes cambiar de app</string>
+    <string name="orders_pickup_demo">Simular recojo</string>
+    <string name="orders_reset">Reiniciar demostración</string>
+    <string name="orders_refresh">Actualizar estado</string>
+    <string name="orders_map_missing">Mapa pendiente de configuración</string>
+    <string name="orders_access_error">Tu sesión no permite acceder a las ofertas. Revisa el estado de tu cuenta.</string>
+    <string name="orders_conflict">La oferta venció o cambió. Actualizamos el estado de tus pedidos.</string>
+    <string name="orders_network_error">No pudimos confirmar el estado. Actualiza antes de continuar.</string>
+    <string name="orders_channel">Ofertas de demostración</string>
+    <string name="orders_notification">Tienes una oferta de ejemplo. Ábrela para ver el recorrido y el pago.</string>
+
 </resources>

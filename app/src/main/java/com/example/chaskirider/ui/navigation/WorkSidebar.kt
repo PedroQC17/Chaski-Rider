@@ -47,6 +47,13 @@ fun WorkSidebar(route: String?, unread: Int, busy: Boolean, onNavigate: (String)
                 badge = { if (target == Screen.Notifications.route && unread > 0) Badge(containerColor = Orange) { Text(unread.toString()) } },
                 colors = colors, shape = RoundedCornerShape(14.dp), modifier = Modifier.padding(horizontal = 12.dp, vertical = 3.dp).height(52.dp))
         }
+        if (com.example.chaskirider.BuildConfig.DEBUG) NavigationDrawerItem(
+            label = { Text(stringResource(R.string.orders_demo), fontSize = 14.sp) },
+            selected = route == Screen.DemoOrders.route,
+            onClick = { onNavigate(Screen.DemoOrders.route) },
+            icon = { Icon(Icons.Default.Place, null, Modifier.size(21.dp)) },
+            colors = colors, shape = RoundedCornerShape(14.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 3.dp).height(52.dp))
         Spacer(Modifier.weight(1f))
         HorizontalDivider(Modifier.padding(horizontal = 20.dp), color = BorderLight)
         TextButton(onClick = onLogout, enabled = !busy, modifier = Modifier.padding(16.dp)) {
