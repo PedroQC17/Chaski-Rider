@@ -225,4 +225,6 @@
     <string name="registration_review_badge">En revisión</string>
     <string name="registration_disabled_title">Cuenta desactivada</string>
     <string name="registration_disabled_body">Tu cuenta no está disponible para realizar repartos.</string>
+    <string name="password_show">Mostrar contraseña</string>
+    <string name="password_hide">Ocultar contraseña</string>
 </resources>

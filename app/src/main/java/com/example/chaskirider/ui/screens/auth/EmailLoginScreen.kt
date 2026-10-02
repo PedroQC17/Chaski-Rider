@@ -41,13 +41,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.chaskirider.ui.components.EyeIcon
-import com.example.chaskirider.ui.components.EyeOffIcon
+import com.example.chaskirider.ui.components.PasswordField
 import com.example.chaskirider.ui.theme.BackgroundLight
 import com.example.chaskirider.ui.theme.BorderLight
 import com.example.chaskirider.ui.theme.ChaskiRiderTheme
@@ -74,7 +71,6 @@ fun EmailLoginScreen(
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
 
     var showResetDialog by remember { mutableStateOf(false) }
     var resetEmail by remember { mutableStateOf("") }
@@ -125,39 +121,8 @@ fun EmailLoginScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text(stringResource(R.string.text_contrasena)) },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Default.Lock,
-                    contentDescription = stringResource(R.string.text_contrasena),
-                    tint = TextMuted
-                )
-            },
-            trailingIcon = {
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    if (passwordVisible) {
-                        EyeOffIcon(color = TextMuted)
-                    } else {
-                        EyeIcon(color = TextMuted)
-                    }
-                }
-            },
-            singleLine = true,
-            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Password,
-                imeAction = ImeAction.Done
-            ),
-            shape = RoundedCornerShape(12.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Orange,
-                unfocusedBorderColor = BorderLight
-            ),
-            modifier = Modifier.fillMaxWidth()
-        )
+        PasswordField(password, { password = it }, stringResource(R.string.text_contrasena),
+            enabled = !isLoading, imeAction = ImeAction.Done)
 
         Row(
             modifier = Modifier

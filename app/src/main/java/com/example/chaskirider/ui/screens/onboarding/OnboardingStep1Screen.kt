@@ -15,6 +15,7 @@ import androidx.compose.ui.text.input.*
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.chaskirider.R
+import com.example.chaskirider.ui.components.PasswordField
 import com.example.chaskirider.ui.components.OnboardingHeader
 import com.example.chaskirider.ui.theme.*
 
@@ -43,10 +44,10 @@ fun OnboardingStep1Screen(
             OutlinedTextField(state.email, {}, readOnly = true, label = { Text(stringResource(R.string.text_correo_electronico)) },
                 singleLine = true, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp))
             if (state.needsPassword) {
-                PersonalInput(state.password, R.string.registration_new_password, !state.isLoading,
-                    { onChange(PersonalField.PASSWORD, it) }, KeyboardType.Password)
-                PersonalInput(state.confirmation, R.string.text_confirmar_contrasena, !state.isLoading,
-                    { onChange(PersonalField.CONFIRMATION, it) }, KeyboardType.Password)
+                PasswordField(state.password, { onChange(PersonalField.PASSWORD, it) },
+                    stringResource(R.string.registration_new_password), enabled = !state.isLoading)
+                PasswordField(state.confirmation, { onChange(PersonalField.CONFIRMATION, it) },
+                    stringResource(R.string.text_confirmar_contrasena), enabled = !state.isLoading, imeAction = ImeAction.Done)
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(state.termsAccepted, onTermsChange, enabled = !state.isLoading,
@@ -70,8 +71,7 @@ private fun PersonalInput(value: String, label: Int, enabled: Boolean, onChange:
     keyboard: KeyboardType = KeyboardType.Text) {
     OutlinedTextField(value, onChange, label = { Text(stringResource(label)) }, enabled = enabled,
         singleLine = true, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
-        keyboardOptions = KeyboardOptions(keyboardType = keyboard, imeAction = ImeAction.Next),
-        visualTransformation = if (keyboard == KeyboardType.Password) PasswordVisualTransformation() else VisualTransformation.None)
+        keyboardOptions = KeyboardOptions(keyboardType = keyboard, imeAction = ImeAction.Next))
 }
 
 @Preview(showBackground = true)
