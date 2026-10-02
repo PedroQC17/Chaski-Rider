@@ -1,9 +1,6 @@
 package com.example.chaskirider.ui.navigation
 
-import android.content.Intent
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -24,6 +21,7 @@ import com.example.chaskirider.ui.screens.notifications.*
 import com.example.chaskirider.ui.screens.onboarding.*
 import com.example.chaskirider.ui.screens.profile.*
 import com.example.chaskirider.ui.screens.profile.documents.DocumentsViewModel
+import com.example.chaskirider.ui.screens.profile.documents.DocumentPreviewHost
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
@@ -37,6 +35,9 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
     val drawerState = rememberDrawerState(DrawerValue.Closed)
 
     val profileViewModel: RiderProfileViewModel = viewModel { RiderProfileViewModel(AppContainer.textProvider, AppContainer.riderProfileRepository, AppContainer.riderSession) }
+    val personalViewModel: PersonalRegistrationViewModel = viewModel { PersonalRegistrationViewModel(
+        AppContainer.authRepository, AppContainer.riderProfileRepository, AppContainer.riderSession, AppContainer.textProvider) }
+    val personalState by personalViewModel.uiState.collectAsStateWithLifecycle()
     val profileState by profileViewModel.uiState.collectAsStateWithLifecycle()
     val documentsViewModel: DocumentsViewModel = viewModel { DocumentsViewModel(AppContainer.textProvider, AppContainer.documentRepository, AppContainer.riderSession) }
     val documentsState by documentsViewModel.uiState.collectAsStateWithLifecycle()
@@ -53,9 +54,18 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
     val route = entry?.destination?.route
     val user = state.currentUser
 
+    if (!state.initialized) {
+        SessionLoadingScreen(state, authViewModel::checkCurrentUser)
+        return
+    }
+
     LaunchedEffect(state.initialized, user?.id, user?.status, route) {
         if (!state.initialized) return@LaunchedEffect
-        if (user != null && (route == Screen.Access.route || route == Screen.EmailLogin.route)) {
+        if (route == Screen.Startup.route) {
+            navController.navigate(user?.let(::destination) ?: Screen.Access.route) {
+                popUpTo(Screen.Startup.route) { inclusive = true }; launchSingleTop = true
+            }
+        } else if (user != null && (route == Screen.Access.route || route == Screen.EmailLogin.route)) {
             navController.navigate(destination(user)) { popUpTo(navController.graph.id) { inclusive = true }; launchSingleTop = true }
         } else if (user == null && route != null && route !in listOf(Screen.Access.route, Screen.EmailLogin.route)) {
             navController.navigate(Screen.Access.route) { popUpTo(navController.graph.id) { inclusive = true } }
@@ -78,16 +88,9 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
                 onLogout = { scope.launch { drawerState.close(); authViewModel.logout() } }
             )
         }) {
-    Scaffold(topBar = {
-        if (route == Screen.Profile.route && workArea) {
-            Row(Modifier.fillMaxWidth().statusBarsPadding()) {
-                IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                    Icon(Icons.Default.Menu, stringResource(R.string.home_open_menu))
-                }
-            }
-        }
-    }, contentWindowInsets = WindowInsets(0, 0, 0, 0)) { padding ->
-        NavHost(navController, startDestination = Screen.Access.route, modifier = Modifier.padding(padding)) {
+    Scaffold(contentWindowInsets = WindowInsets(0, 0, 0, 0)) { padding ->
+        NavHost(navController, startDestination = Screen.Startup.route, modifier = Modifier.padding(padding)) {
+            composable(Screen.Startup.route) { SessionLoadingScreen(state, authViewModel::checkCurrentUser) }
             composable(Screen.Access.route) {
                 AccessScreen(
                     onGoogleSignInClick = {
@@ -117,11 +120,10 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
             }
             composable(Screen.OnboardingStep1.route) {
                 user?.let {
-                    OnboardingStep1Screen(user = it,
+                    OnboardingStep1Screen(state = personalState,
+                        onChange = personalViewModel::change, onTermsChange = personalViewModel::acceptTerms,
                         onNavigateBack = { authViewModel.logout() },
-                        onContinueClick = { n, l, d, p, t ->
-                            profileViewModel.saveStep1PersonalData(n,l,d,p,t) { navController.navigate(Screen.OnboardingStep2.route) }
-                        }, isLoading = profileState.isLoading, errorMessage = profileState.errorMessage)
+                        onContinue = { personalViewModel.save { navController.navigate(Screen.OnboardingStep2.route) } })
                 }
             }
             composable(Screen.OnboardingStep2.route) {
@@ -137,16 +139,12 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
                     OnboardingStep3Screen(vehicleType = it.vehicleType, initialBankInfo = it.bankInfo,
                         onNavigateBack = { profileViewModel.clearError(); documentsViewModel.clearError(); navController.navigate(Screen.OnboardingStep2.route) { launchSingleTop = true } },
                         onDocumentPick = documentsViewModel::uploadDocument,
-                        onDocumentView = { type -> documentsViewModel.openDocument(type) { uri ->
-                            try { context.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(uri, context.contentResolver.getType(uri)).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)) }
-                            catch (_: Exception) { documentsViewModel.reportError(context.getString(R.string.text_no_hay_una_aplicacion_disponible_para_abrir)) }
-                        } },
-                        onSaveBank = profileViewModel::saveBank,
+                        onDocumentView = documentsViewModel::openDocument,
                         onFinishRegistrationClick = { b,h,a,c -> profileViewModel.finishRegistration(b,h,a,c) {
                             navController.navigate(Screen.RegistrationStatus.route) { popUpTo(navController.graph.id) { inclusive = true } }
                         } },
                         documentsMap = documentsState.documentsMap, isLoading = profileState.isLoading || documentsState.isLoading,
-                        errorMessage = documentsState.errorMessage ?: profileState.errorMessage, successMessage = profileState.message)
+                        errorMessage = documentsState.errorMessage ?: profileState.errorMessage)
                 }
             }
             composable(Screen.RegistrationStatus.route) {
@@ -156,7 +154,6 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
                         onGoToHomeClick = { if (it.status == RegistrationStatus.APPROVED && it.isEnabled) navController.navigate(Screen.Home.route) },
                         onLogoutClick = { authViewModel.logout() },
                         onRefresh = authViewModel::checkCurrentUser,
-                        onConfigurePassword = { authViewModel.clearError(); passwordDialog = true },
                         isLoading = state.isLoading, errorMessage = state.errorMessage)
                 }
             }
@@ -166,6 +163,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
             composable(Screen.Profile.route) {
                 user?.let {
                     ProfileScreen(user = it,
+                        onOpenMenu = { scope.launch { drawerState.open() } },
                         onPersonalDataClick = { profileViewModel.clearError(); navController.navigate(Screen.ProfilePersonalData.route) },
                         onVehicleClick = { profileViewModel.clearError(); navController.navigate(Screen.ProfileVehicle.route) },
                         onDocumentsClick = { profileViewModel.clearError(); navController.navigate(Screen.ProfileDocuments.route) },
@@ -201,10 +199,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
                         documentsMap = documentsState.documentsMap,
                         onNavigateBack = { profileViewModel.clearError(); documentsViewModel.clearError(); navController.popBackStack() },
                         onDocumentPick = documentsViewModel::uploadDocument,
-                        onDocumentView = { type -> documentsViewModel.openDocument(type) { uri ->
-                            try { context.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(uri, context.contentResolver.getType(uri)).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)) }
-                            catch (_: Exception) { documentsViewModel.reportError(context.getString(R.string.text_no_hay_una_aplicacion_disponible_para_abrir)) }
-                        } },
+                        onDocumentView = documentsViewModel::openDocument,
                         isLoading = profileState.isLoading || documentsState.isLoading, errorMessage = documentsState.errorMessage ?: profileState.errorMessage)
                 }
             }
@@ -223,6 +218,9 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
     }
 
 
+    documentsState.previewUri?.let { uri ->
+        DocumentPreviewHost(uri, documentsViewModel::dismissPreview, documentsViewModel::reportError)
+    }
     if (recovery) AlertDialog(onDismissRequest = { if (!state.isLoading) recovery = false },
         title = { Text(stringResource(R.string.text_recuperar_contrasena)) },
         text = { Column {

@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,25 +39,12 @@ fun OnboardingHeader(
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
-        IconButton(onClick = onNavigateBack) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(R.string.text_atras),
-                tint = TextDark
-            )
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = stringResource(R.string.text_crear_cuenta),
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            color = TextDark
+        AppHeader(
+            title = stringResource(R.string.text_crear_cuenta),
+            onNavigate = onNavigateBack
         )
 
         Spacer(modifier = Modifier.height(4.dp))
-
         Text(
             text = stringResource(R.string.text_paso_value_de_3, currentStep),
             fontSize = 14.sp,

@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
@@ -54,12 +56,10 @@ fun OnboardingStep3Screen(
     onNavigateBack: () -> Unit = {},
     onDocumentPick: (String, Uri) -> Unit = { _, _ -> },
     onDocumentView: (String) -> Unit = {},
-    onSaveBank: (BankInfo) -> Unit = {},
     onFinishRegistrationClick: (String, String, String, String) -> Unit = { _, _, _, _ -> },
     documentsMap: Map<String, DocumentFile> = emptyMap(),
     isLoading: Boolean = false,
-    errorMessage: String? = null,
-    successMessage: String? = null
+    errorMessage: String? = null
 ) {
     var bank by rememberSaveable { mutableStateOf(initialBankInfo.bankName) }
     var holder by rememberSaveable { mutableStateOf(initialBankInfo.holderName) }
@@ -90,27 +90,20 @@ fun OnboardingStep3Screen(
         Spacer(Modifier.height(14.dp))
         Text(stringResource(R.string.text_informacion_bancaria), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextDark)
         Text(stringResource(R.string.text_la_cuenta_donde_recibiras_tus_pagos), fontSize = 13.sp, color = TextMuted)
-        OutlinedTextField(bank, { bank = it }, label = { Text(stringResource(R.string.text_banco)) }, enabled = !isLoading,
-            singleLine = true, modifier = Modifier.fillMaxWidth())
+        BankSelector(bank, !isLoading) { bank = it }
         OutlinedTextField(holder, { holder = it }, label = { Text(stringResource(R.string.text_titular_de_la_cuenta)) }, enabled = !isLoading,
             singleLine = true, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(account, { account = it }, label = { Text(stringResource(R.string.text_numero_de_cuenta)) }, enabled = !isLoading,
             singleLine = true, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(cci, { cci = it.filter { c -> c in '0'..'9' }.take(20) },
-            label = { Text(stringResource(R.string.text_cci_20_digitos_opcional_si_ingresas_cuenta)) }, enabled = !isLoading,
+            label = { Text(stringResource(R.string.registration_cci)) }, enabled = !isLoading,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             singleLine = true, modifier = Modifier.fillMaxWidth())
-        TextButton(onClick = { onSaveBank(BankInfo(bank, holder, account, cci)) }, enabled = !isLoading) {
-            Text(stringResource(R.string.text_guardar_datos_bancarios))
-        }
         DocumentRow(stringResource(R.string.text_estado_de_cuenta), documentsMap["bankStatement"], !isLoading,
             onPick = { selectedType = "bankStatement"; picker.launch(RegistrationValidation.mimeTypes) },
             onView = { onDocumentView("bankStatement") })
         Spacer(Modifier.height(20.dp))
-        Text(stringResource(R.string.text_revisaremos_tu_informacion_podras_consultar_el_resultado),
-            Modifier.fillMaxWidth().background(Color(0xFFFFF7F2), RoundedCornerShape(12.dp)).padding(16.dp),
-            color = TextMuted, fontSize = 13.sp)
         errorMessage?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(vertical = 12.dp)) }
-        successMessage?.let { Text(it, color = TextDark) }
         Spacer(Modifier.height(24.dp))
         Button(onClick = { onFinishRegistrationClick(bank.trim(),holder.trim(),account.trim(),cci.trim()) },
             enabled = !isLoading && required.all { documentsMap[it]?.uploadState == DocumentUploadState.UPLOADED } &&

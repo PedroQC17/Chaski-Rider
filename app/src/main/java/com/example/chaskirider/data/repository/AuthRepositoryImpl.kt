@@ -40,6 +40,7 @@ class AuthRepositoryImpl(
         }
         user.linkWithCredential(EmailAuthProvider.getCredential(
             user.email ?: error(texts.get(TextKey.TEXT_LA_CUENTA_NO_TIENE_CORREO)), password)).await()
+        session.update(session.user.value?.copy(hasPassword = true))
         Unit
     }
     override suspend fun logout() {

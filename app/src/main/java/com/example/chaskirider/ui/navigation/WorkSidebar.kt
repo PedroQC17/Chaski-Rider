@@ -55,7 +55,7 @@ fun WorkSidebar(
                 .padding(horizontal = 20.dp, vertical = 24.dp)
         ) {
             Image(
-                painter = painterResource(R.mipmap.ic_launcher),
+                painter = painterResource(R.drawable.ic_launcher_foreground),
                 contentDescription = "Logo",
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.size(44.dp)

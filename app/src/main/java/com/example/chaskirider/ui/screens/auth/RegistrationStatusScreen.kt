@@ -1,81 +1,31 @@
 package com.example.chaskirider.ui.screens.auth
 
-import com.example.chaskirider.R
-import androidx.compose.ui.res.stringResource
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.chaskirider.R
 import com.example.chaskirider.domain.model.RegistrationStatus
 import com.example.chaskirider.domain.model.RiderUser
-import com.example.chaskirider.domain.model.VehicleType
-import com.example.chaskirider.ui.theme.BackgroundLight
-import com.example.chaskirider.ui.theme.ChaskiRiderTheme
-import com.example.chaskirider.ui.theme.Orange
-import com.example.chaskirider.ui.theme.TextDark
-import com.example.chaskirider.ui.theme.TextMuted
-
-@Preview(name = "Estado de Registro - En Revisión", showBackground = true, showSystemUi = true)
-@Composable
-fun RegistrationStatusPendingPreview() {
-    ChaskiRiderTheme {
-        RegistrationStatusScreen(
-            user = RiderUser(
-                id = "123",
-                name = "Ana",
-                lastName = "García",
-                email = "ana.garcia@example.com",
-                status = RegistrationStatus.PENDING_REVIEW,
-                vehicleType = VehicleType.MOTORCYCLE
-            )
-        )
-    }
-}
-
-@Preview(name = "Estado de Registro - Aprobado", showBackground = true, showSystemUi = true)
-@Composable
-fun RegistrationStatusApprovedPreview() {
-    ChaskiRiderTheme {
-        RegistrationStatusScreen(
-            user = RiderUser(
-                id = "123",
-                name = "Ana",
-                lastName = "García",
-                email = "ana.garcia@example.com",
-                status = RegistrationStatus.APPROVED,
-                isEnabled = true,
-                vehicleType = VehicleType.MOTORCYCLE
-            )
-        )
-    }
-}
+import com.example.chaskirider.ui.theme.*
 
 @Composable
 fun RegistrationStatusScreen(
@@ -84,222 +34,88 @@ fun RegistrationStatusScreen(
     onGoToHomeClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
     onRefresh: () -> Unit = {},
-    onConfigurePassword: () -> Unit = {},
     isLoading: Boolean = false,
     errorMessage: String? = null
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BackgroundLight)
-            .systemBarsPadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp, vertical = 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween
-    ) {
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            when (user.status) {
-                RegistrationStatus.PENDING_REVIEW -> {
-                    Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = stringResource(R.string.text_pendiente),
-                        tint = Orange,
-                        modifier = Modifier.size(80.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    Text(
-                        text = stringResource(R.string.text_registro_en_revision),
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextDark,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(
-                        text = stringResource(R.string.text_recibimos_tu_informacion_revisaremos_tus_documentos_y),
-                        fontSize = 15.sp,
-                        color = TextMuted,
-                        textAlign = TextAlign.Center,
-                        lineHeight = 22.sp
-                    )
+    Surface(color = Color.White, modifier = Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().systemBarsPadding().verticalScroll(rememberScrollState())
+            .padding(horizontal = 28.dp, vertical = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(stringResource(R.string.app_name), color = Orange,
+                style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(24.dp))
+            if (user.status == RegistrationStatus.PENDING_REVIEW) {
+                Image(painterResource(R.drawable.registration_review), null,
+                    Modifier.fillMaxWidth().heightIn(max = 290.dp).aspectRatio(1f), contentScale = ContentScale.Fit)
+                Surface(color = Color(0xFFFFF0E8), shape = RoundedCornerShape(50)) {
+                    Text(stringResource(R.string.registration_review_badge), color = Orange,
+                        style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
                 }
-
-                RegistrationStatus.NEEDS_CORRECTION -> {
-                    Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = stringResource(R.string.text_observado),
-                        tint = Color(0xFFD32F2F),
-                        modifier = Modifier.size(80.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    Text(
-                        text = stringResource(R.string.text_tu_registro_requiere_correcciones),
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextDark,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(
-                        text = if (user.rejectionReason.isNotBlank()) {
-                            stringResource(R.string.text_motivo_value, user.rejectionReason)
-                        } else {
-                            stringResource(R.string.text_un_revisor_ha_detectado_inconsistencias_en_tus)
-                        },
-                        fontSize = 15.sp,
-                        color = TextMuted,
-                        textAlign = TextAlign.Center,
-                        lineHeight = 22.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    Button(
-                        onClick = onResumeRegistrationClick,
-                        enabled = !isLoading,
-                        shape = CircleShape,
-                        colors = ButtonDefaults.buttonColors(containerColor = Orange),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.text_corregir_informacion),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                }
-
-                RegistrationStatus.APPROVED -> {
-                    Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        contentDescription = stringResource(R.string.text_aprobado),
-                        tint = Color(0xFF2E7D32),
-                        modifier = Modifier.size(80.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    Text(
-                        text = stringResource(R.string.text_cuenta_aprobada),
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextDark,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(
-                        text = stringResource(R.string.text_felicidades_tu_perfil_ha_sido_verificado_ya),
-                        fontSize = 15.sp,
-                        color = TextMuted,
-                        textAlign = TextAlign.Center,
-                        lineHeight = 22.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    Button(
-                        onClick = onGoToHomeClick,
-                        enabled = user.isEnabled && !isLoading,
-                        shape = CircleShape,
-                        colors = ButtonDefaults.buttonColors(containerColor = Orange),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.text_ir_al_panel_principal),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                }
-
-                RegistrationStatus.INCOMPLETE -> {
-                    Icon(
-                        imageVector = Icons.Default.Lock,
-                        contentDescription = stringResource(R.string.status_incomplete),
-                        tint = Orange,
-                        modifier = Modifier.size(80.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    Text(
-                        text = stringResource(R.string.text_registro_incompleto),
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextDark,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(
-                        text = stringResource(R.string.text_aun_tienes_datos_o_documentos_pendientes_por),
-                        fontSize = 15.sp,
-                        color = TextMuted,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    Button(
-                        onClick = onResumeRegistrationClick,
-                        enabled = !isLoading,
-                        shape = CircleShape,
-                        colors = ButtonDefaults.buttonColors(containerColor = Orange),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.text_continuar_registro),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
+                Spacer(Modifier.height(20.dp))
+                StatusMessage(stringResource(R.string.registration_received_title), stringResource(R.string.registration_received_body))
+            } else {
+                Spacer(Modifier.height(48.dp))
+                Icon(when {
+                    !user.isEnabled -> Icons.Default.Lock
+                    user.status == RegistrationStatus.APPROVED -> Icons.Default.CheckCircle
+                    user.status == RegistrationStatus.INCOMPLETE -> Icons.Default.Lock
+                    else -> Icons.Default.Info
+                }, null, Modifier.size(80.dp), tint = Orange)
+                Spacer(Modifier.height(24.dp))
+                when {
+                    !user.isEnabled -> StatusMessage(stringResource(R.string.registration_disabled_title), stringResource(R.string.registration_disabled_body))
+                    user.status == RegistrationStatus.APPROVED -> StatusMessage(stringResource(R.string.text_cuenta_aprobada), stringResource(R.string.text_felicidades_tu_perfil_ha_sido_verificado_ya))
+                    user.status == RegistrationStatus.NEEDS_CORRECTION -> StatusMessage(stringResource(R.string.text_tu_registro_requiere_correcciones),
+                        if (user.rejectionReason.isNotBlank()) user.rejectionReason else stringResource(R.string.text_un_revisor_ha_detectado_inconsistencias_en_tus))
+                    else -> StatusMessage(stringResource(R.string.text_registro_incompleto), stringResource(R.string.text_aun_tienes_datos_o_documentos_pendientes_por))
                 }
             }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        errorMessage?.let { Text(it, color = Color.Red) }
-        androidx.compose.material3.TextButton(onClick = onRefresh, enabled = !isLoading) { Text(stringResource(R.string.text_actualizar_estado)) }
-        androidx.compose.material3.TextButton(onClick = onConfigurePassword, enabled = !isLoading) { Text(stringResource(R.string.text_configurar_contrasena)) }
-
-        OutlinedButton(
-            onClick = onLogoutClick,
-            enabled = !isLoading,
-            shape = CircleShape,
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = TextDark),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.text_cerrar_sesion),
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium
-            )
+            Spacer(Modifier.height(32.dp))
+            errorMessage?.let {
+                Text(it, color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
+                Spacer(Modifier.height(12.dp))
+            }
+            Button(onClick = {
+                when {
+                    !user.isEnabled -> onRefresh()
+                    user.status == RegistrationStatus.APPROVED -> onGoToHomeClick()
+                    user.status == RegistrationStatus.NEEDS_CORRECTION || user.status == RegistrationStatus.INCOMPLETE -> onResumeRegistrationClick()
+                    else -> onRefresh()
+                }
+            }, enabled = !isLoading, modifier = Modifier.fillMaxWidth().height(54.dp),
+                shape = RoundedCornerShape(16.dp), colors = ButtonDefaults.buttonColors(containerColor = Orange)) {
+                if (isLoading) CircularProgressIndicator(Modifier.size(22.dp), color = Color.White, strokeWidth = 2.dp)
+                else Text(stringResource(when {
+                    !user.isEnabled -> R.string.text_actualizar_estado
+                    user.status == RegistrationStatus.APPROVED -> R.string.text_ir_al_panel_principal
+                    user.status == RegistrationStatus.NEEDS_CORRECTION -> R.string.text_corregir_informacion
+                    user.status == RegistrationStatus.INCOMPLETE -> R.string.text_continuar_registro
+                    else -> R.string.text_actualizar_estado
+                }))
+            }
+            Spacer(Modifier.height(8.dp))
+            TextButton(onClick = onLogoutClick, enabled = !isLoading) {
+                Text(stringResource(R.string.text_cerrar_sesion), color = TextMuted)
+            }
         }
     }
+}
+
+@Composable
+private fun StatusMessage(title: String, description: String) {
+    Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold,
+        color = TextDark, textAlign = TextAlign.Center)
+    Spacer(Modifier.height(12.dp))
+    Text(description, fontSize = 15.sp, lineHeight = 23.sp, color = TextMuted, textAlign = TextAlign.Center)
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+private fun RegistrationStatusPendingPreview() {
+    ChaskiRiderTheme { RegistrationStatusScreen(RiderUser(status = RegistrationStatus.PENDING_REVIEW)) }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun RegistrationStatusApprovedPreview() {
+    ChaskiRiderTheme { RegistrationStatusScreen(RiderUser(status = RegistrationStatus.APPROVED)) }
 }

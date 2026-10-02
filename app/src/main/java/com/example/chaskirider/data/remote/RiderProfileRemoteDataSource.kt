@@ -22,10 +22,11 @@ class RiderProfileRemoteDataSource(
         val user = auth.currentUser ?: error(texts.get(TextKey.TEXT_NO_HAY_UNA_SESION_ACTIVA))
 
         val snapshot = db.collection("riders").document(user.uid).get(Source.SERVER).await()
-        val rider = snapshot.toObject(RiderUser::class.java)?.copy(id = user.uid, email = user.email.orEmpty())
+        val profile = snapshot.toObject(RiderUser::class.java)?.copy(id = user.uid, email = user.email.orEmpty())
             ?: RiderUser(id = user.uid, email = user.email.orEmpty(),
                 name = user.displayName?.substringBefore(" ").orEmpty(),
                 lastName = user.displayName?.substringAfter(" ", "").orEmpty())
+        val rider = profile.copy(hasPassword = user.providerData.any { it.providerId == EmailAuthProvider.PROVIDER_ID })
         check(auth.currentUser?.uid == user.uid) { texts.get(TextKey.TEXT_LA_SESION_CAMBIO_VUELVE_A_INGRESAR) }
         session.update(rider)
         return rider

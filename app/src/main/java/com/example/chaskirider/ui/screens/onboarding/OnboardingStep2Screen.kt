@@ -121,14 +121,6 @@ fun OnboardingStep2Screen(
             onClick = { selectedVehicle = VehicleType.MOTORCYCLE }
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        VehicleOptionCard(
-            title = stringResource(R.string.text_automovil),
-            imageRes = R.drawable.vehicle_car,
-            isSelected = selectedVehicle == VehicleType.CAR,
-            onClick = { selectedVehicle = VehicleType.CAR }
-        )
 
         if (errorMessage != null) {
             Spacer(modifier = Modifier.height(16.dp))
@@ -144,7 +136,7 @@ fun OnboardingStep2Screen(
 
         Button(
             onClick = { onContinueClick(selectedVehicle) },
-            enabled = !isLoading && selectedVehicle != VehicleType.NONE,
+            enabled = !isLoading && selectedVehicle in listOf(VehicleType.BICYCLE, VehicleType.MOTORCYCLE),
             shape = CircleShape,
             colors = ButtonDefaults.buttonColors(
                 containerColor = Orange,

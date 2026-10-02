@@ -1,5 +1,6 @@
 package com.example.chaskirider.ui.screens.auth
 
+import com.example.chaskirider.ui.components.AppHeader
 import com.example.chaskirider.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
@@ -18,7 +19,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.AlertDialog
@@ -87,25 +87,7 @@ fun EmailLoginScreen(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 12.dp)
     ) {
-        IconButton(
-            onClick = onNavigateBack,
-            modifier = Modifier.padding(top = 8.dp)
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(R.string.text_volver),
-                tint = TextDark
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = stringResource(R.string.text_ingresar_con_correo),
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            color = TextDark
-        )
+        AppHeader(title = stringResource(R.string.text_ingresar_con_correo), onNavigate = onNavigateBack)
 
         Spacer(modifier = Modifier.height(8.dp))
 

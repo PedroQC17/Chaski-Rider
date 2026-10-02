@@ -29,7 +29,7 @@ class AuthViewModel(
         if (_uiState.value.isLoading) return
         _uiState.update { it.copy(isLoading = true, errorMessage = null) }
         viewModelScope.launch {
-            repository.getCurrentUser().onSuccess { acceptUser(it) }.onFailure { failure(it); _uiState.update { s -> s.copy(initialized = true) } }
+            repository.getCurrentUser().onSuccess { acceptUser(it) }.onFailure { failure(it) }
         }
     }
     private fun failure(error: Throwable) {

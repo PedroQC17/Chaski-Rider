@@ -57,12 +57,13 @@ class DocumentsViewModel(
             }
         }
     }
-    fun openDocument(docType: String, onReady: (Uri) -> Unit) {
+    fun dismissPreview() { _uiState.update { it.copy(previewUri = null) } }
+    fun openDocument(docType: String) {
         if (_uiState.value.isLoading) return
         _uiState.update { it.copy(isLoading = true, errorMessage = null) }
         viewModelScope.launch {
             repository.getDocument(docType).onSuccess { uri ->
-                _uiState.update { it.copy(isLoading = false) }; onReady(uri)
+                _uiState.update { it.copy(isLoading = false, previewUri = uri) }
             }.onFailure { failure(it) }
         }
     }

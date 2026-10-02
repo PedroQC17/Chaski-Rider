@@ -20,10 +20,10 @@ suspend fun <T> firebaseResult(texts: TextProvider, block: suspend () -> T): Res
                     texts.get(TextKey.TEXT_FIREBASE_NO_PERMITE_CONSULTAR_TU_PERFIL_REVISA)
                 else -> texts.get(TextKey.TEXT_NO_SE_PUDO_CARGAR_TU_PERFIL_DE)
             }
+            is FirebaseAuthWeakPasswordException -> texts.get(TextKey.TEXT_LA_CONTRASENA_NO_CUMPLE_LA_POLITICA_DE)
             is FirebaseAuthInvalidCredentialsException, is FirebaseAuthInvalidUserException -> texts.get(TextKey.TEXT_CORREO_O_CONTRASENA_INCORRECTOS)
             is FirebaseAuthUserCollisionException -> texts.get(TextKey.TEXT_LA_CREDENCIAL_YA_PERTENECE_A_OTRA_CUENTA)
             is FirebaseAuthRecentLoginRequiredException -> texts.get(TextKey.TEXT_POR_SEGURIDAD_CIERRA_SESION_Y_VUELVE_A)
-            is FirebaseAuthWeakPasswordException -> texts.get(TextKey.TEXT_LA_CONTRASENA_NO_CUMPLE_LA_POLITICA_DE)
             is FirebaseFunctionsException -> when (e.code) {
                 FirebaseFunctionsException.Code.NOT_FOUND, FirebaseFunctionsException.Code.UNIMPLEMENTED ->
                     texts.get(TextKey.TEXT_FALTA_DESPLEGAR_EL_SERVICIO_DE_REGISTRO_EN)

@@ -18,9 +18,8 @@ object RegistrationValidation {
         else -> null
     }
     fun bankError(bank: BankInfo): TextKey? = when {
-        bank.bankName.isBlank() || bank.holderName.isBlank() -> TextKey.TEXT_COMPLETA_EL_BANCO_Y_EL_TITULAR
-        bank.accountNumber.isBlank() && bank.cci.isBlank() -> TextKey.TEXT_INGRESA_UN_NUMERO_DE_CUENTA_O_CCI
-        bank.cci.isNotBlank() && !bank.cci.matches(Regex("[0-9]{20}")) -> TextKey.TEXT_EL_CCI_DEBE_TENER_20_DIGITOS
+        bank.bankName !in listOf("BCP", "INTERBANK", "BBVA") || bank.holderName.isBlank() -> TextKey.TEXT_COMPLETA_EL_BANCO_Y_EL_TITULAR
+        !bank.cci.matches(Regex("[0-9]{20}")) -> TextKey.TEXT_EL_CCI_DEBE_TENER_20_DIGITOS
         else -> null
     }
     fun requiredDocuments(vehicle: VehicleType) =
@@ -38,8 +37,9 @@ object RegistrationValidation {
         else -> null
     }
     fun nextStep(user: RiderUser): Int = when {
+        !user.hasPassword -> 1
         personalError(user.name, user.lastName, user.dni, user.phone, user.termsAccepted) != null -> 1
-        user.vehicleType !in listOf(VehicleType.BICYCLE, VehicleType.MOTORCYCLE, VehicleType.CAR) -> 2
+        user.vehicleType !in listOf(VehicleType.BICYCLE, VehicleType.MOTORCYCLE) -> 2
         else -> 3
     }
 }

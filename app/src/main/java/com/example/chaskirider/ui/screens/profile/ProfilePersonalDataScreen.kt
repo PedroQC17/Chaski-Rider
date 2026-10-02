@@ -1,5 +1,6 @@
 package com.example.chaskirider.ui.screens.profile
 
+import com.example.chaskirider.ui.components.AppHeader
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -19,7 +20,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
@@ -97,21 +97,7 @@ fun ProfilePersonalDataScreen(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 12.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onNavigateBack) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.text_volver),
-                    tint = TextDark
-                )
-            }
-            Text(
-                text = stringResource(R.string.text_datos_personales),
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextDark
-            )
-        }
+        AppHeader(title = stringResource(R.string.text_datos_personales), onNavigate = onNavigateBack)
 
         Spacer(modifier = Modifier.height(16.dp))
 

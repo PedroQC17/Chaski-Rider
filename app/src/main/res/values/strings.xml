@@ -128,7 +128,6 @@
     <string name="text_banco">"Banco"</string>
     <string name="text_titular_de_la_cuenta">"Titular de la cuenta"</string>
     <string name="text_numero_de_cuenta">"Número de cuenta"</string>
-    <string name="text_cci_20_digitos_opcional_si_ingresas_cuenta">"CCI (20 dígitos, opcional si ingresas cuenta)"</string>
     <string name="text_guardar_datos_bancarios">"Guardar datos bancarios"</string>
     <string name="text_revisaremos_tu_informacion_podras_consultar_el_resultado">"Revisaremos tu información. Podrás consultar el resultado en la app."</string>
     <string name="text_finalizar_registro">"Finalizar registro"</string>
@@ -158,7 +157,7 @@
     <string name="text_ayuda_y_soporte">"Ayuda y soporte"</string>
     <string name="text_vinculado_a_tu_cuenta_value">"Vinculado a tu cuenta: %1$s"</string>
     <string name="text_sin_vehiculo">"Sin vehículo"</string>
-    <string name="text_selecciona_bicicleta_motocicleta_o_automovil">"Selecciona bicicleta, motocicleta o automóvil"</string>
+    <string name="text_selecciona_bicicleta_motocicleta_o_automovil">"Selecciona bicicleta o motocicleta"</string>
     <string name="text_selecciona_un_vehiculo">"Selecciona un vehículo"</string>
     <string name="text_datos_bancarios_guardados">"Datos bancarios guardados"</string>
     <string name="text_sube_todos_los_documentos_obligatorios_antes_de">"Sube todos los documentos obligatorios antes de enviar"</string>
@@ -214,4 +213,16 @@
     <string name="home_ready">Disponible para recibir pedidos</string>
     <string name="home_expand">Mostrar control de conexión</string>
     <string name="home_collapse">Ocultar control de conexión</string>
+    <string name="registration_new_password">Nueva contraseña</string>
+    <string name="registration_terms">Acepto los Términos y Condiciones y la Política de Privacidad.</string>
+    <string name="registration_cci">CCI</string>
+    <string name="bank_bcp">BCP</string>
+    <string name="bank_interbank">INTERBANK</string>
+    <string name="bank_bbva">BBVA</string>
+    <string name="document_preview">Vista del documento</string>
+    <string name="registration_received_title">¡Documentos enviados!</string>
+    <string name="registration_received_body">Nuestro equipo evaluará tus documentos para activar tu cuenta lo antes posible y que puedas empezar a generar ingresos.</string>
+    <string name="registration_review_badge">En revisión</string>
+    <string name="registration_disabled_title">Cuenta desactivada</string>
+    <string name="registration_disabled_body">Tu cuenta no está disponible para realizar repartos.</string>
 </resources>

@@ -2,6 +2,7 @@
 package com.example.chaskirider.ui.navigation
 
 sealed class Screen(val route: String) {
+    object Startup : Screen("startup")
     object Access : Screen("access")
     object EmailLogin : Screen("email_login")
     object OnboardingStep1 : Screen("onboarding_step_1")

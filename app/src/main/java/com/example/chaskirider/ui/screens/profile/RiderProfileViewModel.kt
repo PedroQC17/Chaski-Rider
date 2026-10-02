@@ -36,35 +36,30 @@ class RiderProfileViewModel(
             action().onSuccess { acceptUser(it); _uiState.update { state -> state.copy(isLoading = false) }; onSuccess(it) }.onFailure { failure(it) }
         }
     }
-    fun saveStep1PersonalData(name: String, lastName: String, dni: String, phone: String, termsAccepted: Boolean, onSuccess: () -> Unit) {
-        RegistrationValidation.personalError(name, lastName, dni, phone, termsAccepted)?.let { reportError(texts.get(it)); return }
-        userAction({ repository.savePersonalData(name, lastName, dni, phone, termsAccepted) }) { onSuccess() }
-    }
     fun updatePersonalData(name: String, lastName: String, dni: String, phone: String, onSuccess: () -> Unit) {
         RegistrationValidation.personalError(name, lastName, dni, phone, true)?.let { reportError(texts.get(it)); return }
         val terms = _uiState.value.currentUser?.termsAccepted ?: true
         userAction({ repository.savePersonalData(name, lastName, dni, phone, terms) }) { onSuccess() }
     }
     fun saveStep2VehicleType(vehicleType: VehicleType, onSuccess: () -> Unit) {
-        if (vehicleType !in listOf(VehicleType.BICYCLE, VehicleType.MOTORCYCLE, VehicleType.CAR)) {
+        if (vehicleType !in listOf(VehicleType.BICYCLE, VehicleType.MOTORCYCLE)) {
             reportError(texts.get(TextKey.TEXT_SELECCIONA_BICICLETA_MOTOCICLETA_O_AUTOMOVIL)); return
         }
         userAction({ repository.saveVehicle(vehicleType) }) { onSuccess() }
     }
     fun updateVehicle(vehicleType: VehicleType, onSuccess: () -> Unit) {
-        if (vehicleType !in listOf(VehicleType.BICYCLE, VehicleType.MOTORCYCLE, VehicleType.CAR)) {
+        if (vehicleType !in listOf(VehicleType.BICYCLE, VehicleType.MOTORCYCLE)) {
             reportError(texts.get(TextKey.TEXT_SELECCIONA_UN_VEHICULO)); return
         }
         userAction({ repository.saveVehicle(vehicleType) }) { onSuccess() }
-    }
-    fun saveBank(bank: BankInfo) {
-        RegistrationValidation.bankError(bank)?.let { reportError(texts.get(it)); return }
-        userAction({ repository.saveBankInfo(bank) }) { _uiState.update { s -> s.copy(message = texts.get(TextKey.TEXT_DATOS_BANCARIOS_GUARDADOS)) } }
     }
     fun finishRegistration(bankName: String, holder: String, account: String, cci: String, onSuccess: () -> Unit) {
         val bank = BankInfo(bankName, holder, account, cci)
         RegistrationValidation.bankError(bank)?.let { reportError(texts.get(it)); return }
         val user = _uiState.value.currentUser ?: return
+        if (user.vehicleType !in listOf(VehicleType.BICYCLE, VehicleType.MOTORCYCLE)) {
+            reportError(texts.get(TextKey.TEXT_SELECCIONA_UN_VEHICULO)); return
+        }
         val required = RegistrationValidation.requiredDocuments(user.vehicleType)
         if (required.any { RegistrationValidation.documentPaths(user)[it].isNullOrBlank() }) {
             reportError(texts.get(TextKey.TEXT_SUBE_TODOS_LOS_DOCUMENTOS_OBLIGATORIOS_ANTES_DE)); return

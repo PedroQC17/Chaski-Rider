@@ -1,6 +1,8 @@
 
 package com.example.chaskirider.ui.screens.profile
 
+import com.example.chaskirider.ui.components.AppHeader
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.ui.res.stringResource
 import com.example.chaskirider.ui.screens.profile.components.*
 import androidx.compose.foundation.background
@@ -89,6 +91,7 @@ fun ProfileApprovedPreview() {
 @Composable
 fun ProfileScreen(
     user: RiderUser,
+    onOpenMenu: () -> Unit = {},
     onPersonalDataClick: (() -> Unit)? = null,
     onVehicleClick: (() -> Unit)? = null,
     onDocumentsClick: (() -> Unit)? = null,
@@ -101,14 +104,10 @@ fun ProfileScreen(
             .background(BackgroundLight)
             .statusBarsPadding()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp, vertical = 24.dp)
+            .padding(horizontal = 24.dp, vertical = 12.dp)
     ) {
-        Text(
-            text = stringResource(R.string.text_mi_perfil),
-            fontSize = 26.sp,
-            fontWeight = FontWeight.Bold,
-            color = TextDark
-        )
+        AppHeader(title = stringResource(R.string.text_mi_perfil), onNavigate = onOpenMenu,
+            navigationIcon = Icons.Default.Menu, navigationDescription = stringResource(R.string.home_open_menu))
 
         Spacer(modifier = Modifier.height(20.dp))
 

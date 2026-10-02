@@ -1,6 +1,7 @@
 
 package com.example.chaskirider.ui.screens.profile
 
+import com.example.chaskirider.ui.components.AppHeader
 import com.example.chaskirider.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
@@ -18,7 +19,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -80,21 +80,7 @@ fun ProfileVehicleScreen(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 12.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onNavigateBack) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.text_volver),
-                    tint = TextDark
-                )
-            }
-            Text(
-                text = stringResource(R.string.text_vehiculos),
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextDark
-            )
-        }
+        AppHeader(title = stringResource(R.string.text_vehiculos), onNavigate = onNavigateBack)
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -131,14 +117,6 @@ fun ProfileVehicleScreen(
             onClick = { selectedVehicle = VehicleType.MOTORCYCLE }
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        VehicleOptionCard(
-            title = stringResource(R.string.text_automovil),
-            imageRes = com.example.chaskirider.R.drawable.vehicle_car,
-            isSelected = selectedVehicle == VehicleType.CAR,
-            onClick = { selectedVehicle = VehicleType.CAR }
-        )
 
         if (errorMessage != null) {
             Spacer(modifier = Modifier.height(16.dp))
@@ -155,7 +133,7 @@ fun ProfileVehicleScreen(
         Button(
             onClick = { onSaveClick(selectedVehicle) },
             enabled = !isLoading &&
-                    selectedVehicle != VehicleType.NONE &&
+                    selectedVehicle in listOf(VehicleType.BICYCLE, VehicleType.MOTORCYCLE) &&
                     selectedVehicle != user.vehicleType,
             shape = CircleShape,
             colors = ButtonDefaults.buttonColors(

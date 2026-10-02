@@ -1,6 +1,7 @@
 
 package com.example.chaskirider.ui.screens.notifications
 
+import com.example.chaskirider.ui.components.AppHeader
 import com.example.chaskirider.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
@@ -22,7 +23,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -80,30 +80,8 @@ fun NotificationsScreen(
             .background(BackgroundLight)
             .statusBarsPadding()
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color.White)
-                    .clickable { onNavigateBack() }
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.text_volver),
-                    tint = TextDark,
-                    modifier = Modifier.size(22.dp)
-                )
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(text = stringResource(R.string.text_notificaciones), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextDark)
-        }
+        AppHeader(title = stringResource(R.string.text_notificaciones), onNavigate = onNavigateBack,
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp))
 
         if (notifications.isEmpty()) {
             EmptyNotifications()

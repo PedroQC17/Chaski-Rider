@@ -1,6 +1,7 @@
 
 package com.example.chaskirider.ui.screens.profile
 
+import com.example.chaskirider.ui.components.AppHeader
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
 import android.Manifest
@@ -27,7 +28,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -232,21 +232,7 @@ fun ProfileDocumentsScreen(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 12.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onNavigateBack) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.text_volver),
-                    tint = TextDark
-                )
-            }
-            Text(
-                text = stringResource(R.string.text_documentos),
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextDark
-            )
-        }
+        AppHeader(title = stringResource(R.string.text_documentos), onNavigate = onNavigateBack)
 
         Spacer(modifier = Modifier.height(8.dp))
 
