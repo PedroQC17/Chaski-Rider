@@ -29,6 +29,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -52,9 +53,8 @@ import com.example.chaskirider.ui.theme.TextMuted
 import com.example.chaskirider.ui.theme.WarningAmber
 
 @Composable
-fun ProfileHeaderCard(user: RiderUser) {
+fun ProfileHeaderCard(user: RiderUser, photoUri: android.net.Uri? = null) {
     val fullName = stringResource(R.string.text_value_value, user.name, user.lastName).trim().ifBlank { stringResource(R.string.text_repartidor) }
-    val initial = user.name.trim().firstOrNull()?.uppercaseChar()?.toString() ?: stringResource(R.string.profile_initial_fallback)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -68,7 +68,10 @@ fun ProfileHeaderCard(user: RiderUser) {
                 .background(Color.White.copy(alpha = 0.25f), CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            Text(text = initial, fontSize = 26.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            if (photoUri != null) coil.compose.SubcomposeAsyncImage(model = photoUri, contentDescription = stringResource(R.string.profile_photo),
+                modifier = Modifier.fillMaxSize().clip(CircleShape), contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                error = { Icon(Icons.Default.Person, null, tint = Color.White) })
+            else Icon(Icons.Default.Person, null, tint = Color.White, modifier = Modifier.size(32.dp))
         }
         Spacer(modifier = Modifier.width(16.dp))
         Column {

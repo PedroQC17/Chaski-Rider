@@ -67,3 +67,11 @@ Esta reorganización separa esas responsabilidades.
 
 No se ejecutaron pruebas, compilación, commits, push ni despliegues durante esta
 reorganización. Se revisaron referencias y diferencias de archivos de forma estática.
+# Actualización del área de perfil — 2 de octubre de 2026
+
+- El perfil aprobado presenta datos personales, vehículo y documentos en modo consulta. `RiderProfileUiState` controla el aviso de solicitud; todavía no se envían solicitudes de modificación.
+- `ProfilePhotoViewModel` y `ProfilePhotoUiState` coordinan captura, previsualización y guardado. `ProfilePhotoRepository` aísla Storage y la función de registro; `PortraitImageProcessor` reduce la imagen y conserva su orientación sin copiar metadatos de cámara.
+- La navegación exige una foto registrada a toda cuenta aprobada antes de entrar al área de trabajo. Se usa la cámara del dispositivo sin selector de galería; no se implementa reconocimiento facial ni prueba de vida.
+- `DocumentPreviewUiState` pertenece a `DocumentsUiState`. `DocumentPreviewRepository` renderiza PDF fuera del hilo principal y entrega páginas como imágenes privadas de caché; el modal abre directamente el documento, admite zoom y páginas.
+- `ChaskiDialog` y los colores del tema mantienen los modales blancos con acentos naranjas. El menú lateral y las notificaciones comparten navegación lateral. El panel de conexión permanece expandido.
+- El servidor rechaza cambios de registro fuera de `INCOMPLETE` / `NEEDS_CORRECTION`. La foto tiene un flujo separado, de una sola asignación, para cuentas aprobadas y habilitadas. La disponibilidad requiere foto.

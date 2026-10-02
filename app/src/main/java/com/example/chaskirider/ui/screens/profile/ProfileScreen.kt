@@ -91,11 +91,11 @@ fun ProfileApprovedPreview() {
 @Composable
 fun ProfileScreen(
     user: RiderUser,
+    photoUri: android.net.Uri? = null,
     onOpenMenu: () -> Unit = {},
     onPersonalDataClick: (() -> Unit)? = null,
     onVehicleClick: (() -> Unit)? = null,
     onDocumentsClick: (() -> Unit)? = null,
-    onNotificationsClick: (() -> Unit)? = null,
     onLogoutClick: () -> Unit = {}
 ) {
     Column(
@@ -111,7 +111,7 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        ProfileHeaderCard(user = user)
+        ProfileHeaderCard(user = user, photoUri = photoUri)
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -144,11 +144,6 @@ fun ProfileScreen(
             ProfileMenuRow(
                 icon = { Icon(painterResource(R.drawable.ic_menu_payment), null, tint = TextMuted, modifier = Modifier.size(22.dp)) },
                 label = stringResource(R.string.text_metodos_de_pago)
-            )
-            ProfileMenuRow(
-                icon = { Icon(Icons.Default.Notifications, null, tint = if (onNotificationsClick != null) TextDark else TextMuted, modifier = Modifier.size(22.dp)) },
-                label = stringResource(R.string.text_notificaciones),
-                onClick = onNotificationsClick
             )
             ProfileMenuRow(
                 icon = { Icon(Icons.Default.Info, null, tint = TextMuted, modifier = Modifier.size(22.dp)) },

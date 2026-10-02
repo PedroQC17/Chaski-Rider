@@ -7,6 +7,7 @@ data class RiderUser(
     val dni: String = "",
     val phone: String = "",
     val email: String = "",
+    val profilePhotoPath: String = "",
     val hasPassword: Boolean = false,
     val vehicleType: VehicleType = VehicleType.NONE,
     val status: RegistrationStatus = RegistrationStatus.INCOMPLETE,

@@ -32,6 +32,7 @@ object RegistrationValidation {
     )
     fun availabilityError(user: RiderUser, activating: Boolean): TextKey? = when {
         !activating -> null
+        user.profilePhotoPath.isBlank() -> TextKey.PROFILE_PHOTO_REQUIRED
         user.status != RegistrationStatus.APPROVED || !user.isEnabled ->
             TextKey.TEXT_SOLO_LOS_REPARTIDORES_HABILITADOS_PUEDEN_ACTIVARSE
         else -> null

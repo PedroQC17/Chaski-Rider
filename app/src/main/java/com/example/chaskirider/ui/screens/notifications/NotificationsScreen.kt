@@ -1,6 +1,7 @@
 
 package com.example.chaskirider.ui.screens.notifications
 
+import androidx.compose.material.icons.filled.Menu
 import com.example.chaskirider.ui.components.AppHeader
 import com.example.chaskirider.R
 import androidx.compose.ui.res.stringResource
@@ -69,7 +70,7 @@ fun NotificationsListPreview() {
 
 @Composable
 fun NotificationsScreen(
-    onNavigateBack: () -> Unit = {},
+    onOpenMenu: () -> Unit = {},
     state: NotificationsUiState = NotificationsUiState()
 ) {
     val notifications = state.notifications
@@ -80,7 +81,8 @@ fun NotificationsScreen(
             .background(BackgroundLight)
             .statusBarsPadding()
     ) {
-        AppHeader(title = stringResource(R.string.text_notificaciones), onNavigate = onNavigateBack,
+        AppHeader(title = stringResource(R.string.text_notificaciones), onNavigate = onOpenMenu, navigationIcon = Icons.Default.Menu,
+            navigationDescription = stringResource(R.string.home_open_menu),
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp))
 
         if (notifications.isEmpty()) {

@@ -54,7 +54,6 @@ fun HomeRoute(viewModel: HomeViewModel, onOpenMenu: () -> Unit) {
         permissions.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
     }
     HomeScreen(state = state, onOpenMenu = onOpenMenu,
-        onTogglePanel = viewModel::togglePanel,
         onToggleAvailability = {
             if (state.user?.isAvailable == true) viewModel.setAvailability(false)
             else if (state.hasLocationPermission) viewModel.setAvailability(true)

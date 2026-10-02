@@ -24,7 +24,9 @@ object AppContainer {
     private val documents by lazy { RiderDocumentDataSource(textProvider, applicationContext, profiles) }
     val authRepository: AuthRepository by lazy { AuthRepositoryImpl(textProvider, profiles, sessionStore) }
     val riderProfileRepository: RiderProfileRepository by lazy { RiderProfileRepositoryImpl(textProvider, profiles) }
+    val profilePhotoRepository: ProfilePhotoRepository by lazy { com.example.chaskirider.data.profile.ProfilePhotoRepositoryImpl(applicationContext, textProvider, profiles) }
     val locationRepository: LocationRepository by lazy { DeviceLocationRepository(applicationContext) }
+    val documentPreviewRepository: DocumentPreviewRepository by lazy { com.example.chaskirider.data.documents.DocumentPreviewRepositoryImpl(applicationContext, textProvider) }
     val documentRepository: DocumentRepository by lazy { DocumentRepositoryImpl(documents) }
     val notificationsRepository: NotificationsRepository by lazy { NotificationsRepositoryImpl() }
 }

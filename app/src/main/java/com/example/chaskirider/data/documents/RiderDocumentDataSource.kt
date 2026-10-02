@@ -25,13 +25,6 @@ class RiderDocumentDataSource(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val storage: FirebaseStorage = FirebaseStorage.getInstance()
 ) {
-    suspend fun createCaptureUri(): Result<Uri> = firebaseResult(texts) {
-        withContext(Dispatchers.IO) {
-            val directory = File(context.cacheDir, "captures").apply { mkdirs() }
-            val file = File.createTempFile("capture-", ".jpg", directory)
-            FileProvider.getUriForFile(context, "${context.packageName}.files", file)
-        }
-    }
     suspend fun uploadDocument(docType: String, uri: Uri) = firebaseResult(texts) {
         val uid = auth.currentUser?.uid ?: error(texts.get(TextKey.TEXT_NO_HAY_UNA_SESION_ACTIVA))
         require(docType in listOf("dniFront", "dniBack", "bankStatement", "driverLicense", "soat"))

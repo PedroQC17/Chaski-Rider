@@ -35,11 +35,12 @@ class AuthRepositoryImpl(
     }
     override suspend fun linkPassword(password: String) = firebaseResult(texts) {
         val user = auth.currentUser ?: error(texts.get(TextKey.TEXT_NO_HAY_UNA_SESION_ACTIVA))
-        require(user.providerData.none { it.providerId == EmailAuthProvider.PROVIDER_ID }) {
-            texts.get(TextKey.TEXT_YA_TIENES_UNA_CONTRASENA_CONFIGURADA_USA_LA)
+        if (user.providerData.any { it.providerId == EmailAuthProvider.PROVIDER_ID }) {
+            user.updatePassword(password).await()
+        } else {
+            user.linkWithCredential(EmailAuthProvider.getCredential(
+                user.email ?: error(texts.get(TextKey.TEXT_LA_CUENTA_NO_TIENE_CORREO)), password)).await()
         }
-        user.linkWithCredential(EmailAuthProvider.getCredential(
-            user.email ?: error(texts.get(TextKey.TEXT_LA_CUENTA_NO_TIENE_CORREO)), password)).await()
         session.update(session.user.value?.copy(hasPassword = true))
         Unit
     }

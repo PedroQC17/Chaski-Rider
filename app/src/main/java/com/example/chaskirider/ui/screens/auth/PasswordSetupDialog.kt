@@ -1,46 +1,36 @@
 package com.example.chaskirider.ui.screens.auth
 
-import com.example.chaskirider.R
-import androidx.compose.ui.res.stringResource
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import com.example.chaskirider.ui.components.PasswordField
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.tooling.preview.Preview
-import com.example.chaskirider.ui.theme.ChaskiRiderTheme
-
-@Preview(name = "Diálogo Configurar Contraseña", showBackground = true)
-@Composable
-fun PasswordSetupDialogPreview() {
-    ChaskiRiderTheme {
-        PasswordSetupDialog(
-            email = "usuario@example.com",
-            isLoading = false,
-            error = null,
-            message = null,
-            onSave = { _, _ -> },
-            onDismiss = {}
-        )
-    }
-}
+import androidx.compose.ui.unit.dp
+import com.example.chaskirider.R
+import com.example.chaskirider.ui.components.*
 
 @Composable
-fun PasswordSetupDialog(email: String, isLoading: Boolean, error: String?, message: String?,
+fun PasswordSetupDialog(hasPassword: Boolean, isLoading: Boolean, error: String?, message: String?,
     onSave: (String, String) -> Unit, onDismiss: () -> Unit) {
     var password by remember { mutableStateOf("") }
     var confirmation by remember { mutableStateOf("") }
-    AlertDialog(onDismissRequest = { if (!isLoading) onDismiss() },
-        title = { Text(stringResource(R.string.text_configurar_contrasena)) },
-        text = { Column {
-            Text(stringResource(R.string.text_podras_ingresar_con_value_y_esta_contrasena, email))
-            PasswordField(password, { password = it }, stringResource(R.string.text_contrasena_minimo_8_caracteres), enabled = !isLoading)
-            PasswordField(confirmation, { confirmation = it }, stringResource(R.string.text_confirmar_contrasena),
-                enabled = !isLoading, imeAction = ImeAction.Done)
+    ChaskiDialog(title = stringResource(if (hasPassword) R.string.password_change else R.string.text_configurar_contrasena),
+        onDismiss = { if (!isLoading) onDismiss() }, content = {
+            if (message == null) {
+                PasswordField(password, { password = it }, stringResource(R.string.registration_new_password), enabled = !isLoading)
+                PasswordField(confirmation, { confirmation = it }, stringResource(R.string.text_confirmar_contrasena), enabled = !isLoading, imeAction = ImeAction.Done)
+            }
             error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             message?.let { Text(it) }
-        } },
-        confirmButton = { TextButton(onClick = { onSave(password, confirmation) },
-            enabled = !isLoading && message == null) { Text(stringResource(R.string.text_guardar)) } },
-        dismissButton = { TextButton(onClick = onDismiss, enabled = !isLoading) { Text(stringResource(R.string.text_cerrar)) } })
+        }, confirm = {
+            Button(onClick = { if (message == null) onSave(password, confirmation) else onDismiss() },
+                enabled = !isLoading, shape = RoundedCornerShape(12.dp)) {
+                if (isLoading) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
+                else Text(stringResource(if (message == null) R.string.text_guardar else R.string.text_cerrar))
+            }
+        }, dismiss = {
+            if (message == null) TextButton(onClick = onDismiss, enabled = !isLoading) { Text(stringResource(R.string.text_cerrar)) }
+        })
 }

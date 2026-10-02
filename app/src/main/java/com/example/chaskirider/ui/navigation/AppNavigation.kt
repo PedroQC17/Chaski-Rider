@@ -9,6 +9,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.createSavedStateHandle
+import com.example.chaskirider.ui.screens.profile.photo.*
+import com.example.chaskirider.ui.components.ChaskiDialog
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
 import com.example.chaskirider.R
@@ -39,7 +42,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
         AppContainer.authRepository, AppContainer.riderProfileRepository, AppContainer.riderSession, AppContainer.textProvider) }
     val personalState by personalViewModel.uiState.collectAsStateWithLifecycle()
     val profileState by profileViewModel.uiState.collectAsStateWithLifecycle()
-    val documentsViewModel: DocumentsViewModel = viewModel { DocumentsViewModel(AppContainer.textProvider, AppContainer.documentRepository, AppContainer.riderSession) }
+    val documentsViewModel: DocumentsViewModel = viewModel { DocumentsViewModel(AppContainer.textProvider, AppContainer.documentRepository, AppContainer.riderSession, AppContainer.documentPreviewRepository) }
     val documentsState by documentsViewModel.uiState.collectAsStateWithLifecycle()
     val notificationsViewModel: NotificationsViewModel = viewModel { NotificationsViewModel(AppContainer.notificationsRepository) }
     val notificationsState by notificationsViewModel.uiState.collectAsStateWithLifecycle()
@@ -59,9 +62,20 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
         return
     }
 
-    LaunchedEffect(state.initialized, user?.id, user?.status, route) {
+    val photoViewModel: ProfilePhotoViewModel = viewModel { ProfilePhotoViewModel(AppContainer.profilePhotoRepository,
+        AppContainer.riderSession, AppContainer.textProvider, createSavedStateHandle()) }
+    val photoState by photoViewModel.uiState.collectAsStateWithLifecycle()
+    val needsPhoto = user?.status == RegistrationStatus.APPROVED && user.isEnabled && user.profilePhotoPath.isBlank()
+
+    LaunchedEffect(state.initialized, user?.id, user?.status, user?.isEnabled, user?.profilePhotoPath, route) {
         if (!state.initialized) return@LaunchedEffect
-        if (route == Screen.Startup.route) {
+        if (needsPhoto && route != Screen.ProfilePhoto.route) {
+            navController.navigate(Screen.ProfilePhoto.route) { popUpTo(navController.graph.id) { inclusive = true }; launchSingleTop = true }
+        } else if (user != null && route == Screen.ProfilePhoto.route && !needsPhoto) {
+            navController.navigate(destination(user)) { popUpTo(navController.graph.id) { inclusive = true }; launchSingleTop = true }
+        } else if (user?.status == RegistrationStatus.APPROVED && route?.startsWith("onboarding_") == true) {
+            navController.navigate(destination(user)) { popUpTo(navController.graph.id) { inclusive = true }; launchSingleTop = true }
+        } else if (route == Screen.Startup.route) {
             navController.navigate(user?.let(::destination) ?: Screen.Access.route) {
                 popUpTo(Screen.Startup.route) { inclusive = true }; launchSingleTop = true
             }
@@ -72,12 +86,11 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
         }
     }
 
-    val workArea = user?.status == RegistrationStatus.APPROVED && user.isEnabled
+    val workArea = user?.status == RegistrationStatus.APPROVED && user.isEnabled && !needsPhoto
     LaunchedEffect(workArea) { if (!workArea) drawerState.close() }
     ModalNavigationDrawer(drawerState = drawerState, gesturesEnabled = workArea,
         drawerContent = {
             if (workArea) WorkSidebar(
-                user = user,
                 route = route,
                 unread = notificationsState.unreadCount,
                 busy = homeState.isUpdatingAvailability || state.isLoading || profileState.isLoading || documentsState.isLoading,
@@ -151,23 +164,25 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
                 user?.let {
                     RegistrationStatusScreen(user = it,
                         onResumeRegistrationClick = { profileViewModel.clearError(); navController.navigate(Screen.OnboardingStep1.route) },
-                        onGoToHomeClick = { if (it.status == RegistrationStatus.APPROVED && it.isEnabled) navController.navigate(Screen.Home.route) },
+                        onGoToHomeClick = { if (it.status == RegistrationStatus.APPROVED && it.isEnabled) navController.navigate(destination(it)) },
                         onLogoutClick = { authViewModel.logout() },
                         onRefresh = authViewModel::checkCurrentUser,
                         isLoading = state.isLoading, errorMessage = state.errorMessage)
                 }
             }
+            composable(Screen.ProfilePhoto.route) {
+                if (needsPhoto) ProfilePhotoRoute(photoViewModel, onLogout = authViewModel::logout)
+            }
             composable(Screen.Home.route) {
-                if (user != null) HomeRoute(homeViewModel, onOpenMenu = { scope.launch { drawerState.open() } })
+                if (workArea) HomeRoute(homeViewModel, onOpenMenu = { scope.launch { drawerState.open() } })
             }
             composable(Screen.Profile.route) {
                 user?.let {
-                    ProfileScreen(user = it,
+                    ProfileScreen(user = it, photoUri = photoState.profileUri,
                         onOpenMenu = { scope.launch { drawerState.open() } },
                         onPersonalDataClick = { profileViewModel.clearError(); navController.navigate(Screen.ProfilePersonalData.route) },
                         onVehicleClick = { profileViewModel.clearError(); navController.navigate(Screen.ProfileVehicle.route) },
                         onDocumentsClick = { profileViewModel.clearError(); navController.navigate(Screen.ProfileDocuments.route) },
-                        onNotificationsClick = { profileViewModel.clearError(); navController.navigate(Screen.Notifications.route) },
                         onLogoutClick = { authViewModel.logout() })
                 }
             }
@@ -175,37 +190,28 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
                 user?.let {
                     ProfilePersonalDataScreen(user = it,
                         onNavigateBack = { profileViewModel.clearError(); navController.popBackStack() },
-                        onSaveClick = { n, l, d, p ->
-                            profileViewModel.updatePersonalData(n, l, d, p) { navController.popBackStack() }
-                        },
-                        onConfigurePassword = { authViewModel.clearError(); passwordDialog = true },
-                        isLoading = profileState.isLoading, errorMessage = profileState.errorMessage)
+                        onRequestChange = profileViewModel::showChangeNotice,
+                        onConfigurePassword = { authViewModel.clearError(); passwordDialog = true })
                 }
             }
             composable(Screen.ProfileVehicle.route) {
                 user?.let {
                     ProfileVehicleScreen(user = it,
                         onNavigateBack = { profileViewModel.clearError(); navController.popBackStack() },
-                        onSaveClick = { vehicle ->
-                            profileViewModel.updateVehicle(vehicle) { navController.popBackStack() }
-                        },
-                        isLoading = profileState.isLoading, errorMessage = profileState.errorMessage)
+                        onRequestChange = profileViewModel::showChangeNotice)
                 }
             }
             composable(Screen.ProfileDocuments.route) {
                 user?.let {
                     ProfileDocumentsScreen(user = it,
-                        onPrepareCapture = documentsViewModel::prepareCapture,
-                        documentsMap = documentsState.documentsMap,
                         onNavigateBack = { profileViewModel.clearError(); documentsViewModel.clearError(); navController.popBackStack() },
-                        onDocumentPick = documentsViewModel::uploadDocument,
                         onDocumentView = documentsViewModel::openDocument,
-                        isLoading = profileState.isLoading || documentsState.isLoading, errorMessage = documentsState.errorMessage ?: profileState.errorMessage)
+                        onRequestChange = profileViewModel::showChangeNotice)
                 }
             }
             composable(Screen.Notifications.route) {
                 LaunchedEffect(Unit) { notificationsViewModel.markSeen() }
-                NotificationsScreen(state = notificationsState, onNavigateBack = { navController.popBackStack() })
+                NotificationsScreen(state = notificationsState, onOpenMenu = { scope.launch { drawerState.open() } })
             }
 
         }
@@ -218,9 +224,13 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
     }
 
 
-    documentsState.previewUri?.let { uri ->
-        DocumentPreviewHost(uri, documentsViewModel::dismissPreview, documentsViewModel::reportError)
+    documentsState.preview?.let { preview ->
+        DocumentPreviewHost(preview, documentsViewModel::dismissPreview, documentsViewModel::showPage)
     }
+    if (profileState.changeNoticeVisible) ChaskiDialog(
+        title = stringResource(R.string.profile_change_title), onDismiss = profileViewModel::dismissChangeNotice,
+        content = { Text(stringResource(R.string.profile_change_body)) },
+        confirm = { Button(onClick = profileViewModel::dismissChangeNotice) { Text(stringResource(R.string.profile_change_close)) } })
     if (recovery) AlertDialog(onDismissRequest = { if (!state.isLoading) recovery = false },
         title = { Text(stringResource(R.string.text_recuperar_contrasena)) },
         text = { Column {
@@ -231,7 +241,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
         confirmButton = { TextButton(onClick = { authViewModel.sendPasswordResetEmail(resetEmail) }, enabled = !state.isLoading) { Text(stringResource(R.string.text_enviar_enlace)) } },
         dismissButton = { TextButton(onClick = { recovery = false; authViewModel.clearError() }) { Text(stringResource(R.string.text_cerrar)) } })
     if (passwordDialog && user != null) PasswordSetupDialog(
-        email = user.email, isLoading = state.isLoading, error = state.errorMessage, message = state.message,
+        hasPassword = user.hasPassword, isLoading = state.isLoading, error = state.errorMessage, message = state.message,
         onSave = authViewModel::linkPassword, onDismiss = { passwordDialog = false; authViewModel.clearError() })
 }
 
@@ -241,6 +251,10 @@ private fun destination(user: RiderUser): String = when (user.status) {
         2 -> Screen.OnboardingStep2.route
         else -> Screen.OnboardingStep3.route
     }
-    RegistrationStatus.APPROVED -> if (user.isEnabled) Screen.Home.route else Screen.RegistrationStatus.route
+    RegistrationStatus.APPROVED -> when {
+        !user.isEnabled -> Screen.RegistrationStatus.route
+        user.profilePhotoPath.isBlank() -> Screen.ProfilePhoto.route
+        else -> Screen.Home.route
+    }
     else -> Screen.RegistrationStatus.route
 }

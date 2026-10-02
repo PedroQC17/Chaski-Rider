@@ -35,7 +35,6 @@ class HomeViewModel(
             }
         }
     }
-    fun togglePanel() { state.update { it.copy(panelExpanded = !it.panelExpanded) } }
     fun clearError() { state.update { it.copy(errorMessage = null, locationUnavailable = false) } }
     fun reportError(message: String) { state.update { it.copy(errorMessage = message) } }
     fun setLocationPermission(granted: Boolean) {

@@ -16,11 +16,17 @@ import com.example.chaskirider.domain.repository.RiderSession
 
 class DocumentsViewModel(
     private val texts: TextProvider,
-    private val repository: DocumentRepository, session: RiderSession) : ViewModel() {
+    private val repository: DocumentRepository, session: RiderSession,
+    private val previews: com.example.chaskirider.domain.repository.DocumentPreviewRepository) : ViewModel() {
+    private var previewJob: kotlinx.coroutines.Job? = null
+    private var sessionUid: String? = null
     private val _uiState = MutableStateFlow(DocumentsUiState())
     val uiState = _uiState.asStateFlow()
     init { viewModelScope.launch { session.user.collect { acceptUser(it) } } }
     private fun acceptUser(user: RiderUser?) {
+        if (sessionUid != user?.id) {
+            previewJob?.cancel(); _uiState.value = DocumentsUiState(); sessionUid = user?.id
+        }
         val docs = user?.let { RegistrationValidation.documentPaths(it) }.orEmpty()
             .filterValues { it.isNotBlank() }.mapValues { (key, path) ->
                 DocumentFile(id = key, name = key, url = path, uploadState = DocumentUploadState.UPLOADED)
@@ -34,17 +40,6 @@ class DocumentsViewModel(
     fun reportError(message: String) { _uiState.update { it.copy(errorMessage = message) } }
     fun clearError() { _uiState.update { it.copy(errorMessage = null, message = null) } }
 
-    fun prepareCapture(onReady: (Uri) -> Unit) {
-        if (_uiState.value.isLoading) return
-        _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-        viewModelScope.launch {
-            repository.createCaptureUri().onSuccess { uri ->
-                _uiState.update { it.copy(isLoading = false) }
-                onReady(uri)
-            }.onFailure { failure(it) }
-        }
-    }
-
     fun uploadDocument(docType: String, uri: Uri) {
         if (_uiState.value.isLoading) return
         _uiState.update { it.copy(isLoading = true, errorMessage = null, documentsMap = it.documentsMap +
@@ -57,14 +52,32 @@ class DocumentsViewModel(
             }
         }
     }
-    fun dismissPreview() { _uiState.update { it.copy(previewUri = null) } }
+    fun dismissPreview() {
+        previewJob?.cancel()
+        _uiState.update { it.copy(preview = null) }
+    }
     fun openDocument(docType: String) {
-        if (_uiState.value.isLoading) return
-        _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-        viewModelScope.launch {
+        previewJob?.cancel()
+        _uiState.update { it.copy(preview = DocumentPreviewUiState(docType)) }
+        previewJob = viewModelScope.launch {
             repository.getDocument(docType).onSuccess { uri ->
-                _uiState.update { it.copy(isLoading = false, previewUri = uri) }
-            }.onFailure { failure(it) }
+                _uiState.update { it.copy(preview = it.preview?.copy(sourceUri = uri)) }
+                render(uri, 0)
+            }.onFailure { _uiState.update { it.copy(preview = it.preview?.copy(loading = false, error = true)) } }
         }
+    }
+    fun showPage(index: Int) {
+        val current = _uiState.value.preview ?: return
+        if (current.loading) return
+        val uri = current.sourceUri ?: run { openDocument(current.type); return }
+        if (index < 0 || (current.page != null && index >= current.page.count)) return
+        previewJob?.cancel()
+        _uiState.update { it.copy(preview = it.preview?.copy(loading = true, error = false)) }
+        previewJob = viewModelScope.launch { render(uri, index) }
+    }
+    private suspend fun render(uri: Uri, index: Int) {
+        previews.render(uri, index).onSuccess { page ->
+            _uiState.update { it.copy(preview = it.preview?.copy(page = page, loading = false, error = false)) }
+        }.onFailure { _uiState.update { it.copy(preview = it.preview?.copy(loading = false, error = true)) } }
     }
 }

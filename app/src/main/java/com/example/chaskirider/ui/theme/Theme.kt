@@ -7,6 +7,10 @@ import androidx.compose.ui.graphics.Color
 
 private val ChaskiColors = lightColorScheme(
     primary = Orange, onPrimary = Color.White, secondary = Orange,
+    primaryContainer = Color(0xFFFFE8DC), onPrimaryContainer = TextDark,
+    secondaryContainer = Color(0xFFFFEEE5), onSecondaryContainer = Orange,
+    surfaceTint = Color.Transparent, surfaceVariant = Color(0xFFFFF8F3),
+    surfaceContainerHigh = Color.White, surfaceContainerLow = Color.White,
     background = BackgroundLight, surface = Color.White,
     onSurface = TextDark, onBackground = TextDark, outline = BorderLight
 )

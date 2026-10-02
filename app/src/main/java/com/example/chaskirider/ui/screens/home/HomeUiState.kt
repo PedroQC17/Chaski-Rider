@@ -8,7 +8,6 @@ data class HomeUiState(
     val isUpdatingAvailability: Boolean = false,
     val isLocating: Boolean = false,
     val hasLocationPermission: Boolean = false,
-    val panelExpanded: Boolean = true,
     val location: GeoPoint? = null,
     val cameraRequest: Int = 0,
     val errorMessage: String? = null,

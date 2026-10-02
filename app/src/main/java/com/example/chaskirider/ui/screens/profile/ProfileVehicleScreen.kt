@@ -1,174 +1,31 @@
-
 package com.example.chaskirider.ui.screens.profile
 
-import com.example.chaskirider.ui.components.AppHeader
-import com.example.chaskirider.R
-import androidx.compose.ui.res.stringResource
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Text
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.chaskirider.domain.model.RiderUser
-import com.example.chaskirider.domain.model.VehicleType
-import com.example.chaskirider.ui.screens.onboarding.VehicleOptionCard
-import com.example.chaskirider.ui.theme.BackgroundLight
-import com.example.chaskirider.ui.theme.ChaskiRiderTheme
-import com.example.chaskirider.ui.theme.Orange
-import com.example.chaskirider.ui.theme.TextDark
-import com.example.chaskirider.ui.theme.TextMuted
-
-@Preview(name = "Perfil - Vehículos", showBackground = true, showSystemUi = true)
-@Composable
-fun ProfileVehicleScreenPreview() {
-    ChaskiRiderTheme {
-        ProfileVehicleScreen(
-            user = RiderUser(
-                id = "123",
-                name = "Pedro",
-                lastName = "Quincho Cordova",
-                vehicleType = VehicleType.MOTORCYCLE
-            )
-        )
-    }
-}
+import com.example.chaskirider.R
+import com.example.chaskirider.domain.model.*
+import com.example.chaskirider.ui.screens.profile.components.*
 
 @Composable
-fun ProfileVehicleScreen(
-    user: RiderUser,
-    onNavigateBack: () -> Unit = {},
-    onSaveClick: (vehicleType: VehicleType) -> Unit = {},
-    isLoading: Boolean = false,
-    errorMessage: String? = null
-) {
-    var selectedVehicle by rememberSaveable { mutableStateOf(user.vehicleType) }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BackgroundLight)
-            .systemBarsPadding()
-            .imePadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp, vertical = 12.dp)
-    ) {
-        AppHeader(title = stringResource(R.string.text_vehiculos), onNavigate = onNavigateBack)
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = stringResource(R.string.text_vinculado_a_tu_cuenta_value, vehicleLabel(user.vehicleType)),
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            color = Orange
-        )
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        Text(
-            text = stringResource(R.string.text_selecciona_el_vehiculo_con_el_que_realizaras),
-            fontSize = 14.sp,
-            color = TextMuted
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        VehicleOptionCard(
-            title = stringResource(R.string.text_bicicleta),
-            imageRes = com.example.chaskirider.R.drawable.vehicle_bicycle,
-            isSelected = selectedVehicle == VehicleType.BICYCLE,
-            onClick = { selectedVehicle = VehicleType.BICYCLE }
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        VehicleOptionCard(
-            title = stringResource(R.string.text_motocicleta),
-            imageRes = com.example.chaskirider.R.drawable.vehicle_motorcycle,
-            isSelected = selectedVehicle == VehicleType.MOTORCYCLE,
-            onClick = { selectedVehicle = VehicleType.MOTORCYCLE }
-        )
-
-
-        if (errorMessage != null) {
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = errorMessage,
-                color = Color.Red,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium
-            )
+fun ProfileVehicleScreen(user: RiderUser, onNavigateBack: () -> Unit, onRequestChange: () -> Unit) {
+    ProfileDetailsLayout(stringResource(R.string.text_vehiculos), onNavigateBack, onRequestChange) {
+        val label = when (user.vehicleType) {
+            VehicleType.BICYCLE -> R.string.text_bicicleta
+            VehicleType.MOTORCYCLE -> R.string.text_motocicleta
+            VehicleType.CAR -> R.string.text_automovil
+            else -> R.string.text_sin_vehiculo
         }
-
-        Spacer(modifier = Modifier.height(28.dp))
-
-        Button(
-            onClick = { onSaveClick(selectedVehicle) },
-            enabled = !isLoading &&
-                    selectedVehicle in listOf(VehicleType.BICYCLE, VehicleType.MOTORCYCLE) &&
-                    selectedVehicle != user.vehicleType,
-            shape = CircleShape,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Orange,
-                contentColor = Color.White
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp)
-        ) {
-            if (isLoading) {
-                CircularProgressIndicator(
-                    color = Color.White,
-                    modifier = Modifier.size(24.dp)
-                )
-            } else {
-                Text(
-                    text = stringResource(R.string.text_guardar_cambios),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
+        if (user.vehicleType in listOf(VehicleType.BICYCLE, VehicleType.MOTORCYCLE)) {
+            Image(painterResource(if (user.vehicleType == VehicleType.BICYCLE) R.drawable.vehicle_bicycle else R.drawable.vehicle_motorcycle),
+                null, Modifier.size(180.dp).align(Alignment.CenterHorizontally))
         }
-
-        Spacer(modifier = Modifier.height(24.dp))
+        ProfileReadOnlyField(stringResource(label), stringResource(R.string.text_tipo_de_vehiculo))
     }
-}
-
-@Composable
-private fun vehicleLabel(vehicle: VehicleType): String {
-
-    return when (vehicle) {
-    VehicleType.BICYCLE -> stringResource(R.string.text_bicicleta)
-    VehicleType.MOTORCYCLE -> stringResource(R.string.text_motocicleta)
-    VehicleType.CAR -> stringResource(R.string.text_automovil)
-    VehicleType.NONE -> stringResource(R.string.text_sin_vehiculo)
-}
 }

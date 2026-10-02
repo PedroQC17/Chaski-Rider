@@ -20,10 +20,10 @@ import com.example.chaskirider.ui.screens.home.components.WorkMap
 import com.example.chaskirider.ui.theme.ChaskiRiderTheme
 
 @Composable
-fun HomeScreen(state: HomeUiState, onOpenMenu: () -> Unit, onTogglePanel: () -> Unit,
+fun HomeScreen(state: HomeUiState, onOpenMenu: () -> Unit,
     onToggleAvailability: () -> Unit, onLocate: () -> Unit, onDismissError: () -> Unit) {
     Box(Modifier.fillMaxSize()) {
-        WorkMap(state, if (state.panelExpanded) 200.dp else 110.dp)
+        WorkMap(state, 200.dp)
         Row(Modifier.fillMaxWidth().statusBarsPadding().padding(16.dp),
             verticalAlignment = Alignment.CenterVertically) {
             FilledIconButton(onClick = onOpenMenu, modifier = Modifier.size(48.dp),
@@ -54,7 +54,7 @@ fun HomeScreen(state: HomeUiState, onOpenMenu: () -> Unit, onTogglePanel: () -> 
                 }
             }
             Spacer(Modifier.height(12.dp))
-            ConnectionPanel(state, onTogglePanel, onToggleAvailability)
+            ConnectionPanel(state, onToggleAvailability)
         }
     }
 }
@@ -62,5 +62,5 @@ fun HomeScreen(state: HomeUiState, onOpenMenu: () -> Unit, onTogglePanel: () -> 
 @Preview(showBackground = true)
 @Composable
 private fun HomePreview() {
-    ChaskiRiderTheme { HomeScreen(HomeUiState(), {}, {}, {}, {}, {}) }
+    ChaskiRiderTheme { HomeScreen(HomeUiState(), {}, {}, {}, {}) }
 }

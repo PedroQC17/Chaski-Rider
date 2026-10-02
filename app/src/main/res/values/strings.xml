@@ -227,4 +227,24 @@
     <string name="registration_disabled_body">Tu cuenta no está disponible para realizar repartos.</string>
     <string name="password_show">Mostrar contraseña</string>
     <string name="password_hide">Ocultar contraseña</string>
+    <string name="sidebar_tagline">Tu espacio de trabajo</string>
+    <string name="profile_request_change">Solicitar modificación</string>
+    <string name="profile_change_title">¿Necesitas actualizar tus datos?</string>
+    <string name="profile_change_body">Los cambios se gestionarán mediante una solicitud. Esta opción estará disponible próximamente.</string>
+    <string name="profile_change_close">Entendido</string>
+    <string name="password_change">Cambiar contraseña</string>
+    <string name="profile_photo">Foto de perfil</string>
+    <string name="profile_photo_title">Ponle rostro a tu perfil</string>
+    <string name="profile_photo_body">Toma una foto de frente, con buena luz y el rostro descubierto.</string>
+    <string name="profile_photo_capture">Abrir cámara</string>
+    <string name="profile_photo_save">Usar esta foto</string>
+    <string name="profile_photo_retake">Tomar otra foto</string>
+    <string name="profile_photo_permission">Permite el acceso a la cámara para tomar tu foto.</string>
+    <string name="profile_photo_failure">No se pudo guardar la foto. Inténtalo nuevamente.</string>
+    <string name="profile_photo_camera_error">No se pudo abrir la cámara. Revisa sus permisos e inténtalo nuevamente.</string>
+    <string name="profile_photo_required">Añade tu foto de perfil para conectarte.</string>
+    <string name="preview_pages">%1$d / %2$d</string>
+    <string name="preview_previous">Página anterior</string>
+    <string name="preview_next">Página siguiente</string>
+    <string name="profile_photo_settings">Abrir ajustes de cámara</string>
 </resources>

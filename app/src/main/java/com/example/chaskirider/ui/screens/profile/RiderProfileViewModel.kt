@@ -27,6 +27,8 @@ class RiderProfileViewModel(
         _uiState.update { it.copy(isLoading = false, errorMessage = texts.resolveError(error.message, TextKey.TEXT_NO_SE_PUDO_COMPLETAR_LA_OPERACION)) }
     }
     fun reportError(message: String) { _uiState.update { it.copy(errorMessage = message) } }
+    fun showChangeNotice() { _uiState.update { it.copy(changeNoticeVisible = true) } }
+    fun dismissChangeNotice() { _uiState.update { it.copy(changeNoticeVisible = false) } }
     fun clearError() { _uiState.update { it.copy(errorMessage = null, message = null) } }
 
     private fun userAction(action: suspend () -> Result<RiderUser>, onSuccess: (RiderUser) -> Unit = {}) {
@@ -36,20 +38,9 @@ class RiderProfileViewModel(
             action().onSuccess { acceptUser(it); _uiState.update { state -> state.copy(isLoading = false) }; onSuccess(it) }.onFailure { failure(it) }
         }
     }
-    fun updatePersonalData(name: String, lastName: String, dni: String, phone: String, onSuccess: () -> Unit) {
-        RegistrationValidation.personalError(name, lastName, dni, phone, true)?.let { reportError(texts.get(it)); return }
-        val terms = _uiState.value.currentUser?.termsAccepted ?: true
-        userAction({ repository.savePersonalData(name, lastName, dni, phone, terms) }) { onSuccess() }
-    }
     fun saveStep2VehicleType(vehicleType: VehicleType, onSuccess: () -> Unit) {
         if (vehicleType !in listOf(VehicleType.BICYCLE, VehicleType.MOTORCYCLE)) {
             reportError(texts.get(TextKey.TEXT_SELECCIONA_BICICLETA_MOTOCICLETA_O_AUTOMOVIL)); return
-        }
-        userAction({ repository.saveVehicle(vehicleType) }) { onSuccess() }
-    }
-    fun updateVehicle(vehicleType: VehicleType, onSuccess: () -> Unit) {
-        if (vehicleType !in listOf(VehicleType.BICYCLE, VehicleType.MOTORCYCLE)) {
-            reportError(texts.get(TextKey.TEXT_SELECCIONA_UN_VEHICULO)); return
         }
         userAction({ repository.saveVehicle(vehicleType) }) { onSuccess() }
     }
