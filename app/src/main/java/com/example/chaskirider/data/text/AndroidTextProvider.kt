@@ -7,6 +7,7 @@ import com.example.chaskirider.domain.text.TextProvider
 
 class AndroidTextProvider(private val context: Context) : TextProvider {
     override fun get(key: TextKey): String = context.getString(when (key) {
+        TextKey.HOME_LOCATION_PERMISSION_REQUIRED -> R.string.text_se_requiere_el_permiso_de_ubicacion_para
         TextKey.TEXT_COMPLETA_EL_BANCO_Y_EL_TITULAR -> R.string.text_completa_el_banco_y_el_titular
         TextKey.TEXT_COMPLETA_TUS_NOMBRES_Y_APELLIDOS -> R.string.text_completa_tus_nombres_y_apellidos
         TextKey.TEXT_CONTRASENA_CONFIGURADA_YA_PUEDES_INGRESAR_CON_TU -> R.string.text_contrasena_configurada_ya_puedes_ingresar_con_tu

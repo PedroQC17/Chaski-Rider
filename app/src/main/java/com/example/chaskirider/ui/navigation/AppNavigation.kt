@@ -17,7 +17,8 @@ import androidx.navigation.NavHostController
 import com.example.chaskirider.ui.platform.GoogleSignInClient
 import com.example.chaskirider.di.AppContainer
 import com.example.chaskirider.domain.model.*
-import com.example.chaskirider.ui.components.AppBottomBar
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
 import com.example.chaskirider.ui.screens.auth.*
 import com.example.chaskirider.ui.screens.home.*
 import com.example.chaskirider.ui.screens.notifications.*
@@ -31,6 +32,10 @@ import kotlinx.coroutines.launch
 fun AppNavigation(navController: NavHostController = rememberNavController(), authViewModel: AuthViewModel = viewModel { AuthViewModel(AppContainer.textProvider, AppContainer.authRepository, AppContainer.riderSession) }) {
 
     val state by authViewModel.uiState.collectAsStateWithLifecycle()
+    val homeViewModel: HomeViewModel = viewModel { HomeViewModel(AppContainer.riderProfileRepository,
+        AppContainer.locationRepository, AppContainer.textProvider, AppContainer.riderSession) }
+    val homeState by homeViewModel.uiState.collectAsStateWithLifecycle()
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
 
     val profileViewModel: RiderProfileViewModel = viewModel { RiderProfileViewModel(AppContainer.textProvider, AppContainer.riderProfileRepository, AppContainer.riderSession) }
     val profileState by profileViewModel.uiState.collectAsStateWithLifecycle()
@@ -58,15 +63,28 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
         }
     }
 
-    val mainRoutes = listOf(Screen.Home.route, Screen.Profile.route)
-    Scaffold(
-        bottomBar = {
-            if (route in mainRoutes) AppBottomBar(currentRoute = route, onNavigate = { target ->
-                navController.navigate(target) { launchSingleTop = true }
-            })
-        },
-        contentWindowInsets = WindowInsets(0, 0, 0, 0)
-    ) { padding ->
+    val workArea = user?.status == RegistrationStatus.APPROVED && user.isEnabled
+    LaunchedEffect(workArea) { if (!workArea) drawerState.close() }
+    ModalNavigationDrawer(drawerState = drawerState, gesturesEnabled = workArea,
+        drawerContent = {
+            if (workArea) WorkSidebar(user, route, notificationsState.unreadCount,
+                homeState.isUpdatingAvailability || state.isLoading || profileState.isLoading || documentsState.isLoading,
+                onNavigate = { target -> scope.launch {
+                    drawerState.close()
+                    navController.navigate(target) { popUpTo(Screen.Home.route); launchSingleTop = true }
+                } },
+                onPassword = { scope.launch { drawerState.close(); authViewModel.clearError(); passwordDialog = true } },
+                onLogout = { scope.launch { drawerState.close(); authViewModel.logout() } })
+        }) {
+    Scaffold(topBar = {
+        if (route == Screen.Profile.route && workArea) {
+            Row(Modifier.fillMaxWidth().statusBarsPadding()) {
+                IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                    Icon(Icons.Default.Menu, stringResource(R.string.home_open_menu))
+                }
+            }
+        }
+    }, contentWindowInsets = WindowInsets(0, 0, 0, 0)) { padding ->
         NavHost(navController, startDestination = Screen.Access.route, modifier = Modifier.padding(padding)) {
             composable(Screen.Access.route) {
                 AccessScreen(
@@ -141,16 +159,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
                 }
             }
             composable(Screen.Home.route) {
-                user?.let {
-                    HomeScreen(user = it,
-                        onAvailabilityChange = { available -> profileViewModel.setAvailability(available) },
-                        onError = profileViewModel::reportError,
-                        onConfigurePassword = { passwordDialog = true; authViewModel.clearError() },
-                        onNotificationsClick = { navController.navigate(Screen.Notifications.route) },
-                        onLogout = { authViewModel.logout() },
-                        isLoading = profileState.isLoading, errorMessage = profileState.errorMessage,
-                        unreadCount = notificationsState.unreadCount)
-                }
+                if (user != null) HomeRoute(homeViewModel, onOpenMenu = { scope.launch { drawerState.open() } })
             }
             composable(Screen.Profile.route) {
                 user?.let {
@@ -202,6 +211,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
             }
 
         }
+    }
     }
     LaunchedEffect(state.initialized, user?.id) {
         if (state.initialized && user == null) {

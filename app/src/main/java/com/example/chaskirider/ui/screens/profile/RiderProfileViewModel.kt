@@ -57,12 +57,6 @@ class RiderProfileViewModel(
         }
         userAction({ repository.saveVehicle(vehicleType) }) { onSuccess() }
     }
-    fun setAvailability(available: Boolean, onSuccess: () -> Unit = {}) {
-        val user = _uiState.value.currentUser
-        if (user == null) { reportError(texts.get(TextKey.TEXT_NO_HAY_UNA_SESION_ACTIVA)); return }
-        RegistrationValidation.availabilityError(user, activating = available)?.let { reportError(texts.get(it)); return }
-        userAction({ repository.setAvailability(available) }) { onSuccess() }
-    }
     fun saveBank(bank: BankInfo) {
         RegistrationValidation.bankError(bank)?.let { reportError(texts.get(it)); return }
         userAction({ repository.saveBankInfo(bank) }) { _uiState.update { s -> s.copy(message = texts.get(TextKey.TEXT_DATOS_BANCARIOS_GUARDADOS)) } }

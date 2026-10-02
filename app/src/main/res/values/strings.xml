@@ -206,4 +206,12 @@
     <string name="server_informacion_no_valida">"Información no válida"</string>
     <string name="server_ingresa_una_cuenta_o_cci">"Ingresa una cuenta o CCI"</string>
     <string name="server_selecciona_un_pdf_jpg_o_png_de_hasta_10">"Selecciona un PDF, JPG o PNG de hasta 10 MB"</string>
+    <string name="home_open_menu">Abrir menú</string>
+    <string name="home_map_menu">Mapa de trabajo</string>
+    <string name="home_map_pending">El mapa estará disponible próximamente</string>
+    <string name="home_locate">Centrar en mi ubicación</string>
+    <string name="home_location_unavailable">No se pudo obtener tu ubicación. Revisa el GPS e inténtalo otra vez.</string>
+    <string name="home_ready">Disponible para recibir pedidos</string>
+    <string name="home_expand">Mostrar control de conexión</string>
+    <string name="home_collapse">Ocultar control de conexión</string>
 </resources>

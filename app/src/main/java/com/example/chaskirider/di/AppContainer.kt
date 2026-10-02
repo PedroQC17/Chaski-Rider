@@ -1,6 +1,7 @@
 package com.example.chaskirider.di
 
 import android.content.Context
+import com.example.chaskirider.data.location.DeviceLocationRepository
 import com.example.chaskirider.data.text.AndroidTextProvider
 import com.example.chaskirider.domain.text.TextProvider
 import com.example.chaskirider.data.notifications.NotificationsInitializer
@@ -23,6 +24,7 @@ object AppContainer {
     private val documents by lazy { RiderDocumentDataSource(textProvider, applicationContext, profiles) }
     val authRepository: AuthRepository by lazy { AuthRepositoryImpl(textProvider, profiles, sessionStore) }
     val riderProfileRepository: RiderProfileRepository by lazy { RiderProfileRepositoryImpl(textProvider, profiles) }
+    val locationRepository: LocationRepository by lazy { DeviceLocationRepository(applicationContext) }
     val documentRepository: DocumentRepository by lazy { DocumentRepositoryImpl(documents) }
     val notificationsRepository: NotificationsRepository by lazy { NotificationsRepositoryImpl() }
 }
