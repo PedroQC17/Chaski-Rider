@@ -1,8 +1,6 @@
-
 package com.example.chaskirider.ui.screens.profile
 
-import com.example.chaskirider.R
-import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,6 +12,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,6 +29,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -41,12 +41,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.chaskirider.R
 import com.example.chaskirider.domain.model.RiderUser
 import com.example.chaskirider.ui.theme.BackgroundLight
 import com.example.chaskirider.ui.theme.BorderLight
@@ -77,6 +79,7 @@ fun ProfilePersonalDataScreen(
     user: RiderUser,
     onNavigateBack: () -> Unit = {},
     onSaveClick: (name: String, lastName: String, dni: String, phone: String) -> Unit = { _, _, _, _ -> },
+    onConfigurePassword: () -> Unit = {},
     isLoading: Boolean = false,
     errorMessage: String? = null
 ) {
@@ -289,6 +292,32 @@ fun ProfilePersonalDataScreen(
                     fontWeight = FontWeight.SemiBold
                 )
             }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Botón Configurar Contraseña
+        OutlinedButton(
+            onClick = onConfigurePassword,
+            shape = CircleShape,
+            border = BorderStroke(1.dp, BorderLight),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = TextDark),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Lock,
+                contentDescription = null,
+                tint = Orange,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = stringResource(R.string.text_configurar_contrasena),
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold
+            )
         }
 
         Spacer(modifier = Modifier.height(24.dp))

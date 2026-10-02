@@ -1,24 +1,23 @@
-
 package com.example.chaskirider.ui.navigation
 
-import com.example.chaskirider.R
-import androidx.compose.ui.res.stringResource
 import android.content.Intent
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.compose.*
 import androidx.navigation.NavHostController
-import com.example.chaskirider.ui.platform.GoogleSignInClient
+import androidx.navigation.compose.*
+import com.example.chaskirider.R
 import com.example.chaskirider.di.AppContainer
 import com.example.chaskirider.domain.model.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
+import com.example.chaskirider.ui.platform.GoogleSignInClient
 import com.example.chaskirider.ui.screens.auth.*
 import com.example.chaskirider.ui.screens.home.*
 import com.example.chaskirider.ui.screens.notifications.*
@@ -67,14 +66,17 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
     LaunchedEffect(workArea) { if (!workArea) drawerState.close() }
     ModalNavigationDrawer(drawerState = drawerState, gesturesEnabled = workArea,
         drawerContent = {
-            if (workArea) WorkSidebar(user, route, notificationsState.unreadCount,
-                homeState.isUpdatingAvailability || state.isLoading || profileState.isLoading || documentsState.isLoading,
+            if (workArea) WorkSidebar(
+                user = user,
+                route = route,
+                unread = notificationsState.unreadCount,
+                busy = homeState.isUpdatingAvailability || state.isLoading || profileState.isLoading || documentsState.isLoading,
                 onNavigate = { target -> scope.launch {
                     drawerState.close()
                     navController.navigate(target) { popUpTo(Screen.Home.route); launchSingleTop = true }
                 } },
-                onPassword = { scope.launch { drawerState.close(); authViewModel.clearError(); passwordDialog = true } },
-                onLogout = { scope.launch { drawerState.close(); authViewModel.logout() } })
+                onLogout = { scope.launch { drawerState.close(); authViewModel.logout() } }
+            )
         }) {
     Scaffold(topBar = {
         if (route == Screen.Profile.route && workArea) {
@@ -178,6 +180,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
                         onSaveClick = { n, l, d, p ->
                             profileViewModel.updatePersonalData(n, l, d, p) { navController.popBackStack() }
                         },
+                        onConfigurePassword = { authViewModel.clearError(); passwordDialog = true },
                         isLoading = profileState.isLoading, errorMessage = profileState.errorMessage)
                 }
             }
