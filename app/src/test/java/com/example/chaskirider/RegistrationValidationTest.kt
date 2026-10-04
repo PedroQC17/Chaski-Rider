@@ -10,8 +10,9 @@ class RegistrationValidationTest {
         assertEquals("+51987654321", RegistrationValidation.normalizePhone("+51 987-654-321"))
     }
     @Test fun incompletePersonalDataTakesPriorityOverStoredStep() {
-        assertEquals(1, RegistrationValidation.nextStep(RiderUser(currentStep = 3)))
-        val personal = RiderUser(name = "Ana", lastName = "Perez", dni = "00123456", phone = "+51987654321", termsAccepted = true)
+        assertEquals(1, RegistrationValidation.nextStep(RiderUser(currentStep = 3, hasPassword = true)))
+        val personal = RiderUser(name = "Ana", lastName = "Perez", dni = "00123456", phone = "+51987654321", termsAccepted = true, hasPassword = true)
+        assertEquals(1, RegistrationValidation.nextStep(personal.copy(hasPassword = false)))
         assertEquals(2, RegistrationValidation.nextStep(personal))
         assertEquals(3, RegistrationValidation.nextStep(personal.copy(vehicleType = VehicleType.BICYCLE)))
     }
@@ -19,9 +20,9 @@ class RegistrationValidationTest {
         assertEquals(3, RegistrationValidation.requiredDocuments(VehicleType.BICYCLE).size)
         assertTrue(RegistrationValidation.requiredDocuments(VehicleType.MOTORCYCLE).containsAll(listOf("driverLicense", "soat")))
     }
-    @Test fun carIsAcceptedAndRequiresBicycleDocuments() {
-        val personal = RiderUser(name = "Ana", lastName = "Perez", dni = "00123456", phone = "+51987654321", termsAccepted = true)
-        assertEquals(3, RegistrationValidation.nextStep(personal.copy(vehicleType = VehicleType.CAR)))
+    @Test fun carIsNotSelectableAndKeepsLegacyDocumentList() {
+        val personal = RiderUser(name = "Ana", lastName = "Perez", dni = "00123456", phone = "+51987654321", termsAccepted = true, hasPassword = true)
+        assertEquals(2, RegistrationValidation.nextStep(personal.copy(vehicleType = VehicleType.CAR)))
         assertEquals(3, RegistrationValidation.requiredDocuments(VehicleType.CAR).size)
     }
     @Test fun onlyEnabledRidersCanGoAvailable() {
