@@ -25,6 +25,14 @@ class RiderDocumentDataSource(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val storage: FirebaseStorage = FirebaseStorage.getInstance()
 ) {
+    // URI temporal (FileProvider) para capturar un documento con la cámara externa.
+    suspend fun createCapture() = firebaseResult(texts) {
+        withContext(Dispatchers.IO) {
+            val dir = File(context.cacheDir, "documents").apply { mkdirs() }
+            FileProvider.getUriForFile(context, "${context.packageName}.files", File.createTempFile("capture-", ".jpg", dir))
+        }
+    }
+
     suspend fun uploadDocument(docType: String, uri: Uri) = firebaseResult(texts) {
         val uid = auth.currentUser?.uid ?: error(texts.get(TextKey.TEXT_NO_HAY_UNA_SESION_ACTIVA))
         require(docType in listOf("dniFront", "dniBack", "bankStatement", "driverLicense", "soat"))

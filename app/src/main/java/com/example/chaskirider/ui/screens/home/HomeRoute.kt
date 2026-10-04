@@ -42,7 +42,7 @@ fun HomeRoute(viewModel: HomeViewModel, onOpenMenu: () -> Unit) {
             val granted = listOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)
                 .any { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }
             viewModel.setLocationPermission(granted)
-            if (granted && latestState.location == null) viewModel.locate()
+            if (granted && latestState.user?.isAvailable == true && latestState.location == null) viewModel.locate()
         }
         refreshPermission()
         val observer = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_RESUME) refreshPermission() }

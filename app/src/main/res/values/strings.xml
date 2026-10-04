@@ -187,6 +187,8 @@
     <string name="replace_document">Reemplazar</string>
     <string name="retry">Reintentar</string>
     <string name="attach_document">Adjuntar</string>
+    <string name="text_camara">"Cámara"</string>
+    <string name="text_descartar">"Descartar"</string>
     <string name="dni_label">DNI</string>
     <string name="server_este_registro_no_admite_cambios_en_su_estado_actual">"Este registro no admite cambios en su estado actual"</string>
     <string name="server_referencia_de_documento_no_valida">"Referencia de documento no válida"</string>

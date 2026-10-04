@@ -56,6 +56,35 @@ class DocumentsViewModel(
         previewJob?.cancel()
         _uiState.update { it.copy(preview = null) }
     }
+    private var pendingCapture: Uri? = null
+
+    // HU03: captura con cámara; la foto se confirma en vista previa antes de subirla.
+    fun prepareCapture(docType: String, onReady: (Uri) -> Unit) {
+        if (_uiState.value.captureType != null || _uiState.value.captureUri != null || _uiState.value.isLoading) return
+        viewModelScope.launch {
+            repository.createCapture().onSuccess { uri ->
+                pendingCapture = uri
+                _uiState.update { it.copy(captureType = docType, errorMessage = null) }
+                onReady(uri)
+            }.onFailure { error -> failure(error) }
+        }
+    }
+    fun captured(success: Boolean) {
+        val uri = pendingCapture
+        if (!success || uri == null || _uiState.value.captureType == null) { discardCapture(); return }
+        _uiState.update { it.copy(captureUri = uri) }
+    }
+    fun discardCapture() {
+        pendingCapture = null
+        _uiState.update { it.copy(captureType = null, captureUri = null) }
+    }
+    fun confirmCapture() {
+        val type = _uiState.value.captureType ?: return
+        val uri = pendingCapture ?: return
+        pendingCapture = null
+        _uiState.update { it.copy(captureType = null, captureUri = null) }
+        uploadDocument(type, uri)
+    }
     fun openDocument(docType: String) {
         previewJob?.cancel()
         _uiState.update { it.copy(preview = DocumentPreviewUiState(docType)) }

@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.*
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Duration.Companion.milliseconds
 
-class OrdersViewModel(private val repository: OfferRepository, session: RiderSession) : ViewModel() {
+class OrdersViewModel(private val repository: OfferRepository, private val session: RiderSession) : ViewModel() {
     private val mutable = MutableStateFlow(OrdersUiState())
     val uiState = mutable.asStateFlow()
     private var request: Job? = null
@@ -68,6 +68,11 @@ class OrdersViewModel(private val repository: OfferRepository, session: RiderSes
         val requestUid = uid
         val offerId = mutable.value.snapshot?.offer?.id
         if ((action == OfferAction.ACCEPT || action == OfferAction.REJECT) && offerId == null) return
+        // HU04: sin disponibilidad activa no se piden ofertas nuevas.
+        if (action == OfferAction.OFFER && session.user.value?.isAvailable != true) {
+            mutable.update { it.copy(error = R.string.text_conectate_para_recibir_pedidos_en_tu_zona) }
+            return
+        }
         mutable.update { it.copy(busy = true, error = null) }
         request = viewModelScope.launch {
             val started = SystemClock.elapsedRealtime()

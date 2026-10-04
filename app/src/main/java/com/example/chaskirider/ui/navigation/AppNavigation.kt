@@ -1,12 +1,18 @@
 package com.example.chaskirider.ui.navigation
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.core.content.ContextCompat
 import androidx.credentials.exceptions.GetCredentialCancellationException
+import coil.compose.AsyncImage
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.createSavedStateHandle
@@ -53,6 +59,20 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
     var recovery by remember { mutableStateOf(false) }
     var passwordDialog by remember { mutableStateOf(false) }
     var resetEmail by remember { mutableStateOf("") }
+    // HU03: captura de documentos con la cámara (permiso bajo demanda + vista previa antes de subir).
+    var pendingCameraType by remember { mutableStateOf<String?>(null) }
+    val documentCamera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture(), documentsViewModel::captured)
+    fun openDocumentCamera(type: String) {
+        documentsViewModel.prepareCapture(type) { uri ->
+            try { documentCamera.launch(uri) }
+            catch (_: android.content.ActivityNotFoundException) { documentsViewModel.discardCapture(); documentsViewModel.reportError(context.getString(R.string.profile_photo_camera_error)) }
+            catch (_: SecurityException) { documentsViewModel.discardCapture(); documentsViewModel.reportError(context.getString(R.string.profile_photo_camera_error)) }
+        }
+    }
+    val documentCameraPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) pendingCameraType?.let(::openDocumentCamera)
+        else documentsViewModel.reportError(context.getString(R.string.text_permiso_de_camara_denegado_puedes_elegir_un))
+    }
     val entry by navController.currentBackStackEntryAsState()
     val route = entry?.destination?.route
     val user = state.currentUser
@@ -86,18 +106,20 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
     }
 
     val workArea = user?.status == RegistrationStatus.APPROVED && user.isEnabled && !needsPhoto
+    // HU04: las ofertas (notificación de tiempo y navegación) solo existen conectado.
+    val offersActive = workArea && user?.isAvailable == true
     val ordersViewModel: com.example.chaskirider.ui.screens.orders.OrdersViewModel = viewModel {
         com.example.chaskirider.ui.screens.orders.OrdersViewModel(AppContainer.demoOfferRepository, AppContainer.riderSession)
     }
     val offerNotifier = remember { com.example.chaskirider.data.orders.OfferNotifier(context.applicationContext) }
-    LaunchedEffect(ordersViewModel, workArea) {
-        if (!workArea) { offerNotifier.update(null, 0); return@LaunchedEffect }
+    LaunchedEffect(ordersViewModel, offersActive) {
+        if (!offersActive) { offerNotifier.update(null, 0); return@LaunchedEffect }
         ordersViewModel.uiState.collect { orders ->
             offerNotifier.update(orders.snapshot?.offer?.id, orders.secondsLeft)
         }
     }
-    LaunchedEffect(demoRequest, workArea) {
-        if (demoRequest > 0 && workArea && com.example.chaskirider.BuildConfig.DEBUG) {
+    LaunchedEffect(demoRequest, offersActive) {
+        if (demoRequest > 0 && offersActive && com.example.chaskirider.BuildConfig.DEBUG) {
             navController.navigate(Screen.DemoOrders.route) { launchSingleTop = true }
         }
     }
@@ -166,6 +188,11 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
                     OnboardingStep3Screen(vehicleType = it.vehicleType, initialBankInfo = it.bankInfo,
                         onNavigateBack = { profileViewModel.clearError(); documentsViewModel.clearError(); navController.navigate(Screen.OnboardingStep2.route) { launchSingleTop = true } },
                         onDocumentPick = documentsViewModel::uploadDocument,
+                        onDocumentCamera = { type ->
+                            pendingCameraType = type
+                            if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) openDocumentCamera(type)
+                            else documentCameraPermission.launch(Manifest.permission.CAMERA)
+                        },
                         onDocumentView = documentsViewModel::openDocument,
                         onFinishRegistrationClick = { b,h,a,c -> profileViewModel.finishRegistration(b,h,a,c) {
                             navController.navigate(Screen.RegistrationStatus.route) { popUpTo(navController.graph.id) { inclusive = true } }
@@ -245,6 +272,13 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
 
     documentsState.preview?.let { preview ->
         DocumentPreviewHost(preview, documentsViewModel::dismissPreview, documentsViewModel::showPage)
+    }
+    documentsState.captureUri?.let { capture ->
+        AlertDialog(onDismissRequest = documentsViewModel::discardCapture,
+            title = { Text(stringResource(R.string.document_preview)) },
+            text = { AsyncImage(model = capture, contentDescription = null, modifier = Modifier.fillMaxWidth()) },
+            confirmButton = { TextButton(onClick = documentsViewModel::confirmCapture) { Text(stringResource(R.string.profile_photo_save)) } },
+            dismissButton = { TextButton(onClick = documentsViewModel::discardCapture) { Text(stringResource(R.string.text_descartar)) } })
     }
     if (profileState.changeNoticeVisible) ChaskiDialog(
         title = stringResource(R.string.profile_change_title), onDismiss = profileViewModel::dismissChangeNotice,

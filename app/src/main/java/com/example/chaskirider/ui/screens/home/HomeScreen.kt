@@ -42,7 +42,7 @@ fun HomeScreen(state: HomeUiState, onOpenMenu: () -> Unit,
         }
         Column(Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(16.dp).widthIn(max = 480.dp),
             horizontalAlignment = Alignment.End) {
-            FilledIconButton(onClick = onLocate, enabled = !state.isLocating, modifier = Modifier.size(48.dp),
+            FilledIconButton(onClick = onLocate, enabled = !state.isLocating && state.user?.isAvailable == true, modifier = Modifier.size(48.dp),
                 colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surface)) {
                 if (state.isLocating) CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp)
                 else Icon(Icons.Default.LocationOn, stringResource(R.string.home_locate))

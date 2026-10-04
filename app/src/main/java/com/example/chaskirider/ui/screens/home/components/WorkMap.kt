@@ -43,7 +43,7 @@ fun WorkMap(state: HomeUiState, bottomInset: androidx.compose.ui.unit.Dp) {
     }
     GoogleMap(
         modifier = Modifier.fillMaxSize(), cameraPositionState = camera,
-        properties = MapProperties(isMyLocationEnabled = state.hasLocationPermission),
+        properties = MapProperties(isMyLocationEnabled = state.hasLocationPermission && state.user?.isAvailable == true),
         uiSettings = MapUiSettings(zoomControlsEnabled = false, myLocationButtonEnabled = false,
             mapToolbarEnabled = false, compassEnabled = false, rotationGesturesEnabled = false),
         contentPadding = PaddingValues(top = 96.dp, bottom = bottomInset),

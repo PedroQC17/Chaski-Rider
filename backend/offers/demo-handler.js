@@ -41,6 +41,9 @@ exports.riderOfferDemo = onRequest({ region: "us-central1", maxInstances: 2, min
       }
       if (operation === "reset") { state = empty(); changed = true; }
       if (operation === "offer" && !state.offer) {
+        // HU04: sin disponibilidad activa no se generan ofertas nuevas.
+        if (rider.isAvailable !== true)
+          return { status: 403, body: { code: "rider_unavailable" } };
         const accepted = state.batch?.stops || [];
         if (state.pickedUp || accepted.length >= 3) code = "batch_closed";
         else {

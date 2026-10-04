@@ -55,6 +55,7 @@ fun OnboardingStep3Screen(
     initialBankInfo: BankInfo = BankInfo(),
     onNavigateBack: () -> Unit = {},
     onDocumentPick: (String, Uri) -> Unit = { _, _ -> },
+    onDocumentCamera: (String) -> Unit = {},
     onDocumentView: (String) -> Unit = {},
     onFinishRegistrationClick: (String, String, String, String) -> Unit = { _, _, _, _ -> },
     documentsMap: Map<String, DocumentFile> = emptyMap(),
@@ -84,6 +85,7 @@ fun OnboardingStep3Screen(
         required.filter { it != "bankStatement" }.forEach { type ->
             DocumentRow(labels.getValue(type), documentsMap[type], !isLoading,
                 onPick = { selectedType = type; picker.launch(RegistrationValidation.mimeTypes) },
+                onCamera = { onDocumentCamera(type) },
                 onView = { onDocumentView(type) })
             Spacer(Modifier.height(10.dp))
         }
@@ -101,6 +103,7 @@ fun OnboardingStep3Screen(
             singleLine = true, modifier = Modifier.fillMaxWidth())
         DocumentRow(stringResource(R.string.text_estado_de_cuenta), documentsMap["bankStatement"], !isLoading,
             onPick = { selectedType = "bankStatement"; picker.launch(RegistrationValidation.mimeTypes) },
+            onCamera = { onDocumentCamera("bankStatement") },
             onView = { onDocumentView("bankStatement") })
         Spacer(Modifier.height(20.dp))
         errorMessage?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(vertical = 12.dp)) }
@@ -118,7 +121,7 @@ fun OnboardingStep3Screen(
 }
 
 @Composable
-private fun DocumentRow(title: String, document: DocumentFile?, enabled: Boolean, onPick: () -> Unit, onView: () -> Unit) {
+private fun DocumentRow(title: String, document: DocumentFile?, enabled: Boolean, onPick: () -> Unit, onCamera: () -> Unit, onView: () -> Unit) {
     val state = document?.uploadState ?: DocumentUploadState.NOT_SELECTED
     Surface(shape = RoundedCornerShape(12.dp), border = androidx.compose.foundation.BorderStroke(1.dp, BorderLight), color = Color.White) {
         Column(Modifier.fillMaxWidth().padding(14.dp)) {
@@ -137,6 +140,9 @@ private fun DocumentRow(title: String, document: DocumentFile?, enabled: Boolean
             }
             document?.errorMessage?.let { Text(it, fontSize = 12.sp, color = MaterialTheme.colorScheme.error) }
             Row {
+                TextButton(onClick = onCamera, enabled = enabled) {
+                    Text(stringResource(R.string.text_camara))
+                }
                 TextButton(onClick = onPick, enabled = enabled) {
                     Text(if (state == DocumentUploadState.UPLOADED) stringResource(R.string.replace_document) else if (state == DocumentUploadState.ERROR) stringResource(R.string.retry) else stringResource(R.string.attach_document))
                 }

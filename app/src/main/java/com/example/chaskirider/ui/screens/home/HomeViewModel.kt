@@ -44,6 +44,7 @@ class HomeViewModel(
             isLocating = if (granted) it.isLocating else false) }
     }
     fun locate() {
+        if (state.value.user?.isAvailable != true) return
         if (!state.value.hasLocationPermission || state.value.isLocating) return
         state.update { it.copy(isLocating = true, locationUnavailable = false) }
         locationJob = viewModelScope.launch {
@@ -63,6 +64,7 @@ class HomeViewModel(
         updateJob = viewModelScope.launch {
             profiles.setAvailability(available).onSuccess { user ->
                 state.update { it.copy(user = user, isUpdatingAvailability = false) }
+                if (available) locate()
             }.onFailure { error ->
                 state.update { it.copy(isUpdatingAvailability = false,
                     errorMessage = texts.resolveError(error.message, TextKey.TEXT_NO_SE_PUDO_COMPLETAR_LA_OPERACION)) }
