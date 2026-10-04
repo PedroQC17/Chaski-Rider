@@ -39,7 +39,8 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
 
     val state by authViewModel.uiState.collectAsStateWithLifecycle()
     val homeViewModel: HomeViewModel = viewModel { HomeViewModel(AppContainer.riderProfileRepository,
-        AppContainer.locationRepository, AppContainer.textProvider, AppContainer.riderSession) }
+        AppContainer.locationRepository, AppContainer.textProvider, AppContainer.demoOfferRepository,
+        AppContainer.riderSession) }
     val homeState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
 

@@ -69,7 +69,8 @@ private fun OrdersScreen(state: OrdersUiState, onMenu: () -> Unit, onOffer: () -
                     LinearProgressIndicator(progress = { state.secondsLeft / 45f }, modifier = Modifier.fillMaxWidth())
                 } else Text(stringResource(if (snapshot?.pickedUp == true) R.string.orders_picked_up
                     else if (quote != null) R.string.orders_accepted else R.string.orders_empty), fontWeight = FontWeight.Bold)
-                quote?.let { OrderQuoteCard(it, offer != null && snapshot.batch != null) }
+                quote?.let { OrderQuoteCard(it, offer != null && snapshot.batch != null,
+                    snapshot?.merchantName, snapshot?.merchantZone, offer?.reason, offer?.reasonMeters) }
                 if (offer != null) Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedButton(onClick = onReject, enabled = actionsEnabled && state.secondsLeft > 0,
                         modifier = Modifier.weight(1f)) { Text(stringResource(R.string.orders_reject)) }

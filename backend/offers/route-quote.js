@@ -17,12 +17,17 @@ function quote(stops, previousTotalCents = 0) {
   const approachMeters = 1600;
   const approachCents = Math.round(approachMeters / 10);
   const deliveryCents = Math.round(best.distance / 10);
-  const guaranteeCents = Math.max(0, previousTotalCents - approachCents - deliveryCents);
-  const totalCents = approachCents + deliveryCents + guaranteeCents;
+  // HU07: total = base + extras (acercamiento y ruta) + propina conocida + garantía.
+  // La garantía absorbe la diferencia para que el total nunca baje del monto aceptado.
+  const baseCents = fixture.BASE_CENTS;
+  const tipCents = fixture.TIP_CENTS;
+  const visibleCents = baseCents + approachCents + deliveryCents + tipCents;
+  const guaranteeCents = Math.max(0, previousTotalCents - visibleCents);
+  const totalCents = visibleCents + guaranteeCents;
   return { stops: best.order, approachMeters, deliveryMeters: best.distance,
     durationSeconds: Math.round((approachMeters + best.distance) / 4),
-    approachCents, deliveryCents, guaranteeCents, totalCents,
-    additionalCents: totalCents - previousTotalCents, currency: "PEN",
+    baseCents, approachCents, deliveryCents, tipCents, guaranteeCents, totalCents,
+    additionalCents: Math.max(0, totalCents - previousTotalCents), currency: "PEN",
     path: [fixture.points.rider, fixture.points.store, ...best.order.map(s => s.point)] };
 }
 module.exports = { quote };

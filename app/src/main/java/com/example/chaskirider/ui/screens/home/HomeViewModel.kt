@@ -3,6 +3,9 @@ package com.example.chaskirider.ui.screens.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.chaskirider.domain.model.RegistrationValidation
+import com.example.chaskirider.domain.orders.DemandZone
+import com.example.chaskirider.domain.orders.OfferAction
+import com.example.chaskirider.domain.orders.OfferRepository
 import com.example.chaskirider.domain.repository.LocationRepository
 import com.example.chaskirider.domain.repository.RiderProfileRepository
 import com.example.chaskirider.domain.repository.RiderSession
@@ -19,19 +22,28 @@ class HomeViewModel(
     private val profiles: RiderProfileRepository,
     private val locations: LocationRepository,
     private val texts: TextProvider,
+    private val offers: OfferRepository,
     session: RiderSession
 ) : ViewModel() {
     private val state = MutableStateFlow(HomeUiState())
     val uiState = state.asStateFlow()
     private var updateJob: Job? = null
     private var locationJob: Job? = null
+    private var zonesRequestedFor: String? = null
     init {
         viewModelScope.launch {
             session.user.collect { user ->
                 if (state.value.user?.id != user?.id) {
                     updateJob?.cancel(); locationJob?.cancel()
-                    state.value = HomeUiState(user = user)
+                    state.value = HomeUiState(user = user,
+                        zonesLoaded = state.value.zonesLoaded, demandZones = state.value.demandZones,
+                        zonesUpdatedAt = state.value.zonesUpdatedAt)
                 } else state.update { it.copy(user = user) }
+                // HU05: primera carga de zonas de demanda al iniciar sesión.
+                if (user != null && zonesRequestedFor != user.id) {
+                    zonesRequestedFor = user.id
+                    refreshZones()
+                }
             }
         }
     }
@@ -53,6 +65,25 @@ class HomeViewModel(
                 locationUnavailable = point == null, cameraRequest = it.cameraRequest + 1) }
         }
     }
+    // HU05: carga o recarga las zonas de demanda; el servidor marca la actualización.
+    fun refreshZones() {
+        if (state.value.isRefreshingZones) return
+        state.update { it.copy(isRefreshingZones = true) }
+        viewModelScope.launch {
+            val snapshot = runCatching { offers.execute(OfferAction.STATE) }.getOrNull()
+            state.update { s ->
+                if (snapshot == null) s.copy(isRefreshingZones = false)
+                else s.copy(isRefreshingZones = false, zonesLoaded = true,
+                    demandZones = snapshot.demandZones,
+                    zonesUpdatedAt = snapshot.demandZones.maxOfOrNull { z -> z.updatedAt } ?: snapshot.serverTime,
+                    selectedZone = snapshot.demandZones.find { z -> z.id == s.selectedZone?.id })
+            }
+        }
+    }
+    fun selectZone(zone: DemandZone) {
+        state.update { it.copy(selectedZone = if (it.selectedZone?.id == zone.id) null else zone) }
+    }
+    fun clearZone() { state.update { it.copy(selectedZone = null) } }
     fun setAvailability(available: Boolean) {
         if (state.value.isUpdatingAvailability) return
         val user = state.value.user ?: return

@@ -30,13 +30,18 @@ internal fun OrdersMap(snapshot: OfferSnapshot?) {
     if (BuildConfig.MAPS_CONFIGURED) GoogleMap(Modifier.fillMaxSize(), cameraPositionState = camera,
         onMapLoaded = { loaded = true }, contentPadding = PaddingValues(top = 72.dp, bottom = 330.dp),
         uiSettings = MapUiSettings(zoomControlsEnabled = false, mapToolbarEnabled = false)) {
+        val merchantTitle = snapshot?.merchantName?.let { name ->
+            snapshot?.merchantZone?.let { zone -> "$name · $zone" } ?: name
+        } ?: stringResource(R.string.orders_store)
         snapshot?.merchant?.let { Marker(state = rememberUpdatedMarkerState(LatLng(it.latitude, it.longitude)),
-            title = stringResource(R.string.orders_store)) }
+            title = merchantTitle) }
         quote?.path?.firstOrNull()?.let { Marker(state = rememberUpdatedMarkerState(LatLng(it.latitude, it.longitude)),
             title = stringResource(R.string.orders_rider)) }
         quote?.stops?.forEach { stop -> key(stop.id) {
             Marker(state = rememberUpdatedMarkerState(LatLng(stop.point.latitude, stop.point.longitude)),
-                title = stringResource(R.string.orders_delivery_marker, stop.id.uppercase()))
+                title = stop.zone?.takeIf(String::isNotBlank)?.let { zone ->
+                    stringResource(R.string.orders_delivery_zone, stop.id.uppercase(), zone) }
+                    ?: stringResource(R.string.orders_delivery_marker, stop.id.uppercase()))
         } }
         // Línea de ejemplo, nunca presentada como navegación real por calles.
         if (points.size > 1) Polyline(points = points, color = Color(0xFFFF5722), width = 9f)

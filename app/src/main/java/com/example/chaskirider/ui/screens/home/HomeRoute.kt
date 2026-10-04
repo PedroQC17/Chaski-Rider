@@ -60,5 +60,8 @@ fun HomeRoute(viewModel: HomeViewModel, onOpenMenu: () -> Unit) {
             else requestLocation(true)
         },
         onLocate = { if (state.hasLocationPermission) viewModel.locate() else requestLocation(false) },
-        onDismissError = viewModel::clearError)
+        onDismissError = viewModel::clearError,
+        onRefreshZones = viewModel::refreshZones,
+        onSelectZone = viewModel::selectZone,
+        onClearZone = viewModel::clearZone)
 }

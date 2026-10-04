@@ -21,7 +21,8 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
 
 @Composable
-fun WorkMap(state: HomeUiState, bottomInset: androidx.compose.ui.unit.Dp) {
+fun WorkMap(state: HomeUiState, bottomInset: androidx.compose.ui.unit.Dp,
+    onZoneTap: (com.example.chaskirider.domain.orders.DemandZone) -> Unit = {}) {
     if (!BuildConfig.MAPS_CONFIGURED || LocalInspectionMode.current) {
         Box(Modifier.fillMaxSize().background(Color(0xFFF0F2EF)), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -48,5 +49,27 @@ fun WorkMap(state: HomeUiState, bottomInset: androidx.compose.ui.unit.Dp) {
             mapToolbarEnabled = false, compassEnabled = false, rotationGesturesEnabled = false),
         contentPadding = PaddingValues(top = 96.dp, bottom = bottomInset),
         onMapLoaded = { loaded = true }
-    )
+    ) {
+        // HU05: capa de zonas de demanda; al tocar una zona se selecciona.
+        state.demandZones.forEach { zone ->
+            val selected = state.selectedZone?.id == zone.id
+            val color = demandLevelColor(zone.level)
+            Circle(
+                center = LatLng(zone.latitude, zone.longitude),
+                radius = zone.radiusMeters.toDouble(),
+                strokeColor = color,
+                fillColor = color.copy(alpha = if (selected) 0.35f else 0.15f),
+                strokeWidth = if (selected) 5f else 3f,
+                clickable = true,
+                onClick = { onZoneTap(zone); true }
+            )
+        }
+    }
+}
+
+private fun demandLevelColor(level: String) = when (level) {
+    "HIGH" -> Color(0xFFE53935)
+    "MEDIUM" -> Color(0xFFFB8C00)
+    "LOW" -> Color(0xFF43A047)
+    else -> Color(0xFF4285F4)
 }
