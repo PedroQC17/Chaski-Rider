@@ -1,3 +1,7 @@
+// Parte 1 - Pruebas de validación actualizadas a las reglas vigentes tras el
+// refactor MVVM: contraseña obligatoria antes del vehículo, automóvil fuera del
+// registro (solo lectura de perfiles antiguos), foto de perfil requerida para
+// activarse y catálogo de bancos BCP/INTERBANK/BBVA.
 package com.example.chaskirider
 
 import com.example.chaskirider.domain.model.*
@@ -26,11 +30,16 @@ class RegistrationValidationTest {
         assertEquals(3, RegistrationValidation.requiredDocuments(VehicleType.CAR).size)
     }
     @Test fun onlyEnabledRidersCanGoAvailable() {
-        val approved = RiderUser(status = RegistrationStatus.APPROVED, isEnabled = true)
+        val approved = RiderUser(status = RegistrationStatus.APPROVED, isEnabled = true, profilePhotoPath = "photo.jpg")
         assertNull(RegistrationValidation.availabilityError(approved, activating = true))
         assertNull(RegistrationValidation.availabilityError(approved.copy(isEnabled = false), activating = false))
         assertNotNull(RegistrationValidation.availabilityError(approved.copy(isEnabled = false), activating = true))
-        assertNotNull(RegistrationValidation.availabilityError(RiderUser(status = RegistrationStatus.PENDING_REVIEW), activating = true))
+        assertNotNull(RegistrationValidation.availabilityError(approved.copy(status = RegistrationStatus.PENDING_REVIEW), activating = true))
+    }
+    @Test fun availabilityRequiresProfilePhoto() {
+        val approved = RiderUser(status = RegistrationStatus.APPROVED, isEnabled = true)
+        assertNotNull(RegistrationValidation.availabilityError(approved, activating = true))
+        assertNull(RegistrationValidation.availabilityError(approved, activating = false))
     }
     @Test fun invalidDniAndMissingConsentAreRejected() {
         assertNotNull(RegistrationValidation.personalError("Ana", "Perez", "123", "987654321", true))
@@ -38,8 +47,11 @@ class RegistrationValidationTest {
         assertNull(RegistrationValidation.personalError("Ana", "Perez", "00123456", "987654321", true))
     }
     @Test fun bankAllowsAccountOrValidCci() {
-        assertNotNull(RegistrationValidation.bankError(BankInfo("Bank", "Ana", "", "")))
-        assertNotNull(RegistrationValidation.bankError(BankInfo("Bank", "Ana", "", "123")))
-        assertNull(RegistrationValidation.bankError(BankInfo("Bank", "Ana", "", "00123456789012345678")))
+        assertNotNull(RegistrationValidation.bankError(BankInfo("BCP", "Ana", "", "")))
+        assertNotNull(RegistrationValidation.bankError(BankInfo("BCP", "Ana", "", "123")))
+        assertNull(RegistrationValidation.bankError(BankInfo("BCP", "Ana", "", "00123456789012345678")))
+    }
+    @Test fun unknownBankIsRejected() {
+        assertNotNull(RegistrationValidation.bankError(BankInfo("Bank", "Ana", "", "00123456789012345678")))
     }
 }
