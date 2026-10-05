@@ -9,7 +9,13 @@ internal interface OfferApi {
     @POST("riderOfferDemo")
     suspend fun execute(@Header("Authorization") token: String, @Body body: OfferRequest): SnapshotDto
 }
-internal data class OfferRequest(val action: String, val offerId: String?, val requestId: String)
+internal data class OfferRequest(
+    val action: String,
+    val offerId: String?,
+    val requestId: String,
+    val latitude: Double? = null,
+    val longitude: Double? = null
+)
 internal data class PointDto(val latitude: Double, val longitude: Double) {
     fun toDomain() = RoutePoint(latitude, longitude)
 }
@@ -36,7 +42,16 @@ internal data class DemandZoneDto(val id: String, val name: String, val level: S
 }
 internal data class SnapshotDto(val serverTime: Long, val pickedUp: Boolean,
     val batch: QuoteDto?, val offer: OfferDto?, val merchant: MerchantDto,
-    val demandZones: List<DemandZoneDto>?) {
+    val demandZones: List<DemandZoneDto>?,
+    val arrivedAt: Long? = null,
+    val waitStartedAt: Long? = null,
+    val isNotReadyReported: Boolean? = null,
+    val waitingCompensationCents: Int? = null,
+    val pickedUpAt: Long? = null,
+    val deliveredAt: Long? = null,
+    val isDelivered: Boolean? = null) {
     fun toDomain() = OfferSnapshot(serverTime, pickedUp, batch?.toDomain(), offer?.toDomain(),
-        merchant.toPoint(), merchant.name, merchant.zone, demandZones.orEmpty().map { it.toDomain() })
+        merchant.toPoint(), merchant.name, merchant.zone, demandZones.orEmpty().map { it.toDomain() },
+        arrivedAt, waitStartedAt, isNotReadyReported ?: false, waitingCompensationCents ?: 0,
+        pickedUpAt, deliveredAt, isDelivered ?: false)
 }

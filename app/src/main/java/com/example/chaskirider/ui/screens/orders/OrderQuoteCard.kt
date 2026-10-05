@@ -12,9 +12,15 @@ import com.example.chaskirider.domain.orders.DeliveryQuote
 import java.util.Locale
 
 @Composable
-internal fun OrderQuoteCard(quote: DeliveryQuote, additional: Boolean,
-    merchantName: String? = null, merchantZone: String? = null,
-    offerReason: String? = null, reasonMeters: Int? = null) {
+internal fun OrderQuoteCard(
+    quote: DeliveryQuote,
+    additional: Boolean,
+    merchantName: String? = null,
+    merchantZone: String? = null,
+    offerReason: String? = null,
+    reasonMeters: Int? = null,
+    waitingCompensationCents: Int = 0
+) {
     // HU07: recojo identificado, destino aproximado, base + extras y propina separada.
     val storeTitle = merchantName?.let { name -> merchantZone?.let { zone -> "$name · $zone" } ?: name }
         ?: stringResource(R.string.orders_store)
@@ -37,7 +43,11 @@ internal fun OrderQuoteCard(quote: DeliveryQuote, additional: Boolean,
     if (quote.deliveryCents > 0) PaymentLine(stringResource(R.string.orders_deliveries, quote.deliveryMeters / 1000.0), quote.deliveryCents)
     if (quote.tipCents > 0) PaymentLine(stringResource(R.string.orders_tip), quote.tipCents)
     if (quote.guaranteeCents > 0) PaymentLine(stringResource(R.string.orders_guarantee), quote.guaranteeCents)
-    PaymentLine(stringResource(R.string.orders_total), quote.totalCents, true)
+    // HU08: Compensación por espera
+    if (waitingCompensationCents > 0) {
+        PaymentLine("Compensación por espera", waitingCompensationCents)
+    }
+    PaymentLine(stringResource(R.string.orders_total), quote.totalCents + waitingCompensationCents, true)
     if (additional) Text(stringResource(R.string.orders_additional, quote.additionalCents / 100.0),
         color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
 }

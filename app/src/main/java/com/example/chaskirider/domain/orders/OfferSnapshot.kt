@@ -9,9 +9,20 @@ data class DeliveryOffer(val id: String, val expiresAt: Long, val quote: Deliver
 data class OfferSnapshot(val serverTime: Long, val pickedUp: Boolean,
     val batch: DeliveryQuote?, val offer: DeliveryOffer?, val merchant: RoutePoint,
     val merchantName: String? = null, val merchantZone: String? = null,
-    val demandZones: List<DemandZone> = emptyList())
-enum class OfferAction { STATE, OFFER, ACCEPT, REJECT, PICKUP, RESET }
+    val demandZones: List<DemandZone> = emptyList(),
+    // HU08: estado de llegada al establecimiento, reporte de pedido no listo y compensación por espera.
+    val arrivedAt: Long? = null, val waitStartedAt: Long? = null,
+    val isNotReadyReported: Boolean = false, val waitingCompensationCents: Int = 0,
+    // HU09: timestamps de recojo y entrega al cliente.
+    val pickedUpAt: Long? = null, val deliveredAt: Long? = null,
+    val isDelivered: Boolean = false)
+enum class OfferAction { STATE, OFFER, ACCEPT, REJECT, ARRIVE_MERCHANT, REPORT_NOT_READY, PICKUP, DELIVER, RESET }
 interface OfferRepository {
-    suspend fun execute(action: OfferAction, offerId: String? = null): OfferSnapshot
+    suspend fun execute(
+        action: OfferAction,
+        offerId: String? = null,
+        lat: Double? = null,
+        lng: Double? = null
+    ): OfferSnapshot
 }
 class OfferRequestException(val status: Int) : Exception()

@@ -17,8 +17,8 @@ exports.riderOfferDemo = onRequest({ region: "us-central1", maxInstances: 2, min
     if (!token) throw new Error("missing_token");
     uid = (await getAuth().verifyIdToken(token, true)).uid;
   } catch (_) { return res.status(401).json({ code: "unauthenticated" }); }
-  const { action, offerId, requestId } = req.body || {};
-  if (!["state", "offer", "accept", "reject", "pickup", "reset"].includes(action) ||
+  const { action, offerId, requestId, latitude, longitude } = req.body || {};
+  if (!["state", "offer", "accept", "reject", "arrive_merchant", "report_not_ready", "pickup", "deliver", "reset"].includes(action) ||
       (action !== "state" && (typeof requestId !== "string" || !/^[a-f0-9-]{36}$/.test(requestId))) ||
       (["accept", "reject"].includes(action) && (typeof offerId !== "string" || offerId.length > 80)))
     return res.status(400).json({ code: "invalid_request" });
@@ -84,16 +84,59 @@ exports.riderOfferDemo = onRequest({ region: "us-central1", maxInstances: 2, min
         else {
           if (action === "accept") {
             state.batch = state.offer.quote; state.revision++;
-            // HU05/HU06: al aceptar el pedido queda como ACCEPTADO para este repartidor y no se ofrece a otros.
+            // HU05/HU06: al aceptar el pedido queda como ACEPTADO para este repartidor y no se ofrece a otros.
             markOrder(state.offer.orderId, "ACCEPTED");
           } else markOrder(state.offer.orderId, "RELEASED");
           state.decisions[offerId] = action === "accept" ? "accepted" : "rejected";
           state.offer = null; changed = true;
         }
       }
+      // HU08: confirmación de llegada al establecimiento.
+      if (operation === "arrive_merchant") {
+        if (!state.batch || state.offer || state.pickedUp) code = "offer_conflict";
+        else if (!state.arrivedAt) {
+          state.arrivedAt = now;
+          state.revision++;
+          changed = true;
+        }
+      }
+      // HU08: reporte de pedido no listo e inicio de tiempo de espera.
+      if (operation === "report_not_ready") {
+        if (!state.batch || state.offer || state.pickedUp) code = "offer_conflict";
+        else if (!state.isNotReadyReported) {
+          state.isNotReadyReported = true;
+          state.waitStartedAt = now;
+          state.revision++;
+          changed = true;
+        }
+      }
       if (operation === "pickup") {
         if (!state.batch || state.offer) code = "offer_conflict";
-        else if (!state.pickedUp) { state.pickedUp = true; state.revision++; changed = true; }
+        else if (!state.pickedUp) {
+          state.pickedUp = true;
+          state.pickedUpAt = now; // HU09: registrar la hora de recojo
+          // HU08: cálculo de compensación si la espera reportada supera los 5 min (300 s).
+          if (state.waitStartedAt && now > state.waitStartedAt) {
+            const waitSeconds = Math.floor((now - state.waitStartedAt) / 1000);
+            if (waitSeconds > 300) {
+              const extraMinutes = Math.ceil((waitSeconds - 300) / 60);
+              state.waitingCompensationCents = extraMinutes * 20; // S/ 0.20 por minuto extra.
+            }
+          }
+          state.revision++;
+          changed = true;
+        }
+      }
+      // HU09: confirmación de entrega al cliente
+      if (operation === "deliver") {
+        if (!state.batch || !state.pickedUp) code = "offer_conflict";
+        else if (!state.isDelivered) {
+          state.isDelivered = true;
+          state.deliveredAt = now;
+          (state.batch?.stops || []).forEach(s => markOrder(s.orderId, "DELIVERED"));
+          state.revision++;
+          changed = true;
+        }
       }
       // Acotar el historial de esta herramienta de demostración.
       state.decisions = Object.fromEntries(Object.entries(state.decisions).slice(-30));
@@ -113,7 +156,11 @@ exports.riderOfferDemo = onRequest({ region: "us-central1", maxInstances: 2, min
       const demandZones = fixture.demandZones.map(z => ({ ...z, updatedAt: now }));
       return { status: code ? 409 : 200, body: { code, serverTime: now, revision: state.revision,
         pickedUp: state.pickedUp, batch: state.batch, offer: state.offer, merchant: fixture.points.store,
-        demandZones } };
+        demandZones, arrivedAt: state.arrivedAt || null, waitStartedAt: state.waitStartedAt || null,
+        isNotReadyReported: state.isNotReadyReported || false,
+        waitingCompensationCents: state.waitingCompensationCents || 0,
+        pickedUpAt: state.pickedUpAt || null, deliveredAt: state.deliveredAt || null,
+        isDelivered: state.isDelivered || false } };
     });
     return res.status(result.status).json(result.body);
   } catch (e) {

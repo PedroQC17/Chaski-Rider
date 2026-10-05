@@ -33,8 +33,18 @@ internal fun OrdersMap(snapshot: OfferSnapshot?) {
         val merchantTitle = snapshot?.merchantName?.let { name ->
             snapshot?.merchantZone?.let { zone -> "$name · $zone" } ?: name
         } ?: stringResource(R.string.orders_store)
-        snapshot?.merchant?.let { Marker(state = rememberUpdatedMarkerState(LatLng(it.latitude, it.longitude)),
-            title = merchantTitle) }
+        snapshot?.merchant?.let { merchant ->
+            val center = LatLng(merchant.latitude, merchant.longitude)
+            Marker(state = rememberUpdatedMarkerState(center), title = merchantTitle)
+            // HU08: Círculo visual de geocerca de 100m alrededor del establecimiento
+            Circle(
+                center = center,
+                radius = 100.0,
+                fillColor = Color(0x334CAF50),
+                strokeColor = Color(0xFF4CAF50),
+                strokeWidth = 3f
+            )
+        }
         quote?.path?.firstOrNull()?.let { Marker(state = rememberUpdatedMarkerState(LatLng(it.latitude, it.longitude)),
             title = stringResource(R.string.orders_rider)) }
         quote?.stops?.forEach { stop -> key(stop.id) {
@@ -43,7 +53,6 @@ internal fun OrdersMap(snapshot: OfferSnapshot?) {
                     stringResource(R.string.orders_delivery_zone, stop.id.uppercase(), zone) }
                     ?: stringResource(R.string.orders_delivery_marker, stop.id.uppercase()))
         } }
-        // Línea de ejemplo, nunca presentada como navegación real por calles.
         if (points.size > 1) Polyline(points = points, color = Color(0xFFFF5722), width = 9f)
     } else Text(stringResource(R.string.orders_map_missing))
 }
