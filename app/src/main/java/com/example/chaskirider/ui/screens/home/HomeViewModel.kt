@@ -1,5 +1,6 @@
 package com.example.chaskirider.ui.screens.home
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.chaskirider.domain.model.RegistrationValidation
@@ -50,17 +51,20 @@ class HomeViewModel(
     fun clearError() { state.update { it.copy(errorMessage = null, locationUnavailable = false) } }
     fun reportError(message: String) { state.update { it.copy(errorMessage = message) } }
     fun setLocationPermission(granted: Boolean) {
+        Log.d("HomeViewModel", "setLocationPermission: granted=$granted")
         if (!granted) locationJob?.cancel()
         state.update { it.copy(hasLocationPermission = granted,
             location = if (granted) it.location else null,
             isLocating = if (granted) it.isLocating else false) }
     }
     fun locate() {
+        Log.d("HomeViewModel", "locate() called. userAvailable=${state.value.user?.isAvailable}, hasPermission=${state.value.hasLocationPermission}, isLocating=${state.value.isLocating}")
         if (state.value.user?.isAvailable != true) return
         if (!state.value.hasLocationPermission || state.value.isLocating) return
         state.update { it.copy(isLocating = true, locationUnavailable = false) }
         locationJob = viewModelScope.launch {
             val point = locations.currentLocation().getOrNull()
+            Log.d("HomeViewModel", "locate() result: $point")
             state.update { it.copy(isLocating = false, location = point,
                 locationUnavailable = point == null, cameraRequest = it.cameraRequest + 1) }
         }

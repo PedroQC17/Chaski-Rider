@@ -1,5 +1,6 @@
 package com.example.chaskirider.ui.screens.home.components
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -23,6 +24,7 @@ import com.google.maps.android.compose.*
 @Composable
 fun WorkMap(state: HomeUiState, bottomInset: androidx.compose.ui.unit.Dp,
     onZoneTap: (com.example.chaskirider.domain.orders.DemandZone) -> Unit = {}) {
+    Log.d("WorkMap", "Rendering WorkMap. MAPS_CONFIGURED=${BuildConfig.MAPS_CONFIGURED}, isInspection=${LocalInspectionMode.current}")
     if (!BuildConfig.MAPS_CONFIGURED || LocalInspectionMode.current) {
         Box(Modifier.fillMaxSize().background(Color(0xFFF0F2EF)), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -39,8 +41,12 @@ fun WorkMap(state: HomeUiState, bottomInset: androidx.compose.ui.unit.Dp,
     var loaded by remember { mutableStateOf(false) }
     LaunchedEffect(loaded, state.cameraRequest, state.location) {
         val point = state.location
-        if (loaded && point != null) camera.animate(
-            CameraUpdateFactory.newLatLngZoom(LatLng(point.latitude, point.longitude), 16f))
+        Log.d("WorkMap", "LaunchedEffect: loaded=$loaded, location=$point, cameraRequest=${state.cameraRequest}")
+        if (loaded && point != null) {
+            Log.d("WorkMap", "Animating camera to: ${point.latitude}, ${point.longitude}")
+            camera.animate(
+                CameraUpdateFactory.newLatLngZoom(LatLng(point.latitude, point.longitude), 16f))
+        }
     }
     GoogleMap(
         modifier = Modifier.fillMaxSize(), cameraPositionState = camera,
@@ -48,7 +54,10 @@ fun WorkMap(state: HomeUiState, bottomInset: androidx.compose.ui.unit.Dp,
         uiSettings = MapUiSettings(zoomControlsEnabled = false, myLocationButtonEnabled = false,
             mapToolbarEnabled = false, compassEnabled = false, rotationGesturesEnabled = false),
         contentPadding = PaddingValues(top = 96.dp, bottom = bottomInset),
-        onMapLoaded = { loaded = true }
+        onMapLoaded = {
+            Log.d("WorkMap", "GoogleMap onMapLoaded triggered")
+            loaded = true
+        }
     ) {
         // HU05: capa de zonas de demanda; al tocar una zona se selecciona.
         state.demandZones.forEach { zone ->

@@ -109,7 +109,7 @@ fun ChatDialogContent(
             ) {
                 Column {
                     Text(
-                        text = "💬 Chat del Pedido",
+                        text = " Chat del Pedido",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -194,8 +194,8 @@ fun ChatDialogContent(
                 ) {
                     Text(
                         text = if (state.activeChannel == ChatChannel.MERCHANT)
-                            "🔒 El chat con el establecimiento finalizó al recoger el pedido."
-                        else "🔒 El chat con el cliente finalizó al entregar el pedido.",
+                            "El chat con el establecimiento finalizó al recoger el pedido."
+                        else "El chat con el cliente finalizó al entregar el pedido.",
                         style = MaterialTheme.typography.bodySmall,
                         color = TextMuted,
                         modifier = Modifier.padding(14.dp)

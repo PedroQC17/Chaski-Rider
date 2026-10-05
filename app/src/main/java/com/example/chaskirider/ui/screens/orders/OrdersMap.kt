@@ -1,5 +1,6 @@
 package com.example.chaskirider.ui.screens.orders
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -17,18 +18,24 @@ import com.google.maps.android.compose.*
 
 @Composable
 internal fun OrdersMap(snapshot: OfferSnapshot?) {
+    Log.d("OrdersMap", "Rendering OrdersMap. MAPS_CONFIGURED=${BuildConfig.MAPS_CONFIGURED}")
     val quote = snapshot?.offer?.quote ?: snapshot?.batch
     val camera = rememberCameraPositionState()
     var loaded by remember { mutableStateOf(false) }
     val points = quote?.path?.map { LatLng(it.latitude, it.longitude) }.orEmpty()
     LaunchedEffect(loaded, points) {
         if (!loaded) return@LaunchedEffect
+        Log.d("OrdersMap", "LaunchedEffect points count=${points.size}")
         if (points.size > 1) camera.animate(CameraUpdateFactory.newLatLngBounds(
             LatLngBounds.builder().apply { points.forEach { include(it) } }.build(), 70))
         else camera.move(CameraUpdateFactory.newLatLngZoom(LatLng(-12.0464, -77.0428), 13f))
     }
     if (BuildConfig.MAPS_CONFIGURED) GoogleMap(Modifier.fillMaxSize(), cameraPositionState = camera,
-        onMapLoaded = { loaded = true }, contentPadding = PaddingValues(top = 72.dp, bottom = 330.dp),
+        onMapLoaded = {
+            Log.d("OrdersMap", "GoogleMap onMapLoaded triggered")
+            loaded = true
+        },
+        contentPadding = PaddingValues(top = 72.dp, bottom = 330.dp),
         uiSettings = MapUiSettings(zoomControlsEnabled = false, mapToolbarEnabled = false)) {
         val merchantTitle = snapshot?.merchantName?.let { name ->
             snapshot?.merchantZone?.let { zone -> "$name · $zone" } ?: name

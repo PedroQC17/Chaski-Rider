@@ -108,7 +108,7 @@ private fun OrdersScreen(
                 // HU10: Acceso al Chat del pedido activo
                 if (quote != null) {
                     IconButton(onClick = { chatViewModel.openChat() }) {
-                        Text("", style = MaterialTheme.typography.titleMedium)
+                        Text("✉\uFE0F", style = MaterialTheme.typography.titleMedium)
                     }
                 }
             }
@@ -128,12 +128,12 @@ private fun OrdersScreen(
                     Column(Modifier.weight(1f)) {
                         Text(
                             text = when {
-                                snapshot?.isDelivered == true -> "🎉 ¡Entrega completada!"
-                                snapshot?.pickedUp == true -> "🚚 En camino al cliente"
-                                snapshot?.arrivedAt != null -> "🏪 En establecimiento"
-                                quote != null -> "📦 Pedido activo (Toca para expandir)"
-                                offer != null -> "🔔 ¡Nueva oferta de pedido!"
-                                else -> "📍 Demo de pedidos"
+                                snapshot?.isDelivered == true -> " ¡Entrega completada!"
+                                snapshot?.pickedUp == true -> " En camino al cliente"
+                                snapshot?.arrivedAt != null -> " En establecimiento"
+                                quote != null -> " Pedido activo (Toca para expandir)"
+                                offer != null -> " ¡Nueva oferta de pedido!"
+                                else -> " Demo de pedidos"
                             },
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.bodyMedium
@@ -215,9 +215,9 @@ private fun OrdersScreen(
                     LinearProgressIndicator(progress = { state.secondsLeft / 45f }, modifier = Modifier.fillMaxWidth())
                 } else {
                     val title = when {
-                        snapshot?.isDelivered == true -> "🎉 ¡Entrega completada con éxito!"
-                        snapshot?.pickedUp == true -> "🚚 En camino al cliente"
-                        snapshot?.arrivedAt != null -> "🏪 En establecimiento"
+                        snapshot?.isDelivered == true -> " ¡Entrega completada con éxito!"
+                        snapshot?.pickedUp == true -> " En camino al cliente"
+                        snapshot?.arrivedAt != null -> " En establecimiento"
                         quote != null -> stringResource(R.string.orders_accepted)
                         else -> stringResource(R.string.orders_empty)
                     }
@@ -263,7 +263,7 @@ private fun OrdersScreen(
                         ) {
                             Column(Modifier.padding(12.dp)) {
                                 Text(
-                                    "✅ El pedido fue entregado al cliente.",
+                                    " El pedido fue entregado al cliente.",
                                     fontWeight = FontWeight.Bold,
                                     style = MaterialTheme.typography.bodyMedium
                                 )
@@ -352,7 +352,7 @@ private fun OrdersScreen(
                                 ) {
                                     Column(Modifier.padding(12.dp)) {
                                         Text(
-                                            text = "⏱️ Tiempo de espera: $timeStr min",
+                                            text = "⏱ Tiempo de espera: $timeStr min",
                                             fontWeight = FontWeight.Bold,
                                             style = MaterialTheme.typography.bodyMedium
                                         )
