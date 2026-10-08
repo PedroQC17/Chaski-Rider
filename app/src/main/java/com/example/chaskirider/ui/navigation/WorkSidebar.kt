@@ -38,22 +38,19 @@ fun WorkSidebar(route: String?, unread: Int, busy: Boolean, onNavigate: (String)
         val colors = NavigationDrawerItemDefaults.colors(selectedContainerColor = Color(0xFFFFEEE5),
             selectedIconColor = Orange, selectedTextColor = Orange, unselectedContainerColor = Color.White,
             unselectedIconColor = TextMuted, unselectedTextColor = TextDark)
-        listOf(Triple(Screen.Home.route, R.string.home_map_menu, Icons.Default.Home),
+        listOf(
+            Triple(Screen.Home.route, R.string.home_map_menu, Icons.Default.Home),
+            Triple(Screen.Orders.route, R.string.orders_real_menu, Icons.Default.ShoppingCart),
+            Triple(Screen.DemoOrders.route, R.string.orders_demo_menu, Icons.Default.Build),
             Triple(Screen.Profile.route, R.string.text_perfil, Icons.Default.Person),
-            Triple(Screen.Notifications.route, R.string.text_notificaciones, Icons.Default.Notifications)).forEach { (target, label, icon) ->
+            Triple(Screen.Notifications.route, R.string.text_notificaciones, Icons.Default.Notifications)
+        ).forEach { (target, label, icon) ->
             NavigationDrawerItem(label = { Text(stringResource(label), fontSize = 14.sp, fontWeight = FontWeight.Medium) },
                 selected = route == target || (target == Screen.Profile.route && route?.startsWith("profile_") == true),
                 onClick = { onNavigate(target) }, icon = { Icon(icon, null, Modifier.size(21.dp)) },
                 badge = { if (target == Screen.Notifications.route && unread > 0) Badge(containerColor = Orange) { Text(unread.toString()) } },
                 colors = colors, shape = RoundedCornerShape(14.dp), modifier = Modifier.padding(horizontal = 12.dp, vertical = 3.dp).height(52.dp))
         }
-        if (com.example.chaskirider.BuildConfig.DEBUG) NavigationDrawerItem(
-            label = { Text(stringResource(R.string.orders_demo), fontSize = 14.sp) },
-            selected = route == Screen.DemoOrders.route,
-            onClick = { onNavigate(Screen.DemoOrders.route) },
-            icon = { Icon(Icons.Default.Place, null, Modifier.size(21.dp)) },
-            colors = colors, shape = RoundedCornerShape(14.dp),
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 3.dp).height(52.dp))
         Spacer(Modifier.weight(1f))
         HorizontalDivider(Modifier.padding(horizontal = 20.dp), color = BorderLight)
         TextButton(onClick = onLogout, enabled = !busy, modifier = Modifier.padding(16.dp)) {

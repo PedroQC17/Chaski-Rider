@@ -3,8 +3,10 @@
 // @get:PropertyName fija el nombre real del documento y habilita el campo privado.
 package com.example.chaskirider.domain.model
 
+import com.google.firebase.firestore.IgnoreExtraProperties
 import com.google.firebase.firestore.PropertyName
 
+@IgnoreExtraProperties
 data class RiderUser(
     val id: String = "",
     val name: String = "",

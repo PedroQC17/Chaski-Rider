@@ -97,6 +97,7 @@
     <string name="text_registro_aprobado">"Registro aprobado"</string>
     <string name="text_ya_puedes_empezar_a_recibir_pedidos">"¡Ya puedes empezar a recibir pedidos!"</string>
     <string name="text_notificaciones">"Notificaciones"</string>
+    <string name="text_pedidos">"Pedidos"</string>
     <string name="text_aun_no_tienes_notificaciones">"Aún no tienes notificaciones"</string>
     <string name="text_cuando_llegue_un_pedido_o_haya_una">"Cuando llegue un pedido o haya una novedad de tu cuenta, te avisaremos aquí."</string>
     <string name="text_datos_personales">"Datos personales"</string>
@@ -257,6 +258,8 @@
     <string name="profile_photo_settings">Abrir ajustes de cámara</string>
 
     <string name="orders_demo">Demo de pedidos</string>
+    <string name="orders_real_menu">Pedidos</string>
+    <string name="orders_demo_menu">Demo de pedidos (Test)</string>
     <string name="orders_demo_note">DEMOSTRACIÓN · Pedidos, ubicación y recorridos de ejemplo</string>
     <string name="orders_menu">Abrir menú</string>
     <string name="orders_store">Local de ejemplo · Centro de Lima</string>

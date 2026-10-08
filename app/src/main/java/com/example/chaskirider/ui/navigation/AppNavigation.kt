@@ -21,6 +21,7 @@ import com.example.chaskirider.ui.components.ChaskiDialog
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
 import com.example.chaskirider.R
+import com.example.chaskirider.data.orders.OfferNotifier
 import com.example.chaskirider.di.AppContainer
 import com.example.chaskirider.domain.model.*
 import com.example.chaskirider.ui.platform.GoogleSignInClient
@@ -28,6 +29,8 @@ import com.example.chaskirider.ui.screens.auth.*
 import com.example.chaskirider.ui.screens.home.*
 import com.example.chaskirider.ui.screens.notifications.*
 import com.example.chaskirider.ui.screens.onboarding.*
+import com.example.chaskirider.ui.screens.orders.OrdersRoute
+import com.example.chaskirider.ui.screens.orders.OrdersViewModel
 import com.example.chaskirider.ui.screens.profile.*
 import com.example.chaskirider.ui.screens.profile.documents.DocumentsViewModel
 import com.example.chaskirider.ui.screens.profile.documents.DocumentPreviewHost
@@ -39,7 +42,7 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
 
     val state by authViewModel.uiState.collectAsStateWithLifecycle()
     val homeViewModel: HomeViewModel = viewModel { HomeViewModel(AppContainer.riderProfileRepository,
-        AppContainer.locationRepository, AppContainer.textProvider, AppContainer.demoOfferRepository,
+        AppContainer.locationRepository, AppContainer.textProvider, AppContainer.offerRepository,
         AppContainer.riderSession) }
     val homeState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -109,14 +112,28 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
     val workArea = user?.status == RegistrationStatus.APPROVED && user.isEnabled && !needsPhoto
     // HU04: las ofertas (notificación de tiempo y navegación) solo existen conectado.
     val offersActive = workArea && user?.isAvailable == true
-    val ordersViewModel: com.example.chaskirider.ui.screens.orders.OrdersViewModel = viewModel {
-        com.example.chaskirider.ui.screens.orders.OrdersViewModel(AppContainer.demoOfferRepository, AppContainer.riderSession)
+    val realOrdersViewModel: OrdersViewModel = viewModel(key = "real_orders") {
+        OrdersViewModel(AppContainer.realOfferRepository, AppContainer.riderSession)
     }
-    val offerNotifier = remember { com.example.chaskirider.data.orders.OfferNotifier(context.applicationContext) }
-    LaunchedEffect(ordersViewModel, offersActive) {
+    val demoOrdersViewModel: OrdersViewModel = viewModel(key = "demo_orders") {
+        OrdersViewModel(AppContainer.demoOfferRepository, AppContainer.riderSession)
+    }
+    val offerNotifier = remember { OfferNotifier(context.applicationContext) }
+    LaunchedEffect(realOrdersViewModel, demoOrdersViewModel, offersActive) {
         if (!offersActive) { offerNotifier.update(null, 0); return@LaunchedEffect }
-        ordersViewModel.uiState.collect { orders ->
-            offerNotifier.update(orders.snapshot?.offer?.id, orders.secondsLeft)
+        launch {
+            realOrdersViewModel.uiState.collect { orders ->
+                if (orders.snapshot?.offer != null) {
+                    offerNotifier.update(orders.snapshot?.offer?.id, orders.secondsLeft)
+                }
+            }
+        }
+        launch {
+            demoOrdersViewModel.uiState.collect { orders ->
+                if (orders.snapshot?.offer != null) {
+                    offerNotifier.update(orders.snapshot?.offer?.id, orders.secondsLeft)
+                }
+            }
         }
     }
     LaunchedEffect(demoRequest, offersActive) {
@@ -215,10 +232,21 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
             composable(Screen.ProfilePhoto.route) {
                 if (needsPhoto) ProfilePhotoRoute(photoViewModel, onLogout = authViewModel::logout)
             }
+            composable(Screen.Orders.route) {
+                if (workArea)
+                    OrdersRoute(
+                        viewModel = realOrdersViewModel,
+                        onMenu = { scope.launch { drawerState.open() } },
+                        isDemo = false
+                    )
+            }
             composable(Screen.DemoOrders.route) {
-                if (workArea && com.example.chaskirider.BuildConfig.DEBUG)
-                    com.example.chaskirider.ui.screens.orders.OrdersRoute(ordersViewModel,
-                        onMenu = { scope.launch { drawerState.open() } })
+                if (workArea)
+                    OrdersRoute(
+                        viewModel = demoOrdersViewModel,
+                        onMenu = { scope.launch { drawerState.open() } },
+                        isDemo = true
+                    )
             }
             composable(Screen.Home.route) {
                 if (workArea) HomeRoute(homeViewModel, onOpenMenu = { scope.launch { drawerState.open() } })

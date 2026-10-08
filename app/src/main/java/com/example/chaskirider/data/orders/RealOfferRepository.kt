@@ -11,7 +11,11 @@ import java.util.Locale
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
-class DemoOfferRepository : OfferRepository {
+/**
+ * Repositorio real que se conecta al backend de Firebase Cloud Functions.
+ * Usa la API real del backend para procesar pedidos.
+ */
+class RealOfferRepository : OfferRepository {
     private val api = Retrofit.Builder()
         .baseUrl("https://us-central1-chaski-rider.cloudfunctions.net/")
         .client(OkHttpClient.Builder().callTimeout(25, TimeUnit.SECONDS).build())
