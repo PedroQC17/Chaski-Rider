@@ -264,14 +264,14 @@
     <string name="orders_real_menu">Pedidos</string>
     <string name="orders_demo_menu">Demo de pedidos (Test)</string>
     <string name="orders_demo_note">SIMULACIÓN · Pedidos ficticios, GPS real</string>
-    <string name="orders_location_required">No se pudo obtener tu ubicación. Activa el GPS y permite el acceso a la ubicación para buscar pedidos.</string>
-    <string name="orders_simulation_error">No se pudo guardar el cambio de la simulación. Inténtalo nuevamente; el pedido conserva su último estado guardado.</string>
-    <string name="orders_searching_nearby">Buscando pedidos simulados a menos de 5 km de tu ubicación.</string>
+    <string name="orders_location_required">No se pudo obtener tu ubicación. Activa el GPS y permite el acceso a la ubicación para continuar.</string>
+    <string name="orders_simulation_error">No se pudo guardar el cambio del pedido. Inténtalo nuevamente; el pedido conserva su último estado guardado.</string>
+    <string name="orders_searching_nearby">Buscando pedidos cerca de ti.</string>
     <string name="orders_wait_nearby">Sin nuevas ofertas cercanas por ahora. Seguiremos buscando mientras estés conectado.</string>
-    <string name="orders_connect_to_search">Conéctate desde Inicio para recibir pedidos simulados.</string>
+    <string name="orders_connect_to_search">Conéctate desde Inicio para recibir pedidos.</string>
     <string name="orders_menu">Abrir menú</string>
-    <string name="orders_store">Local de ejemplo · Centro de Lima</string>
-    <string name="orders_rider">Repartidor de ejemplo</string>
+    <string name="orders_store">Establecimiento</string>
+    <string name="orders_rider">Tu ubicación</string>
     <string name="orders_delivery_marker">Entrega %1$s · ubicación aproximada de ejemplo</string>
     <string name="orders_route_summary">%1$.2f km · %2$d min estimados</string>
     <string name="orders_route_order">Orden de entrega: %1$s</string>
@@ -294,11 +294,11 @@
     <string name="orders_picked_up">Recojo simulado · No se añaden más pedidos</string>
     <string name="orders_accept">Aceptar</string>
     <string name="orders_reject">Rechazar</string>
-    <string name="orders_generate">Buscar oferta de prueba ahora</string>
+    <string name="orders_generate">Buscar pedidos</string>
     <string name="orders_schedule">Recibir en 5 s y probar el aviso</string>
     <string name="orders_scheduled">Oferta programada… Puedes cambiar de app</string>
     <string name="orders_pickup_demo">Simular recojo</string>
-    <string name="orders_reset">Reiniciar demostración</string>
+    <string name="orders_reset">Cancelar pedido</string>
     <string name="orders_refresh">Actualizar estado</string>
     <string name="orders_map_missing">Mapa pendiente de configuración</string>
     <string name="orders_access_error">Tu sesión no permite acceder a las ofertas. Revisa el estado de tu cuenta.</string>
@@ -323,4 +323,7 @@
     <string name="document_review_pending">Pendiente de revisión</string>
     <string name="document_review_approved">Documento aprobado</string>
     <string name="document_review_observed">Documento observado</string>
+    <string name="orders_near_pickup">Acércate a menos de 100 m del local para continuar.</string>
+    <string name="orders_near_delivery">Acércate a menos de 100 m del destino para confirmar la entrega.</string>
+    <string name="orders_checking_location">Esperando una ubicación reciente. Mantén el GPS y el permiso de ubicación activos.</string>
 </resources>

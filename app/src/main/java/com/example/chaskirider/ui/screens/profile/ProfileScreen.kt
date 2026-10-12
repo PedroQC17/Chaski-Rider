@@ -96,6 +96,7 @@ fun ProfileScreen(
     onPersonalDataClick: (() -> Unit)? = null,
     onVehicleClick: (() -> Unit)? = null,
     onDocumentsClick: (() -> Unit)? = null,
+    onSupportClick: (() -> Unit)? = null,
     onLogoutClick: () -> Unit = {}
 ) {
     Column(
@@ -147,7 +148,8 @@ fun ProfileScreen(
             )
             ProfileMenuRow(
                 icon = { Icon(Icons.Default.Info, null, tint = TextMuted, modifier = Modifier.size(22.dp)) },
-                label = stringResource(R.string.text_ayuda_y_soporte)
+                label = stringResource(R.string.text_ayuda_y_soporte),
+                onClick = onSupportClick
             )
             HorizontalDivider(color = BorderLight)
             ProfileMenuRow(

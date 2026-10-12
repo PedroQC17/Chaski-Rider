@@ -39,7 +39,7 @@ class DemoOrdersDeviceTest {
             val offer = repo.execute(OfferAction.OFFER, lat = -12.046, lng = -77.037)
             assertNotNull(offer.offer)
             repo.execute(OfferAction.ACCEPT, offer.offer!!.id)
-            val picked = repo.execute(OfferAction.ARRIVE_MERCHANT)
+            val picked = repo.execute(OfferAction.ARRIVE_MERCHANT, lat = offer.merchant.latitude, lng = offer.merchant.longitude)
             database.close()
             database = Room.databaseBuilder(context, DemoOrderDatabase::class.java, name).build()
             repo = LocalDemoOfferRepository(RoomDemoOrderStore(database.orders()), { uid }, { catalog() }, hasOffer = { true })
@@ -57,8 +57,9 @@ class DemoOrdersDeviceTest {
             override val user = MutableStateFlow<RiderUser?>(RiderUser(id = "device-rider", status = RegistrationStatus.APPROVED,
                 isAvailable = true, profilePhotoPath = "photo"))
         }
+        var gps = GeoPoint(-12.046, -77.037)
         val locations = object : LocationRepository {
-            override suspend fun currentLocation(): Result<GeoPoint?> = Result.success(GeoPoint(-12.046, -77.037))
+            override suspend fun currentLocation(): Result<GeoPoint?> = Result.success(gps)
         }
         val repo = LocalDemoOfferRepository(RoomDemoOrderStore(database.orders()), { session.user.value?.id }, { catalog() }, hasOffer = { true })
         val vm = OrdersViewModel(repo, session, locations)
@@ -68,19 +69,35 @@ class DemoOrdersDeviceTest {
             compose.runOnUiThread { vm.createOffer() }
             compose.waitUntil(10_000) { vm.uiState.value.snapshot?.offer != null && !vm.uiState.value.busy }
             val orderId = vm.uiState.value.snapshot!!.offer!!.quote.stops.single().orderId
-            compose.onNodeWithText("1 · Recojo").assertExists()
-            compose.onNodeWithText("2 · Entrega · Cercado de Lima").assertExists()
+            compose.onNodeWithText("RECOJO").assertExists()
+            compose.onNodeWithText("ENTREGA").assertExists()
             screenshot("orders-offer.png")
             compose.onNodeWithText(context.getString(R.string.orders_accept)).performClick()
             compose.waitUntil(10_000) { vm.uiState.value.snapshot?.batch != null && !vm.uiState.value.busy }
-            compose.onNodeWithContentDescription("Minimizar").performScrollTo().performClick()
             screenshot("orders-accepted.png")
-            compose.onNodeWithContentDescription("Expandir").performClick()
-            compose.onNodeWithText("Simular llegada al recojo").performClick()
+            compose.onNodeWithText("Llegué al local").assertIsNotEnabled()
+            val pickup = vm.uiState.value.snapshot!!.merchant
+            gps = GeoPoint(pickup.latitude, pickup.longitude)
+            compose.runOnUiThread { vm.fetchCurrentLocation() }
+            compose.waitUntil(10_000) { vm.uiState.value.isWithinGeofence }
+            compose.onNodeWithText("Llegué al local").performClick()
             compose.waitUntil(10_000) { vm.uiState.value.snapshot?.arrivedAt != null && !vm.uiState.value.busy }
-            compose.onNodeWithText("Simular pedido recogido").performClick()
+            val destination = vm.uiState.value.snapshot!!.batch!!.stops.single().point
+            gps = GeoPoint(destination.latitude, destination.longitude)
+            compose.runOnUiThread { vm.fetchCurrentLocation() }
+            compose.waitUntil(10_000) { !vm.uiState.value.isWithinGeofence }
+            compose.onNodeWithText("Confirmar recojo").assertIsNotEnabled()
+            gps = GeoPoint(pickup.latitude, pickup.longitude)
+            compose.runOnUiThread { vm.fetchCurrentLocation() }
+            compose.waitUntil(10_000) { vm.uiState.value.isWithinGeofence }
+            compose.onNodeWithText("Confirmar recojo").performClick()
             compose.waitUntil(10_000) { vm.uiState.value.snapshot?.pickedUp == true && !vm.uiState.value.busy }
-            compose.onNodeWithText("Simular entrega al cliente").performClick()
+            compose.onNodeWithText("Confirmar entrega").assertIsNotEnabled()
+            val delivery = vm.uiState.value.snapshot!!.batch!!.stops.single().point
+            gps = GeoPoint(delivery.latitude, delivery.longitude)
+            compose.runOnUiThread { vm.fetchCurrentLocation() }
+            compose.waitUntil(10_000) { vm.uiState.value.isNearCustomer }
+            compose.onNodeWithText("Confirmar entrega").performClick()
             compose.waitUntil(10_000) { vm.uiState.value.snapshot?.isDelivered == true && !vm.uiState.value.busy }
             assertEquals(orderId, vm.uiState.value.snapshot!!.batch!!.stops.single().orderId)
             compose.onNodeWithText("Siguiente Pedido").assertExists()

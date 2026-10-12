@@ -22,16 +22,10 @@ internal fun OrderQuoteCard(
     waitingCompensationCents: Int = 0,
     showPaymentDetails: Boolean = true
 ) {
-    // HU07: recojo identificado, destino aproximado, base + extras y propina separada.
-    val storeTitle = merchantName?.let { name -> merchantZone?.takeIf { !name.endsWith(it) }?.let { zone -> "$name · $zone" } ?: name }
-        ?: stringResource(R.string.orders_store)
-    Text("1 · Recojo", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-    Text(storeTitle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-    merchantAddress?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+    val storeTitle = merchantName ?: stringResource(R.string.orders_store)
+    LocationSection("1", "RECOJO", storeTitle, merchantAddress, merchantZone, MaterialTheme.colorScheme.primary)
     quote.stops.forEach { stop ->
-        Text("2 · Entrega · ${stop.zone.orEmpty()}", fontWeight = FontWeight.Bold)
-        stop.address?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-        Text("Pedido ${stop.orderId}", style = MaterialTheme.typography.labelSmall)
+        LocationSection("2", "ENTREGA", "Dirección de entrega", stop.address, stop.zone, androidx.compose.ui.graphics.Color(0xFF263238))
     }
     if (offerReason == "PROXIMITY" && reasonMeters != null) Text(
         stringResource(R.string.orders_reason_proximity, reasonMeters / 1000.0),
@@ -40,9 +34,6 @@ internal fun OrderQuoteCard(
         color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
     Text(stringResource(R.string.orders_route_summary, (quote.approachMeters + quote.deliveryMeters) / 1000.0,
         (quote.durationSeconds + 59) / 60), style = MaterialTheme.typography.bodySmall)
-    val zones = quote.stops.mapNotNull { it.zone?.takeIf(String::isNotBlank) }.distinct()
-    if (zones.isNotEmpty()) Text(stringResource(R.string.orders_destinations, zones.joinToString(", ")),
-        style = MaterialTheme.typography.bodySmall)
     HorizontalDivider(Modifier.padding(vertical = 6.dp))
     if (showPaymentDetails) {
         if (quote.baseCents > 0) PaymentLine(stringResource(R.string.orders_base), quote.baseCents)
@@ -58,6 +49,26 @@ internal fun OrderQuoteCard(
     PaymentLine(stringResource(R.string.orders_total), quote.totalCents + waitingCompensationCents, true)
     if (additional) Text(stringResource(R.string.orders_additional, quote.additionalCents / 100.0),
         color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+}
+
+@Composable
+private fun LocationSection(number: String, label: String, title: String, address: String?, zone: String?, color: androidx.compose.ui.graphics.Color) {
+    Surface(color = color.copy(alpha = 0.06f), shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+        Row(Modifier.padding(14.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Surface(color = color, contentColor = androidx.compose.ui.graphics.Color.White,
+                shape = androidx.compose.foundation.shape.CircleShape, modifier = Modifier.size(30.dp)) {
+                Box(contentAlignment = androidx.compose.ui.Alignment.Center) {
+                    Text(number, fontWeight = FontWeight.Bold)
+                }
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(label, color = color, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                address?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                zone?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            }
+        }
+    }
 }
 
 @Composable

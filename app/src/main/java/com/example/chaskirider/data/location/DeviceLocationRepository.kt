@@ -15,13 +15,15 @@ import kotlinx.coroutines.withTimeoutOrNull
 
 class DeviceLocationRepository(context: Context) : LocationRepository {
     private val client = LocationServices.getFusedLocationProviderClient(context.applicationContext)
+    private val manager = context.applicationContext.getSystemService(android.location.LocationManager::class.java)
     @SuppressLint("MissingPermission") // La ruta solicita el permiso; SecurityException se devuelve como error.
     override suspend fun currentLocation(): Result<GeoPoint?> {
+        if (!androidx.core.location.LocationManagerCompat.isLocationEnabled(manager)) return Result.success(null)
         val cancellation = CancellationTokenSource()
         Log.d("DeviceLocationRepo", "Requesting current location...")
         return try {
             val location = withTimeoutOrNull(15_000) {
-                client.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, cancellation.token).await()
+                client.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cancellation.token).await()
             } ?: run {
                 Log.w("DeviceLocationRepo", "getCurrentLocation returned null or timed out. Trying lastLocation fallback...")
                 client.lastLocation.await()
@@ -32,7 +34,7 @@ class DeviceLocationRepository(context: Context) : LocationRepository {
                 Log.w("DeviceLocationRepo", "Location is still null after lastLocation fallback.")
             }
             Result.success(location?.takeIf {
-                SystemClock.elapsedRealtime() - it.elapsedRealtimeNanos / 1_000_000 <= 120_000
+                SystemClock.elapsedRealtime() - it.elapsedRealtimeNanos / 1_000_000 in 0..30_000
             }?.let { GeoPoint(it.latitude, it.longitude) })
         } catch (error: CancellationException) { throw error
         } catch (error: Exception) {

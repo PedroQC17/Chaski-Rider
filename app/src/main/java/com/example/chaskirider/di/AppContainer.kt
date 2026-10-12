@@ -22,6 +22,8 @@ object AppContainer {
     }
     private val sessionStore = RiderSessionStore()
     val riderSession: RiderSession = sessionStore
+    val orderChanges = kotlinx.coroutines.flow.MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val offerNotifier by lazy { com.example.chaskirider.data.orders.OfferNotifier(applicationContext) }
     private val registrationDatabase by lazy {
         androidx.room.Room.databaseBuilder(applicationContext,
             com.example.chaskirider.data.local.RegistrationDatabase::class.java, "registration.db").build()
@@ -51,6 +53,14 @@ object AppContainer {
 
     val offerRepository: OfferRepository by lazy {
         demoOfferRepository
+    }
+    val supportRepository: com.example.chaskirider.domain.support.SupportRepository by lazy {
+        com.example.chaskirider.data.support.FirebaseSupportRepository()
+    }
+    val supportDraftStore: com.example.chaskirider.domain.support.SupportDraftStore by lazy {
+        val database = androidx.room.Room.databaseBuilder(applicationContext,
+            com.example.chaskirider.data.support.SupportDraftDatabase::class.java, "support_drafts.db").build()
+        com.example.chaskirider.data.support.RoomSupportDraftStore(database.drafts())
     }
     val textProvider: TextProvider by lazy { AndroidTextProvider(applicationContext) }
     private val profiles by lazy { RiderProfileRemoteDataSource(textProvider, sessionStore) }

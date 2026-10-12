@@ -22,7 +22,6 @@ import com.example.chaskirider.ui.components.ChaskiDialog
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
 import com.example.chaskirider.R
-import com.example.chaskirider.data.orders.OfferNotifier
 import com.example.chaskirider.di.AppContainer
 import com.example.chaskirider.domain.model.*
 import com.example.chaskirider.ui.platform.GoogleSignInClient
@@ -32,11 +31,15 @@ import com.example.chaskirider.ui.screens.notifications.*
 import com.example.chaskirider.ui.screens.onboarding.*
 import com.example.chaskirider.ui.screens.orders.OrdersRoute
 import com.example.chaskirider.ui.screens.orders.OrdersViewModel
+import com.example.chaskirider.ui.screens.support.SupportViewModel
+import com.example.chaskirider.ui.screens.support.SupportRoute
+import com.example.chaskirider.domain.support.SupportOrderContext
 import com.example.chaskirider.ui.screens.profile.*
 import com.example.chaskirider.ui.screens.profile.documents.DocumentsViewModel
 import com.example.chaskirider.ui.screens.profile.documents.DocumentPreviewHost
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collect
 
 @Composable
 fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = rememberNavController(), authViewModel: AuthViewModel = viewModel { AuthViewModel(AppContainer.textProvider, AppContainer.authRepository, AppContainer.riderSession) }) {
@@ -123,16 +126,35 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
     // HU04: las ofertas (notificación de tiempo y navegación) solo existen conectado.
     val offersActive = workArea && user?.isAvailable == true
     val demoOrdersViewModel: OrdersViewModel = viewModel(key = "demo_orders") {
-        OrdersViewModel(AppContainer.demoOfferRepository, AppContainer.riderSession)
+        OrdersViewModel(AppContainer.demoOfferRepository, AppContainer.riderSession, automaticSearch = false)
     }
     val ordersState by demoOrdersViewModel.uiState.collectAsStateWithLifecycle()
-    val offerNotifier = remember { OfferNotifier(context.applicationContext) }
-    androidx.lifecycle.compose.LifecycleStartEffect(demoOrdersViewModel) {
+    val supportViewModel: SupportViewModel = viewModel {
+        SupportViewModel(AppContainer.supportRepository, AppContainer.supportDraftStore, AppContainer.riderSession)
+    }
+    fun activeSupportOrder(): SupportOrderContext? {
+        val snapshot = ordersState.snapshot ?: return null
+        val stop = snapshot.batch?.stops?.firstOrNull() ?: return null
+        if (snapshot.isDelivered) return null
+        return SupportOrderContext(stop.orderId, snapshot.merchantName.orEmpty(), snapshot.merchantAddress.orEmpty(),
+            stop.address.orEmpty(), snapshot.pickedUp, snapshot.problem?.id)
+    }
+    fun openOrderSupport() {
+        val order = activeSupportOrder() ?: return
+        val problem = ordersState.snapshot?.problem
+        supportViewModel.openForOrder(order, problem?.reason, problem?.detail)
+        navController.navigate(Screen.Support.route) { launchSingleTop = true }
+    }
+    LaunchedEffect(ordersState.snapshot) { supportViewModel.setAvailableOrder(activeSupportOrder()) }
+    androidx.lifecycle.compose.LifecycleStartEffect(demoOrdersViewModel, offersActive, user?.id) {
         demoOrdersViewModel.setForeground(true)
+        if (offersActive) com.example.chaskirider.data.orders.OrderSearchService.start(context)
+        else com.example.chaskirider.data.orders.OrderSearchService.stop(context)
         onStopOrDispose { demoOrdersViewModel.setForeground(false) }
     }
-    LaunchedEffect(ordersState.snapshot?.offer?.id, ordersState.secondsLeft, offersActive) {
-        offerNotifier.update(if (offersActive) ordersState.snapshot?.offer?.id else null, ordersState.secondsLeft)
+    androidx.lifecycle.compose.LifecycleStartEffect(demoOrdersViewModel, "order_updates") {
+        val job = scope.launch { AppContainer.orderChanges.collect { demoOrdersViewModel.refresh() } }
+        onStopOrDispose { job.cancel() }
     }
     LaunchedEffect(ordersState.snapshot?.offer?.id, ordersState.snapshot?.batch, route, workArea, offersActive) {
         val snapshot = ordersState.snapshot
@@ -141,12 +163,12 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
         }
     }
     LaunchedEffect(demoRequest, offersActive) {
-        if (demoRequest > 0 && offersActive && com.example.chaskirider.BuildConfig.DEBUG) {
+        if (demoRequest > 0 && offersActive) {
             navController.navigate(Screen.DemoOrders.route) { launchSingleTop = true }
         }
     }
     LaunchedEffect(workArea) { if (!workArea) drawerState.close() }
-    ModalNavigationDrawer(drawerState = drawerState, gesturesEnabled = workArea,
+    ModalNavigationDrawer(drawerState = drawerState, gesturesEnabled = false,
         drawerContent = {
             if (workArea) WorkSidebar(
                 route = route,
@@ -239,7 +261,8 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
                         } },
                         onGoToHomeClick = { if (it.status == RegistrationStatus.APPROVED && it.isEnabled) navController.navigate(destination(it)) },
                         onLogoutClick = { authViewModel.logout() },
-                        onRefresh = reviewViewModel::refresh)
+                        onRefresh = reviewViewModel::refresh,
+                        onSupportClick = { navController.navigate(Screen.Support.route) { launchSingleTop = true } })
                 }
             }
             composable(Screen.ProfilePhoto.route) {
@@ -250,7 +273,8 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
                     OrdersRoute(
                         viewModel = demoOrdersViewModel,
                         onMenu = { scope.launch { drawerState.open() } },
-                        isDemo = true
+                        isDemo = true,
+                        onSupport = ::openOrderSupport
                     )
             }
             composable(Screen.DemoOrders.route) {
@@ -258,7 +282,8 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
                     OrdersRoute(
                         viewModel = demoOrdersViewModel,
                         onMenu = { scope.launch { drawerState.open() } },
-                        isDemo = true
+                        isDemo = true,
+                        onSupport = ::openOrderSupport
                     )
             }
             composable(Screen.Home.route) {
@@ -271,6 +296,7 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
                         onPersonalDataClick = { profileViewModel.clearError(); navController.navigate(Screen.ProfilePersonalData.route) },
                         onVehicleClick = { profileViewModel.clearError(); navController.navigate(Screen.ProfileVehicle.route) },
                         onDocumentsClick = { profileViewModel.clearError(); navController.navigate(Screen.ProfileDocuments.route) },
+                        onSupportClick = { navController.navigate(Screen.Support.route) { launchSingleTop = true } },
                         onLogoutClick = { authViewModel.logout() })
                 }
             }
@@ -300,6 +326,9 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
             composable(Screen.Notifications.route) {
                 LaunchedEffect(Unit) { notificationsViewModel.markSeen() }
                 NotificationsScreen(state = notificationsState, onOpenMenu = { scope.launch { drawerState.open() } })
+            }
+            composable(Screen.Support.route) {
+                if (user != null) SupportRoute(supportViewModel, onBack = { navController.popBackStack() })
             }
 
         }

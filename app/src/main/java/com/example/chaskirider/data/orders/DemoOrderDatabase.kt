@@ -10,7 +10,8 @@ import androidx.room.Upsert
 import com.example.chaskirider.domain.orders.OfferSnapshot
 import com.google.gson.Gson
 
-data class DemoOrderState(val snapshot: OfferSnapshot, val recent: Map<String, Long> = emptyMap())
+data class DemoOrderState(val snapshot: OfferSnapshot, val recent: Map<String, Long> = emptyMap(),
+    val problems: List<com.example.chaskirider.domain.orders.OrderProblem>? = emptyList())
 interface DemoOrderStore {
     suspend fun load(uid: String): DemoOrderState?
     suspend fun save(uid: String, state: DemoOrderState)

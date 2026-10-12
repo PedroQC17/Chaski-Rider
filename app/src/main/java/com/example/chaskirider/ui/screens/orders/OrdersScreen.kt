@@ -6,8 +6,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -25,10 +23,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.chaskirider.domain.orders.OrderProblemReason
 import com.example.chaskirider.R
-import com.example.chaskirider.domain.orders.DeliveryOffer
-import com.example.chaskirider.domain.orders.DeliveryQuote
-import com.example.chaskirider.domain.orders.OfferSnapshot
 import com.example.chaskirider.ui.screens.chat.ChatDialog
 import com.example.chaskirider.ui.screens.chat.ChatUiState
 import com.example.chaskirider.ui.screens.chat.ChatViewModel
@@ -36,7 +32,7 @@ import com.example.chaskirider.ui.theme.Orange
 import java.util.Locale
 
 @Composable
-fun OrdersRoute(viewModel: OrdersViewModel, onMenu: () -> Unit, isDemo: Boolean = false) {
+fun OrdersRoute(viewModel: OrdersViewModel, onMenu: () -> Unit, isDemo: Boolean = false, onSupport: () -> Unit = {}) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val chatViewModel: ChatViewModel = viewModel()
     val chatState by chatViewModel.uiState.collectAsStateWithLifecycle()
@@ -72,10 +68,13 @@ fun OrdersRoute(viewModel: OrdersViewModel, onMenu: () -> Unit, isDemo: Boolean 
         onReportNotReady = viewModel::reportNotReady,
         onPickup = viewModel::pickup,
         onDeliver = viewModel::deliver,
-        onReset = viewModel::reset,
+        onReset = { if (state.snapshot?.batch != null && state.snapshot?.isDelivered != true) viewModel.openProblem() else viewModel.reset() },
         onRefresh = viewModel::refresh,
         onClearError = viewModel::clearError,
+        onSupport = onSupport,
     )
+    if (state.problemDialogOpen) OrderProblemDialog(state, viewModel::closeProblem,
+        viewModel::selectProblem, viewModel::updateProblemDetail, viewModel::confirmProblem)
 }
 
 @Composable
@@ -95,19 +94,19 @@ private fun OrdersScreen(
     onReset: () -> Unit,
     onRefresh: () -> Unit,
     onClearError: () -> Unit,
+    onSupport: () -> Unit,
 ) {
     val snapshot = state.snapshot
     val actionsEnabled = !state.busy
     val offer = snapshot?.offer
     val quote = offer?.quote ?: snapshot?.batch
-    var isBottomCardMinimized by remember { mutableStateOf(false) }
     var bottomCardHeight by remember { mutableStateOf(300.dp) }
     val density = LocalDensity.current
 
     Box(Modifier.fillMaxSize()) {
         OrdersMap(snapshot, state.riderLocation, bottomCardHeight)
 
-        OrdersTopHeader(isDemo = isDemo, onMenu = onMenu)
+        OrdersTopHeader(onMenu = onMenu)
 
         if (snapshot?.batch != null && !snapshot.isDelivered) {
             ChatFloatingActionButton(
@@ -121,33 +120,22 @@ private fun OrdersScreen(
             shape = RoundedCornerShape(24.dp),
             shadowElevation = 8.dp
         ) {
-            if (isBottomCardMinimized) {
-                MinimizedOrderSummary(
-                    snapshot = snapshot,
-                    quote = quote,
-                    offer = offer,
-                    state = state,
-                    isDemo = isDemo,
-                    onExpand = { isBottomCardMinimized = false }
-                )
-            } else {
-                ExpandedOrderContent(
-                    state = state,
-                    isDemo = isDemo,
-                    actionsEnabled = actionsEnabled,
-                    onMinimize = { isBottomCardMinimized = true },
-                    onRefresh = onRefresh,
-                    onClearError = onClearError,
-                    onReject = onReject,
-                    onAccept = onAccept,
-                    onArriveMerchant = onArriveMerchant,
-                    onReportNotReady = onReportNotReady,
-                    onPickup = onPickup,
-                    onDeliver = onDeliver,
-                    onReset = onReset,
-                    onOffer = onOffer,
-                )
-            }
+            ExpandedOrderContent(
+                state = state,
+                isDemo = isDemo,
+                actionsEnabled = actionsEnabled,
+                onRefresh = onRefresh,
+                onClearError = onClearError,
+                onReject = onReject,
+                onAccept = onAccept,
+                onArriveMerchant = onArriveMerchant,
+                onReportNotReady = onReportNotReady,
+                onPickup = onPickup,
+                onDeliver = onDeliver,
+                onReset = onReset,
+                onOffer = onOffer,
+                onSupport = onSupport,
+            )
         }
 
         ChatDialog(
@@ -162,7 +150,7 @@ private fun OrdersScreen(
 }
 
 @Composable
-private fun OrdersTopHeader(isDemo: Boolean, onMenu: () -> Unit) {
+private fun OrdersTopHeader(onMenu: () -> Unit) {
     Surface(
         Modifier.statusBarsPadding().padding(16.dp),
         shape = RoundedCornerShape(22.dp),
@@ -171,7 +159,7 @@ private fun OrdersTopHeader(isDemo: Boolean, onMenu: () -> Unit) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 4.dp)) {
             IconButton(onClick = onMenu) { Icon(Icons.Default.Menu, stringResource(R.string.orders_menu)) }
             Text(
-                if (isDemo) stringResource(R.string.orders_demo) else stringResource(R.string.text_pedidos),
+                stringResource(R.string.text_pedidos),
                 Modifier.padding(end = 12.dp),
                 fontWeight = FontWeight.Bold
             )
@@ -209,52 +197,10 @@ private fun BoxScope.ChatFloatingActionButton(onClick: () -> Unit) {
 }
 
 @Composable
-private fun MinimizedOrderSummary(
-    snapshot: OfferSnapshot?,
-    quote: DeliveryQuote?,
-    offer: DeliveryOffer?,
-    state: OrdersUiState,
-    isDemo: Boolean,
-    onExpand: () -> Unit
-) {
-    Row(
-        Modifier.padding(horizontal = 20.dp, vertical = 14.dp).fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(Modifier.weight(1f)) {
-            Text(
-                text = when {
-                    snapshot?.isDelivered == true -> " ¡Entrega completada!"
-                    snapshot?.pickedUp == true -> " En camino al cliente"
-                    snapshot?.arrivedAt != null -> " En establecimiento"
-                    offer != null -> " Nueva oferta de pedido"
-                    quote != null -> " Pedido activo (Toca para expandir)"
-                    else -> if (isDemo) " Demo de pedidos" else " Pedidos"
-                },
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.bodyMedium
-            )
-            if (quote != null) {
-                val distText = if (snapshot?.pickedUp == true) state.distanceToCustomerMeters?.let { "Cliente a ${it.toInt()}m" }
-                else state.distanceToMerchantMeters?.let { "Local a ${it}m" }
-                distText?.let {
-                    Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary)
-                }
-            }
-        }
-        IconButton(onClick = onExpand) {
-            Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Expandir")
-        }
-    }
-}
-
-@Composable
 private fun ExpandedOrderContent(
     state: OrdersUiState,
     isDemo: Boolean,
     actionsEnabled: Boolean,
-    onMinimize: () -> Unit,
     onRefresh: () -> Unit,
     onClearError: () -> Unit,
     onReject: () -> Unit,
@@ -265,6 +211,7 @@ private fun ExpandedOrderContent(
     onDeliver: () -> Unit,
     onReset: () -> Unit,
     onOffer: () -> Unit,
+    onSupport: () -> Unit,
 ) {
     val snapshot = state.snapshot
     val offer = snapshot?.offer
@@ -279,32 +226,6 @@ private fun ExpandedOrderContent(
             Modifier.weight(1f, fill = false).verticalScroll(scroll).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (isDemo) {
-                    Text(
-                        stringResource(R.string.orders_demo_note),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                } else {
-                    Text(
-                        "Pedidos",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                IconButton(
-                    onClick = onMinimize,
-                    modifier = Modifier.size(32.dp)
-                ) {
-                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Minimizar")
-                }
-            }
-
             if (state.busy) LinearProgressIndicator(Modifier.fillMaxWidth())
 
             state.error?.let { errorRes ->
@@ -358,6 +279,19 @@ private fun ExpandedOrderContent(
                 Text(title, fontWeight = FontWeight.Bold)
             }
 
+            snapshot?.problem?.let { problem ->
+                Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = RoundedCornerShape(12.dp)) {
+                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text("Problema registrado", fontWeight = FontWeight.Bold)
+                        Text(problemLabel(problem.reason), style = MaterialTheme.typography.bodyMedium)
+                        Text(problem.detail, style = MaterialTheme.typography.bodySmall)
+                        Text("Incidencia guardada en este dispositivo. Abre un ticket para enviarla a soporte. El pedido sigue activo; confirma la entrega solo si entregaste el producto.",
+                            style = MaterialTheme.typography.bodySmall)
+                        TextButton(onClick = onSupport, enabled = !state.busy) { Text("Abrir ticket de soporte") }
+                    }
+                }
+            }
+
             quote?.let {
                 OrderQuoteCard(
                     quote = it,
@@ -375,7 +309,7 @@ private fun ExpandedOrderContent(
         }
         Column(Modifier.padding(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (offer != null) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Ganancia simulada", fontWeight = FontWeight.Bold)
+                Text("Ganancia del pedido", fontWeight = FontWeight.Bold)
                 Text(stringResource(R.string.orders_money, offer.quote.totalCents / 100.0), fontWeight = FontWeight.Bold)
             }
             OrderActionControls(
@@ -444,7 +378,7 @@ private fun OrderActionControls(
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
-                        "La simulación de este pedido ha finalizado.",
+                        "Tu entrega quedó registrada.",
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -467,23 +401,29 @@ private fun OrderActionControls(
                 )
             }
 
+            if (!state.isNearCustomer) Text(
+                stringResource(if (distCustomer == null) R.string.orders_checking_location else R.string.orders_near_delivery),
+                style = MaterialTheme.typography.bodySmall)
             Button(
                 onClick = onDeliver,
-                enabled = actionsEnabled,
+                enabled = actionsEnabled && state.isNearCustomer,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(if (isDemo) "Simular entrega al cliente" else "Confirmar entrega")
+                Text("Confirmar entrega")
             }
 
             if (isDemo) {
                 TextButton(
                     onClick = onReset,
-                    enabled = actionsEnabled,
+                    enabled = actionsEnabled && snapshot?.problem == null,
                     modifier = Modifier.fillMaxWidth()
-                ) { Text(stringResource(R.string.orders_reset)) }
+                ) { Text(if (snapshot?.problem != null) "Problema registrado" else "Tengo un problema") }
             }
         } else {
             val arrived = snapshot?.arrivedAt != null
+            if (!state.isWithinGeofence) Text(
+                stringResource(if (state.distanceToMerchantMeters == null) R.string.orders_checking_location else R.string.orders_near_pickup),
+                style = MaterialTheme.typography.bodySmall)
 
             if (!arrived) {
                 val dist = state.distanceToMerchantMeters
@@ -497,11 +437,11 @@ private fun OrderActionControls(
 
                 Button(
                     onClick = onArriveMerchant,
-                    enabled = actionsEnabled,
+                    enabled = actionsEnabled && state.isWithinGeofence,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        if (isDemo) "Simular llegada al recojo" else "Confirmar llegada al establecimiento"
+                        "Llegué al local"
                     )
                 }
             } else {
@@ -509,7 +449,7 @@ private fun OrderActionControls(
                 if (!notReady) {
                     OutlinedButton(
                         onClick = onReportNotReady,
-                        enabled = actionsEnabled,
+                        enabled = actionsEnabled && state.isWithinGeofence,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("Reportar: Pedido no está listo")
@@ -545,10 +485,10 @@ private fun OrderActionControls(
 
                 Button(
                     onClick = onPickup,
-                    enabled = actionsEnabled,
+                    enabled = actionsEnabled && state.isWithinGeofence,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(if (isDemo) "Simular pedido recogido" else "Confirmar recojo")
+                    Text("Confirmar recojo")
                 }
             }
 
@@ -557,7 +497,7 @@ private fun OrderActionControls(
                     onClick = onReset,
                     enabled = actionsEnabled,
                     modifier = Modifier.fillMaxWidth()
-                ) { Text(stringResource(R.string.orders_reset)) }
+                ) { Text("Cancelar pedido") }
             }
         }
     } else {
@@ -583,4 +523,46 @@ private fun OrderActionControls(
             )
         }
     }
+}
+
+private fun problemLabel(reason: OrderProblemReason): String = when (reason) {
+    OrderProblemReason.LOCAL_CLOSED -> "El local está cerrado"
+    OrderProblemReason.ORDER_UNAVAILABLE -> "El local no tiene el pedido"
+    OrderProblemReason.VEHICLE_PROBLEM -> "Problema con mi vehículo"
+    OrderProblemReason.CUSTOMER_UNREACHABLE -> "El cliente no responde"
+    OrderProblemReason.ADDRESS_PROBLEM -> "Problema con la dirección"
+    OrderProblemReason.OTHER -> "Otro problema"
+}
+
+@Composable
+private fun OrderProblemDialog(state: OrdersUiState, onClose: () -> Unit,
+    onReason: (OrderProblemReason) -> Unit, onDetail: (String) -> Unit, onConfirm: () -> Unit) {
+    val pickedUp = state.snapshot?.pickedUp == true
+    val reasons = if (pickedUp) listOf(OrderProblemReason.CUSTOMER_UNREACHABLE, OrderProblemReason.ADDRESS_PROBLEM,
+        OrderProblemReason.VEHICLE_PROBLEM, OrderProblemReason.OTHER)
+        else listOf(OrderProblemReason.LOCAL_CLOSED, OrderProblemReason.ORDER_UNAVAILABLE,
+            OrderProblemReason.VEHICLE_PROBLEM, OrderProblemReason.OTHER)
+    AlertDialog(onDismissRequest = onClose,
+        title = { Text(if (pickedUp) "Problema con la entrega" else "Cancelar pedido") },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(if (pickedUp) "El pedido seguirá activo. Esta incidencia se guarda en el dispositivo; luego puedes abrir un ticket para comunicarte con soporte."
+                    else "Si confirmas, dejarás de atender este pedido. El motivo quedará registrado.")
+                reasons.forEach { reason ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(selected = state.problemReason == reason, onClick = { onReason(reason) }, enabled = !state.busy)
+                        TextButton(onClick = { onReason(reason) }, enabled = !state.busy) { Text(problemLabel(reason)) }
+                    }
+                }
+                OutlinedTextField(value = state.problemDetail, onValueChange = onDetail, enabled = !state.busy,
+                    label = { Text("Describe lo ocurrido") }, supportingText = { Text("Entre 10 y 500 caracteres") },
+                    modifier = Modifier.fillMaxWidth(), minLines = 2, maxLines = 4)
+                state.error?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error) }
+            }
+        },
+        confirmButton = { TextButton(onClick = onConfirm,
+            enabled = !state.busy && state.problemReason != null && state.problemDetail.trim().length >= 10) {
+            Text(if (pickedUp) "Registrar problema" else "Confirmar cancelación")
+        } },
+        dismissButton = { TextButton(onClick = onClose, enabled = !state.busy) { Text("Volver al pedido") } })
 }

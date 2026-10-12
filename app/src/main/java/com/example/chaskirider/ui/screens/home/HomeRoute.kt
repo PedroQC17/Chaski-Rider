@@ -34,6 +34,7 @@ fun HomeRoute(viewModel: HomeViewModel, onOpenMenu: () -> Unit) {
         if (granted) {
             viewModel.locate()
             if (connectAfterPermission) viewModel.setAvailability(true)
+            else if (state.user?.isAvailable == true) com.example.chaskirider.data.orders.OrderSearchService.start(context)
         } else viewModel.reportError(context.getString(R.string.text_se_requiere_el_permiso_de_ubicacion_para))
         connectAfterPermission = false
     }

@@ -6,6 +6,9 @@ import com.example.chaskirider.domain.orders.OfferSnapshot
 data class OrdersUiState(
     val snapshot: OfferSnapshot? = null,
     val busy: Boolean = false,
+    val problemDialogOpen: Boolean = false,
+    val problemReason: com.example.chaskirider.domain.orders.OrderProblemReason? = null,
+    val problemDetail: String = "",
     val secondsLeft: Int = 0,
     val error: Int? = null,
     val isAvailable: Boolean = false,
@@ -14,6 +17,7 @@ data class OrdersUiState(
     val riderLocation: GeoPoint? = null,
     val distanceToMerchantMeters: Int? = null,
     val isWithinGeofence: Boolean = false,
+    val isNearCustomer: Boolean = false,
     val elapsedWaitSeconds: Int = 0,
     // HU09: tracking hacia el cliente y entrega
     val distanceToCustomerMeters: Int? = null,

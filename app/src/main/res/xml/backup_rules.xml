@@ -6,5 +6,8 @@
     <exclude domain="database" path="demo_orders.db" />
     <exclude domain="database" path="demo_orders.db-wal" />
     <exclude domain="database" path="demo_orders.db-shm" />
+    <exclude domain="database" path="support_drafts.db" />
+    <exclude domain="database" path="support_drafts.db-wal" />
+    <exclude domain="database" path="support_drafts.db-shm" />
     <exclude domain="file" path="registration_documents/" />
 </full-backup-content>

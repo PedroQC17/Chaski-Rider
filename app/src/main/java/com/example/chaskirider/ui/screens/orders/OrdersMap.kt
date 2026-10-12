@@ -31,6 +31,7 @@ internal fun OrdersMap(snapshot: OfferSnapshot?, riderLocation: GeoPoint?, botto
     val style = remember(context) { MapStyleOptions.loadRawResourceStyle(context, R.raw.map_grayscale) }
     val pickupIcon = remember(loaded) { if (loaded) numberMarker("1", 0xFFFF5722.toInt()) else null }
     val deliveryIcon = remember(loaded) { if (loaded) numberMarker("2", 0xFF263238.toInt()) else null }
+    val riderIcon = remember(loaded, context) { if (loaded) com.example.chaskirider.ui.components.riderMapMarker(context) else null }
     val pickup = snapshot?.merchant?.takeIf { quote != null }?.let { LatLng(it.latitude, it.longitude) }
     val destinations = quote?.stops?.map { LatLng(it.point.latitude, it.point.longitude) }.orEmpty()
     val points = listOfNotNull(pickup) + destinations
@@ -61,7 +62,8 @@ internal fun OrdersMap(snapshot: OfferSnapshot?, riderLocation: GeoPoint?, botto
         riderLocation?.let {
             Marker(state = rememberUpdatedMarkerState(LatLng(it.latitude, it.longitude)),
                 title = stringResource(R.string.orders_rider),
-                icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
+                anchor = androidx.compose.ui.geometry.Offset(0.5f, 0.5f), zIndex = 1f,
+                icon = riderIcon)
         }
     }
 }

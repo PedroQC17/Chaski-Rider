@@ -27,7 +27,8 @@ fun RegistrationStatusScreen(
     onResumeRegistrationClick: () -> Unit = {},
     onGoToHomeClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
-    onRefresh: () -> Unit = {}
+    onRefresh: () -> Unit = {},
+    onSupportClick: () -> Unit = {}
 ) {
     val stage = state.stage
     val user = state.user ?: return
@@ -105,6 +106,10 @@ fun RegistrationStatusScreen(
                 enabled = !state.isRefreshing, modifier = Modifier.align(Alignment.CenterHorizontally)) {
                 if (state.isRefreshing) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
                 else Text(stringResource(R.string.text_actualizar_estado))
+            }
+            TextButton(onClick = onSupportClick, enabled = !state.isRefreshing,
+                modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                Text(stringResource(R.string.text_ayuda_y_soporte))
             }
             TextButton(onClick = onLogoutClick, enabled = !state.isRefreshing,
                 modifier = Modifier.align(Alignment.CenterHorizontally)) {

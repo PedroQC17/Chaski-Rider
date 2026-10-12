@@ -49,29 +49,57 @@ class LocalDemoOfferRepository(
             OfferAction.ARRIVE_MERCHANT -> {
                 checkActive(snapshot)
                 if (snapshot.pickedUp) throw OfferRequestException(409)
+                OrderLocationRules.requireNear(lat, lng, snapshot.merchant)
                 snapshot.copy(arrivedAt = snapshot.arrivedAt ?: now)
             }
             OfferAction.REPORT_NOT_READY -> {
                 checkActive(snapshot)
                 if (snapshot.arrivedAt == null || snapshot.pickedUp) throw OfferRequestException(409)
+                OrderLocationRules.requireNear(lat, lng, snapshot.merchant)
                 snapshot.copy(isNotReadyReported = true, waitStartedAt = snapshot.waitStartedAt ?: now)
             }
             OfferAction.PICKUP -> {
                 checkActive(snapshot)
                 if (snapshot.arrivedAt == null) throw OfferRequestException(409)
+                OrderLocationRules.requireNear(lat, lng, snapshot.merchant)
                 snapshot.copy(pickedUp = true, pickedUpAt = snapshot.pickedUpAt ?: now)
             }
             OfferAction.DELIVER -> {
                 if (snapshot.batch == null || !snapshot.pickedUp) throw OfferRequestException(409)
+                OrderLocationRules.requireNear(lat, lng, snapshot.batch!!.stops.first().point)
                 snapshot.copy(isDelivered = true, deliveredAt = snapshot.deliveredAt ?: now)
             }
-            OfferAction.RESET -> empty(now)
+            OfferAction.RESET -> {
+                if (snapshot.batch != null && !snapshot.isDelivered) throw OfferRequestException(409)
+                empty(now)
+            }
         }
         val waitEnd = snapshot.pickedUpAt ?: now
         val extraMillis = snapshot.waitStartedAt?.let { (waitEnd - it - 300_000).coerceAtLeast(0) } ?: 0
         snapshot = snapshot.copy(waitingCompensationCents = ((extraMillis + 59_999) / 60_000).toInt() * 20)
-        store.save(uid, DemoOrderState(snapshot, recent))
+        store.save(uid, DemoOrderState(snapshot, recent, saved.problems.orEmpty()))
         snapshot
+    }
+    override suspend fun reportProblem(reason: OrderProblemReason, detail: String, cancel: Boolean): OfferSnapshot = mutex.withLock {
+        val uid = currentUid() ?: throw OfferRequestException(401)
+        val saved = store.load(uid) ?: throw OfferRequestException(409)
+        val snapshot = saved.snapshot
+        checkActive(snapshot)
+        if (cancel && snapshot.pickedUp) throw OfferRequestException(409)
+        val allowed = if (snapshot.pickedUp) setOf(OrderProblemReason.CUSTOMER_UNREACHABLE,
+            OrderProblemReason.ADDRESS_PROBLEM, OrderProblemReason.VEHICLE_PROBLEM, OrderProblemReason.OTHER)
+            else setOf(OrderProblemReason.LOCAL_CLOSED, OrderProblemReason.ORDER_UNAVAILABLE,
+                OrderProblemReason.VEHICLE_PROBLEM, OrderProblemReason.OTHER)
+        if (reason !in allowed || detail.trim().length !in 10..500) throw OfferRequestException(400)
+        if (!cancel && snapshot.problem != null) return@withLock snapshot
+        val now = clock()
+        val problem = OrderProblem(UUID.randomUUID().toString(), snapshot.batch!!.stops.first().orderId,
+            reason, detail.trim(), now, snapshot.pickedUp, cancel)
+        val result = if (cancel) empty(now) else snapshot.copy(serverTime = now, problem = problem)
+        store.save(uid, saved.copy(snapshot = result,
+            recent = if (cancel) saved.recent + (problem.orderId to now) else saved.recent,
+            problems = saved.problems.orEmpty() + problem))
+        result
     }
     private fun checkActive(snapshot: OfferSnapshot) {
         if (snapshot.batch == null || snapshot.isDelivered) throw OfferRequestException(409)

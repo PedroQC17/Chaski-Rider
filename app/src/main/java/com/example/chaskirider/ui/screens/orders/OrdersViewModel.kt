@@ -18,6 +18,7 @@ class OrdersViewModel(
     private val repository: OfferRepository,
     private val session: RiderSession,
     private val locations: LocationRepository = AppContainer.locationRepository,
+    private val automaticSearch: Boolean = true,
     private val elapsed: () -> Long = SystemClock::elapsedRealtime
 ) : ViewModel() {
     private val mutable = MutableStateFlow(OrdersUiState())
@@ -30,6 +31,7 @@ class OrdersViewModel(
     private var uid: String? = session.user.value?.id
     private var foreground = false
     private var deadline = 0L
+    private var locationConfirmedAt: Long? = null
 
     init {
         viewModelScope.launch {
@@ -38,6 +40,7 @@ class OrdersViewModel(
                     uid = user?.id
                     request?.cancel(); ticker?.cancel(); search?.cancel(); tracking?.cancel(); locationJob?.cancel()
                     mutable.value = OrdersUiState()
+                    locationConfirmedAt = null
                 }
                 mutable.update { it.copy(isAvailable = user?.isAvailable == true) }
                 if (foreground && canWork() && mutable.value.snapshot == null) refresh()
@@ -49,7 +52,10 @@ class OrdersViewModel(
 
     fun setForeground(active: Boolean) {
         foreground = active
-        if (active) refresh() else { search?.cancel(); tracking?.cancel(); ticker?.cancel(); locationJob?.cancel() }
+        if (active) refresh() else {
+            search?.cancel(); tracking?.cancel(); ticker?.cancel(); locationJob?.cancel()
+            invalidateLocation()
+        }
         syncSearch()
         syncTracking()
     }
@@ -59,7 +65,7 @@ class OrdersViewModel(
     } == true
 
     private fun syncSearch() {
-        if (!foreground || !canWork() || !mutable.value.isAvailable) { search?.cancel(); return }
+        if (!automaticSearch || !foreground || !canWork() || !mutable.value.isAvailable) { search?.cancel(); return }
         if (search?.isActive == true) return
         search = viewModelScope.launch {
             delay(5_000)
@@ -83,15 +89,59 @@ class OrdersViewModel(
     fun deliver() = execute(OfferAction.DELIVER)
     fun reset() = execute(OfferAction.RESET)
 
+    fun openProblem() { mutable.update { it.copy(problemDialogOpen = true, problemReason = null, problemDetail = "") } }
+    fun closeProblem() { if (!mutable.value.busy) mutable.update { it.copy(problemDialogOpen = false) } }
+    fun selectProblem(reason: OrderProblemReason) { mutable.update { it.copy(problemReason = reason) } }
+    fun updateProblemDetail(detail: String) { mutable.update { it.copy(problemDetail = detail.take(500)) } }
+    fun confirmProblem() {
+        val state = mutable.value
+        val reason = state.problemReason ?: return
+        val snapshot = state.snapshot ?: return
+        if (!canWork() || state.busy || snapshot.batch == null || snapshot.isDelivered || state.problemDetail.trim().length < 10) return
+        val requestUid = uid
+        mutable.update { it.copy(busy = true, error = null) }
+        request = viewModelScope.launch {
+            try {
+                val started = elapsed()
+                val result = repository.reportProblem(reason, state.problemDetail, cancel = !snapshot.pickedUp)
+                if (requestUid == uid) {
+                    applySnapshot(result, started)
+                    mutable.update { it.copy(problemDialogOpen = false, problemReason = null, problemDetail = "") }
+                }
+            } catch (error: CancellationException) { throw error }
+            catch (_: Exception) { if (requestUid == uid) mutable.update { it.copy(error = R.string.orders_simulation_error) } }
+            finally { if (requestUid == uid) mutable.update { it.copy(busy = false) } }
+        }
+    }
+
     fun updateRiderLocation(point: GeoPoint) {
+        if (!point.latitude.isFinite() || !point.longitude.isFinite() || point.latitude !in -90.0..90.0 || point.longitude !in -180.0..180.0) {
+            invalidateLocation(); return
+        }
+        locationConfirmedAt = elapsed()
+        mutable.update { it.copy(riderLocation = point) }
+        updateDistances()
+    }
+
+    private fun invalidateLocation() {
+        locationConfirmedAt = null
+        mutable.update { it.copy(distanceToMerchantMeters = null, distanceToCustomerMeters = null,
+            isWithinGeofence = false, isNearCustomer = false) }
+    }
+
+    private fun updateDistances() {
+        val point = mutable.value.riderLocation ?: return
+        if (locationConfirmedAt?.let { elapsed() - it in 0..30_000 } != true) { invalidateLocation(); return }
         val snapshot = mutable.value.snapshot
         val active = snapshot?.offer != null || snapshot?.batch != null
         val merchant = snapshot?.merchant?.takeIf { active }
         val customer = snapshot?.batch?.stops?.firstOrNull()?.point
         val merchantDistance = merchant?.let { LocationUtils.distanceMeters(point.latitude, point.longitude, it.latitude, it.longitude) }
         val customerDistance = customer?.let { LocationUtils.distanceMeters(point.latitude, point.longitude, it.latitude, it.longitude) }
-        mutable.update { it.copy(riderLocation = point, distanceToMerchantMeters = merchantDistance,
-            distanceToCustomerMeters = customerDistance, isWithinGeofence = merchantDistance != null && merchantDistance <= 100) }
+        mutable.update { it.copy(distanceToMerchantMeters = merchantDistance,
+            distanceToCustomerMeters = customerDistance,
+            isWithinGeofence = merchant?.let { target -> OrderLocationRules.isNear(point.latitude, point.longitude, target) } == true,
+            isNearCustomer = customer?.let { target -> OrderLocationRules.isNear(point.latitude, point.longitude, target) } == true) }
     }
 
     fun fetchCurrentLocation() {
@@ -99,7 +149,9 @@ class OrdersViewModel(
         locationJob?.cancel()
         locationJob = viewModelScope.launch {
             val point = locations.currentLocation().getOrNull()
-            if (requestUid == uid && point != null) updateRiderLocation(point)
+            if (requestUid == uid) {
+                if (point != null) updateRiderLocation(point) else invalidateLocation()
+            }
         }
     }
 
@@ -110,7 +162,8 @@ class OrdersViewModel(
         if (tracking?.isActive == true) return
         tracking = viewModelScope.launch {
             while (isActive) {
-                locations.currentLocation().getOrNull()?.let(::updateRiderLocation)
+                val point = locations.currentLocation().getOrNull()
+                if (point != null) updateRiderLocation(point) else invalidateLocation()
                 delay(5_000)
             }
         }
@@ -120,7 +173,7 @@ class OrdersViewModel(
         val remaining = ((snapshot.offer?.expiresAt ?: snapshot.serverTime) - snapshot.serverTime - (elapsed() - started)).coerceAtLeast(0)
         deadline = elapsed() + remaining
         mutable.update { it.copy(snapshot = snapshot, secondsLeft = ((remaining + 999) / 1000).toInt()) }
-        mutable.value.riderLocation?.let(::updateRiderLocation)
+        updateDistances()
         syncTracking()
         ticker?.cancel()
         val waitStart = snapshot.waitStartedAt
@@ -149,13 +202,17 @@ class OrdersViewModel(
         mutable.update { it.copy(busy = true, error = null) }
         request = viewModelScope.launch {
             try {
-                val point = if (action == OfferAction.OFFER) locations.currentLocation().getOrNull() else mutable.value.riderLocation
-                if (action == OfferAction.OFFER && point == null) {
+                val requiresLocation = action in listOf(OfferAction.OFFER, OfferAction.ARRIVE_MERCHANT,
+                    OfferAction.REPORT_NOT_READY, OfferAction.PICKUP, OfferAction.DELIVER)
+                val point = if (requiresLocation) locations.currentLocation().getOrNull() else mutable.value.riderLocation
+                if (requestUid != uid || !canWork()) return@launch
+                if (requiresLocation && point == null) {
+                    invalidateLocation()
                     mutable.update { it.copy(error = R.string.orders_location_required) }
                     return@launch
                 }
                 if (requestUid != uid || (action == OfferAction.OFFER && session.user.value?.isAvailable != true)) return@launch
-                if (point != null) updateRiderLocation(point)
+                if (requiresLocation && point != null) updateRiderLocation(point)
                 val started = elapsed()
                 val snapshot = repository.execute(action, offerId, point?.latitude, point?.longitude)
                 if (requestUid != uid) return@launch
@@ -166,6 +223,8 @@ class OrdersViewModel(
                 if (requestUid == uid) mutable.update { it.copy(error = when ((error as? OfferRequestException)?.status) {
                     401, 403 -> R.string.orders_access_error
                     409 -> R.string.orders_conflict
+                    412 -> if (action == OfferAction.DELIVER) R.string.orders_near_delivery else R.string.orders_near_pickup
+                    422 -> R.string.orders_location_required
                     else -> R.string.orders_simulation_error
                 }) }
             } finally {

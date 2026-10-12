@@ -43,6 +43,7 @@ fun WorkMap(state: HomeUiState, bottomInset: androidx.compose.ui.unit.Dp,
     var loaded by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val mapStyle = remember(context) { MapStyleOptions.loadRawResourceStyle(context, R.raw.map_grayscale) }
+    val riderIcon = remember(loaded, context) { if (loaded) com.example.chaskirider.ui.components.riderMapMarker(context) else null }
     LaunchedEffect(loaded, state.cameraRequest, state.location) {
         val point = state.location
         Log.d("WorkMap", "LaunchedEffect: loaded=$loaded, location=$point, cameraRequest=${state.cameraRequest}")
@@ -54,8 +55,7 @@ fun WorkMap(state: HomeUiState, bottomInset: androidx.compose.ui.unit.Dp,
     }
     GoogleMap(
         modifier = Modifier.fillMaxSize(), cameraPositionState = camera,
-        properties = MapProperties(mapStyleOptions = mapStyle,
-            isMyLocationEnabled = state.hasLocationPermission && state.user?.isAvailable == true),
+        properties = MapProperties(mapStyleOptions = mapStyle),
         uiSettings = MapUiSettings(zoomControlsEnabled = false, myLocationButtonEnabled = false,
             mapToolbarEnabled = false, compassEnabled = false, rotationGesturesEnabled = false),
         contentPadding = PaddingValues(top = 96.dp, bottom = bottomInset),
@@ -64,6 +64,12 @@ fun WorkMap(state: HomeUiState, bottomInset: androidx.compose.ui.unit.Dp,
             loaded = true
         }
     ) {
+        LaunchedEffect(Unit) { loaded = true }
+        state.location?.takeIf { state.hasLocationPermission }?.let { point ->
+            Marker(state = rememberUpdatedMarkerState(LatLng(point.latitude, point.longitude)),
+                title = stringResource(R.string.orders_rider), icon = riderIcon,
+                anchor = androidx.compose.ui.geometry.Offset(0.5f, 0.5f), zIndex = 1f)
+        }
         // HU05: capa de zonas de demanda; al tocar una zona se selecciona.
         state.demandZones.forEach { zone ->
             val selected = state.selectedZone?.id == zone.id

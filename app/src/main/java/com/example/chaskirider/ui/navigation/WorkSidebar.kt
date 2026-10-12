@@ -87,7 +87,8 @@ fun WorkSidebar(route: String?, unread: Int, busy: Boolean, onNavigate: (String)
             Triple(Screen.Home.route, R.string.home_map_menu, Icons.Default.Home),
             Triple(Screen.Orders.route, R.string.orders_real_menu, Icons.Default.ShoppingCart),
             Triple(Screen.Profile.route, R.string.text_perfil, Icons.Default.Person),
-            Triple(Screen.Notifications.route, R.string.text_notificaciones, Icons.Default.Notifications)
+            Triple(Screen.Notifications.route, R.string.text_notificaciones, Icons.Default.Notifications),
+            Triple(Screen.Support.route, R.string.text_ayuda_y_soporte, Icons.Default.Info)
         ).forEach { (target, label, icon) ->
             NavigationDrawerItem(
                 label = { Text(stringResource(label), fontSize = 14.sp, fontWeight = FontWeight.Medium) },
