@@ -13,11 +13,18 @@ import kotlinx.coroutines.launch
 import com.example.chaskirider.domain.model.*
 import com.example.chaskirider.domain.repository.DocumentRepository
 import com.example.chaskirider.domain.repository.RiderSession
+import com.example.chaskirider.domain.repository.RegistrationDraftRepository
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 
 class DocumentsViewModel(
     private val texts: TextProvider,
     private val repository: DocumentRepository, session: RiderSession,
-    private val previews: com.example.chaskirider.domain.repository.DocumentPreviewRepository) : ViewModel() {
+    private val previews: com.example.chaskirider.domain.repository.DocumentPreviewRepository,
+    private val drafts: RegistrationDraftRepository) : ViewModel() {
+    private var uploadJob: Job? = null
+    private var captureJob: Job? = null
+    private var pendingCapture: Uri? = null
     private var previewJob: kotlinx.coroutines.Job? = null
     private var sessionUid: String? = null
     private val _uiState = MutableStateFlow(DocumentsUiState())
@@ -25,7 +32,10 @@ class DocumentsViewModel(
     init { viewModelScope.launch { session.user.collect { acceptUser(it) } } }
     private fun acceptUser(user: RiderUser?) {
         if (sessionUid != user?.id) {
-            previewJob?.cancel(); _uiState.value = DocumentsUiState(); sessionUid = user?.id
+            previewJob?.cancel(); uploadJob?.cancel(); captureJob?.cancel()
+            pendingCapture = null
+            _uiState.value = DocumentsUiState(); sessionUid = user?.id
+            if (user != null) recoverCapture()
         }
         val docs = user?.let { RegistrationValidation.documentPaths(it) }.orEmpty()
             .filterValues { it.isNotBlank() }.mapValues { (key, path) ->
@@ -42,10 +52,21 @@ class DocumentsViewModel(
 
     fun uploadDocument(docType: String, uri: Uri) {
         if (_uiState.value.isLoading) return
+        val owner = sessionUid ?: return
         _uiState.update { it.copy(isLoading = true, errorMessage = null, documentsMap = it.documentsMap +
             (docType to DocumentFile(id = docType, uploadState = DocumentUploadState.UPLOADING))) }
-        viewModelScope.launch {
-            repository.uploadDocument(docType, uri).onSuccess { acceptUser(it); _uiState.update { state -> state.copy(isLoading = false) } }.onFailure { error ->
+        uploadJob = viewModelScope.launch {
+            repository.uploadDocument(docType, uri).onSuccess {
+                if (sessionUid != owner) return@launch
+                acceptUser(it)
+                if (pendingCapture == uri) {
+                    try { clearCapture(owner) }
+                    catch (e: CancellationException) { throw e }
+                    catch (e: Exception) { failure(e) }
+                }
+                _uiState.update { state -> state.copy(isLoading = false) }
+            }.onFailure { error ->
+                if (sessionUid != owner) return@launch
                 failure(error)
                 _uiState.update { it.copy(documentsMap = it.documentsMap +
                     (docType to DocumentFile(id = docType, uploadState = DocumentUploadState.ERROR, errorMessage = texts.resolveError(error.message, TextKey.TEXT_NO_SE_PUDO_COMPLETAR_LA_OPERACION)))) }
@@ -56,33 +77,76 @@ class DocumentsViewModel(
         previewJob?.cancel()
         _uiState.update { it.copy(preview = null) }
     }
-    private var pendingCapture: Uri? = null
+
+    fun recoverCapture() {
+        val owner = sessionUid ?: return
+        if (captureJob?.isActive == true || _uiState.value.isLoading) return
+        captureJob = viewModelScope.launch {
+            try {
+                val capture = drafts.loadCapture(owner) ?: return@launch
+                val uri = Uri.parse(capture.uri)
+                val exists = repository.hasCapture(uri).getOrThrow()
+                if (sessionUid != owner) return@launch
+                pendingCapture = uri
+                _uiState.update { it.copy(captureType = if (exists) capture.type else null,
+                    captureUri = if (exists) uri else null) }
+            } catch (e: CancellationException) { throw e }
+            catch (e: Exception) { failure(e) }
+        }
+    }
+
+    private suspend fun clearCapture(owner: String) {
+        val capture = drafts.loadCapture(owner)
+        capture?.let { repository.deleteCapture(Uri.parse(it.uri)).getOrThrow() }
+        drafts.clearCapture(owner)
+        if (sessionUid == owner) {
+            pendingCapture = null
+            _uiState.update { it.copy(captureType = null, captureUri = null) }
+        }
+    }
 
     // HU03: captura con cámara; la foto se confirma en vista previa antes de subirla.
     fun prepareCapture(docType: String, onReady: (Uri) -> Unit) {
-        if (_uiState.value.captureType != null || _uiState.value.captureUri != null || _uiState.value.isLoading) return
-        viewModelScope.launch {
-            repository.createCapture().onSuccess { uri ->
+        if (captureJob?.isActive == true || _uiState.value.captureType != null || _uiState.value.isLoading) return
+        val owner = sessionUid ?: return
+        _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+        captureJob = viewModelScope.launch {
+            try {
+                clearCapture(owner)
+                val uri = repository.createCapture().getOrThrow()
+                drafts.saveCapture(PendingDocumentCapture(owner, docType, uri.toString()))
+                if (sessionUid != owner) return@launch
                 pendingCapture = uri
-                _uiState.update { it.copy(captureType = docType, errorMessage = null) }
+                _uiState.update { it.copy(captureType = docType, isLoading = false) }
                 onReady(uri)
-            }.onFailure { error -> failure(error) }
+            } catch (e: CancellationException) { throw e }
+            catch (e: Exception) { if (sessionUid == owner) failure(e) }
         }
     }
     fun captured(success: Boolean) {
-        val uri = pendingCapture
-        if (!success || uri == null || _uiState.value.captureType == null) { discardCapture(); return }
-        _uiState.update { it.copy(captureUri = uri) }
+        // ActivityResult can arrive after process recreation, before Room has finished loading.
+        val previous = captureJob
+        viewModelScope.launch {
+            previous?.join()
+            if (success) recoverCapture() else discardCapture()
+        }
     }
     fun discardCapture() {
-        pendingCapture = null
-        _uiState.update { it.copy(captureType = null, captureUri = null) }
+        if (_uiState.value.isLoading) return
+        val owner = sessionUid ?: return
+        val previous = captureJob
+        _uiState.update { it.copy(isLoading = true) }
+        captureJob = viewModelScope.launch {
+            previous?.join()
+            try { clearCapture(owner) }
+            catch (e: CancellationException) { throw e }
+            catch (e: Exception) { if (sessionUid == owner) failure(e) }
+            finally { if (sessionUid == owner) _uiState.update { it.copy(isLoading = false) } }
+        }
     }
     fun confirmCapture() {
         val type = _uiState.value.captureType ?: return
         val uri = pendingCapture ?: return
-        pendingCapture = null
-        _uiState.update { it.copy(captureType = null, captureUri = null) }
         uploadDocument(type, uri)
     }
     fun openDocument(docType: String) {

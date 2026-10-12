@@ -21,41 +21,43 @@ import com.example.chaskirider.ui.theme.*
 
 @Composable
 fun OnboardingStep1Screen(
-    state: PersonalRegistrationUiState,
+    state: RegistrationUiState,
     onChange: (PersonalField, String) -> Unit,
     onTermsChange: (Boolean) -> Unit,
     onNavigateBack: () -> Unit,
-    onContinue: () -> Unit
+    onContinue: () -> Unit,
+    onRetryDraft: () -> Unit = {}
 ) {
     Surface(color = BackgroundLight) {
         Column(Modifier.fillMaxSize().systemBarsPadding().imePadding()
             .verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
             OnboardingHeader(1, onNavigateBack = { if (!state.isLoading) onNavigateBack() })
+            RegistrationDraftNotice(state.draftStatus, onRetryDraft)
             Spacer(Modifier.height(8.dp))
             Text(stringResource(R.string.text_datos_personales), style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold)
-            PersonalInput(state.name, R.string.text_nombres, !state.isLoading, { onChange(PersonalField.NAME, it) })
-            PersonalInput(state.lastName, R.string.text_apellidos, !state.isLoading, { onChange(PersonalField.LAST_NAME, it) })
-            PersonalInput(state.dni, R.string.text_dni_8_digitos, !state.isLoading,
+            PersonalInput(state.name, R.string.text_nombres, state.controlsEnabled, { onChange(PersonalField.NAME, it) })
+            PersonalInput(state.lastName, R.string.text_apellidos, state.controlsEnabled, { onChange(PersonalField.LAST_NAME, it) })
+            PersonalInput(state.dni, R.string.text_dni_8_digitos, state.controlsEnabled,
                 { onChange(PersonalField.DNI, it) }, KeyboardType.Number)
-            PersonalInput(state.phone, R.string.text_numero_de_celular, !state.isLoading,
+            PersonalInput(state.phone, R.string.text_numero_de_celular, state.controlsEnabled,
                 { onChange(PersonalField.PHONE, it) }, KeyboardType.Phone)
             OutlinedTextField(state.email, {}, readOnly = true, label = { Text(stringResource(R.string.text_correo_electronico)) },
                 singleLine = true, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp))
             if (state.needsPassword) {
                 PasswordField(state.password, { onChange(PersonalField.PASSWORD, it) },
-                    stringResource(R.string.registration_new_password), enabled = !state.isLoading)
+                    stringResource(R.string.registration_new_password), enabled = state.controlsEnabled)
                 PasswordField(state.confirmation, { onChange(PersonalField.CONFIRMATION, it) },
-                    stringResource(R.string.text_confirmar_contrasena), enabled = !state.isLoading, imeAction = ImeAction.Done)
+                    stringResource(R.string.text_confirmar_contrasena), enabled = state.controlsEnabled, imeAction = ImeAction.Done)
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(state.termsAccepted, onTermsChange, enabled = !state.isLoading,
+                Checkbox(state.termsAccepted, onTermsChange, enabled = state.controlsEnabled,
                     colors = CheckboxDefaults.colors(checkedColor = Orange))
                 Text(stringResource(R.string.registration_terms), style = MaterialTheme.typography.bodySmall)
             }
             state.errorMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-            Button(onClick = onContinue, enabled = !state.isLoading,
+            Button(onClick = onContinue, enabled = state.controlsEnabled && state.draftStatus != DraftStatus.ERROR,
                 modifier = Modifier.fillMaxWidth().height(54.dp), shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Orange)) {
                 if (state.isLoading) CircularProgressIndicator(Modifier.size(22.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
@@ -77,5 +79,5 @@ private fun PersonalInput(value: String, label: Int, enabled: Boolean, onChange:
 @Preview(showBackground = true)
 @Composable
 private fun PersonalRegistrationPreview() {
-    ChaskiRiderTheme { OnboardingStep1Screen(PersonalRegistrationUiState(email = "ana@example.com"), { _, _ -> }, {}, {}, {}) }
+    ChaskiRiderTheme { OnboardingStep1Screen(RegistrationUiState(email = "ana@example.com", ready = true, editable = true, draftStatus = DraftStatus.SAVED), { _, _ -> }, {}, {}, {}) }
 }

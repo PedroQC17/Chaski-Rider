@@ -25,12 +25,32 @@ class RiderDocumentDataSource(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val storage: FirebaseStorage = FirebaseStorage.getInstance()
 ) {
-    // URI temporal (FileProvider) para capturar un documento con la cámara externa.
+    // Private durable file: cache eviction must not discard an unconfirmed registration capture.
     suspend fun createCapture() = firebaseResult(texts) {
+        val uid = auth.currentUser?.uid ?: error(texts.get(TextKey.TEXT_NO_HAY_UNA_SESION_ACTIVA))
         withContext(Dispatchers.IO) {
-            val dir = File(context.cacheDir, "documents").apply { mkdirs() }
+            val dir = File(context.filesDir, "registration_documents/$uid").apply { mkdirs() }
             FileProvider.getUriForFile(context, "${context.packageName}.files", File.createTempFile("capture-", ".jpg", dir))
         }
+    }
+
+    suspend fun hasCapture(uri: Uri) = firebaseResult(texts) {
+        requireCapture(uri)
+        withContext(Dispatchers.IO) {
+            try { context.contentResolver.openInputStream(uri)?.use { it.read() != -1 } ?: false }
+            catch (_: java.io.FileNotFoundException) { false }
+        }
+    }
+
+    suspend fun deleteCapture(uri: Uri) = firebaseResult(texts) {
+        requireCapture(uri)
+        withContext(Dispatchers.IO) { context.contentResolver.delete(uri, null, null) }
+        Unit
+    }
+
+    private fun requireCapture(uri: Uri) {
+        require(uri.scheme == "content" && uri.authority == "${context.packageName}.files" &&
+            uri.pathSegments.firstOrNull() == "registration_documents")
     }
 
     suspend fun uploadDocument(docType: String, uri: Uri) = firebaseResult(texts) {

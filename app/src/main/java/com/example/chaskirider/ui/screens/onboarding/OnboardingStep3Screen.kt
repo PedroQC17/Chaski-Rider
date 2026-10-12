@@ -35,12 +35,12 @@ fun OnboardingStep3ScreenPreview() {
     ChaskiRiderTheme {
         OnboardingStep3Screen(
             vehicleType = VehicleType.MOTORCYCLE,
-            initialBankInfo = BankInfo(
+            state = RegistrationUiState(ready = true, editable = true, draftStatus = DraftStatus.SAVED, bank = BankInfo(
                 bankName = "BCP",
                 holderName = "Ana García",
                 accountNumber = "191-12345678-0-12",
                 cci = "00219100123456780123"
-            ),
+            )),
             documentsMap = mapOf(
                 "dniFront" to DocumentFile("dniFront", uploadState = DocumentUploadState.UPLOADED),
                 "dniBack" to DocumentFile("dniBack", uploadState = DocumentUploadState.UPLOADED)
@@ -52,20 +52,23 @@ fun OnboardingStep3ScreenPreview() {
 @Composable
 fun OnboardingStep3Screen(
     vehicleType: VehicleType,
-    initialBankInfo: BankInfo = BankInfo(),
+    state: RegistrationUiState,
+    onBankChange: (BankField, String) -> Unit = { _, _ -> },
+    onRetryDraft: () -> Unit = {},
     onNavigateBack: () -> Unit = {},
     onDocumentPick: (String, Uri) -> Unit = { _, _ -> },
     onDocumentCamera: (String) -> Unit = {},
     onDocumentView: (String) -> Unit = {},
-    onFinishRegistrationClick: (String, String, String, String) -> Unit = { _, _, _, _ -> },
+    onFinishRegistrationClick: () -> Unit = {},
     documentsMap: Map<String, DocumentFile> = emptyMap(),
     isLoading: Boolean = false,
     errorMessage: String? = null
 ) {
-    var bank by rememberSaveable { mutableStateOf(initialBankInfo.bankName) }
-    var holder by rememberSaveable { mutableStateOf(initialBankInfo.holderName) }
-    var account by rememberSaveable { mutableStateOf(initialBankInfo.accountNumber) }
-    var cci by rememberSaveable { mutableStateOf(initialBankInfo.cci) }
+    val bank = state.bank.bankName
+    val holder = state.bank.holderName
+    val account = state.bank.accountNumber
+    val cci = state.bank.cci
+    val enabled = state.controlsEnabled && !isLoading
     var selectedType by rememberSaveable { mutableStateOf<String?>(null) }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         val type = selectedType
@@ -77,13 +80,14 @@ fun OnboardingStep3Screen(
     Column(Modifier.fillMaxSize().background(BackgroundLight).systemBarsPadding().imePadding()
         .verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 12.dp)) {
         OnboardingHeader(3, onNavigateBack = { if (!isLoading) onNavigateBack() })
+        RegistrationDraftNotice(state.draftStatus, onRetryDraft)
         Spacer(Modifier.height(24.dp))
         Text(stringResource(R.string.text_documentacion), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextDark)
         Spacer(Modifier.height(8.dp))
         Text(stringResource(R.string.text_sube_archivos_pdf_jpg_o_png_de), color = TextMuted, fontSize = 14.sp)
         Spacer(Modifier.height(20.dp))
         required.filter { it != "bankStatement" }.forEach { type ->
-            DocumentRow(labels.getValue(type), documentsMap[type], !isLoading,
+            DocumentRow(labels.getValue(type), documentsMap[type], enabled,
                 onPick = { selectedType = type; picker.launch(RegistrationValidation.mimeTypes) },
                 onCamera = { onDocumentCamera(type) },
                 onView = { onDocumentView(type) })
@@ -92,24 +96,24 @@ fun OnboardingStep3Screen(
         Spacer(Modifier.height(14.dp))
         Text(stringResource(R.string.text_informacion_bancaria), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextDark)
         Text(stringResource(R.string.text_la_cuenta_donde_recibiras_tus_pagos), fontSize = 13.sp, color = TextMuted)
-        BankSelector(bank, !isLoading) { bank = it }
-        OutlinedTextField(holder, { holder = it }, label = { Text(stringResource(R.string.text_titular_de_la_cuenta)) }, enabled = !isLoading,
+        BankSelector(bank, enabled) { onBankChange(BankField.BANK, it) }
+        OutlinedTextField(holder, { onBankChange(BankField.HOLDER, it) }, label = { Text(stringResource(R.string.text_titular_de_la_cuenta)) }, enabled = enabled,
             singleLine = true, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(account, { account = it }, label = { Text(stringResource(R.string.text_numero_de_cuenta)) }, enabled = !isLoading,
+        OutlinedTextField(account, { onBankChange(BankField.ACCOUNT, it) }, label = { Text(stringResource(R.string.text_numero_de_cuenta)) }, enabled = enabled,
             singleLine = true, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(cci, { cci = it.filter { c -> c in '0'..'9' }.take(20) },
-            label = { Text(stringResource(R.string.registration_cci)) }, enabled = !isLoading,
+        OutlinedTextField(cci, { onBankChange(BankField.CCI, it) },
+            label = { Text(stringResource(R.string.registration_cci)) }, enabled = enabled,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             singleLine = true, modifier = Modifier.fillMaxWidth())
-        DocumentRow(stringResource(R.string.text_estado_de_cuenta), documentsMap["bankStatement"], !isLoading,
+        DocumentRow(stringResource(R.string.text_estado_de_cuenta), documentsMap["bankStatement"], enabled,
             onPick = { selectedType = "bankStatement"; picker.launch(RegistrationValidation.mimeTypes) },
             onCamera = { onDocumentCamera("bankStatement") },
             onView = { onDocumentView("bankStatement") })
         Spacer(Modifier.height(20.dp))
         errorMessage?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(vertical = 12.dp)) }
         Spacer(Modifier.height(24.dp))
-        Button(onClick = { onFinishRegistrationClick(bank.trim(),holder.trim(),account.trim(),cci.trim()) },
-            enabled = !isLoading && required.all { documentsMap[it]?.uploadState == DocumentUploadState.UPLOADED } &&
+        Button(onClick = onFinishRegistrationClick,
+            enabled = enabled && state.draftStatus != DraftStatus.ERROR && required.all { documentsMap[it]?.uploadState == DocumentUploadState.UPLOADED } &&
                 RegistrationValidation.bankError(BankInfo(bank,holder,account,cci)) == null,
             modifier = Modifier.fillMaxWidth().height(54.dp), shape = RoundedCornerShape(14.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Orange)) {

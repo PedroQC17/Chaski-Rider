@@ -1,7 +1,5 @@
 package com.example.chaskirider.ui.screens.profile
 
-import com.example.chaskirider.domain.text.TextProvider
-import com.example.chaskirider.domain.text.TextKey
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.collect
@@ -10,12 +8,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import com.example.chaskirider.domain.model.*
-import com.example.chaskirider.domain.repository.RiderProfileRepository
 import com.example.chaskirider.domain.repository.RiderSession
 
-class RiderProfileViewModel(
-    private val texts: TextProvider,
-    private val repository: RiderProfileRepository, session: RiderSession) : ViewModel() {
+class RiderProfileViewModel(session: RiderSession) : ViewModel() {
     private val _uiState = MutableStateFlow(RiderProfileUiState())
     val uiState = _uiState.asStateFlow()
     init { viewModelScope.launch { session.user.collect { acceptUser(it) } } }
@@ -23,41 +18,8 @@ class RiderProfileViewModel(
         if (user == null) _uiState.value = RiderProfileUiState()
         else _uiState.update { it.copy(currentUser = user) }
     }
-    private fun failure(error: Throwable) {
-        _uiState.update { it.copy(isLoading = false, errorMessage = texts.resolveError(error.message, TextKey.TEXT_NO_SE_PUDO_COMPLETAR_LA_OPERACION)) }
-    }
-    fun reportError(message: String) { _uiState.update { it.copy(errorMessage = message) } }
     fun showChangeNotice() { _uiState.update { it.copy(changeNoticeVisible = true) } }
     fun dismissChangeNotice() { _uiState.update { it.copy(changeNoticeVisible = false) } }
     fun clearError() { _uiState.update { it.copy(errorMessage = null, message = null) } }
 
-    private fun userAction(action: suspend () -> Result<RiderUser>, onSuccess: (RiderUser) -> Unit = {}) {
-        if (_uiState.value.isLoading) return
-        _uiState.update { it.copy(isLoading = true, errorMessage = null, message = null) }
-        viewModelScope.launch {
-            action().onSuccess { acceptUser(it); _uiState.update { state -> state.copy(isLoading = false) }; onSuccess(it) }.onFailure { failure(it) }
-        }
-    }
-    fun saveStep2VehicleType(vehicleType: VehicleType, onSuccess: () -> Unit) {
-        if (vehicleType !in listOf(VehicleType.BICYCLE, VehicleType.MOTORCYCLE)) {
-            reportError(texts.get(TextKey.TEXT_SELECCIONA_BICICLETA_MOTOCICLETA_O_AUTOMOVIL)); return
-        }
-        userAction({ repository.saveVehicle(vehicleType) }) { onSuccess() }
-    }
-    fun finishRegistration(bankName: String, holder: String, account: String, cci: String, onSuccess: () -> Unit) {
-        val bank = BankInfo(bankName, holder, account, cci)
-        RegistrationValidation.bankError(bank)?.let { reportError(texts.get(it)); return }
-        val user = _uiState.value.currentUser ?: return
-        if (user.vehicleType !in listOf(VehicleType.BICYCLE, VehicleType.MOTORCYCLE)) {
-            reportError(texts.get(TextKey.TEXT_SELECCIONA_UN_VEHICULO)); return
-        }
-        val required = RegistrationValidation.requiredDocuments(user.vehicleType)
-        if (required.any { RegistrationValidation.documentPaths(user)[it].isNullOrBlank() }) {
-            reportError(texts.get(TextKey.TEXT_SUBE_TODOS_LOS_DOCUMENTOS_OBLIGATORIOS_ANTES_DE)); return
-        }
-        userAction({
-            val saved = repository.saveBankInfo(bank)
-            if (saved.isFailure) Result.failure(saved.exceptionOrNull()!!) else repository.submitRegistration()
-        }) { onSuccess() }
-    }
 }

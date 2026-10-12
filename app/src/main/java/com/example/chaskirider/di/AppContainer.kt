@@ -22,6 +22,13 @@ object AppContainer {
     }
     private val sessionStore = RiderSessionStore()
     val riderSession: RiderSession = sessionStore
+    private val registrationDatabase by lazy {
+        androidx.room.Room.databaseBuilder(applicationContext,
+            com.example.chaskirider.data.local.RegistrationDatabase::class.java, "registration.db").build()
+    }
+    val registrationDraftRepository: RegistrationDraftRepository by lazy {
+        com.example.chaskirider.data.local.RoomRegistrationDraftRepository(registrationDatabase.drafts())
+    }
     
     // Repositorio real de ofertas (Nube / Firebase)
     val realOfferRepository: OfferRepository by lazy {

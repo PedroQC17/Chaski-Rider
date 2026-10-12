@@ -30,10 +30,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -58,20 +54,22 @@ import com.example.chaskirider.ui.theme.TextMuted
 fun OnboardingStep2ScreenPreview() {
     ChaskiRiderTheme {
         OnboardingStep2Screen(
-            currentVehicle = VehicleType.MOTORCYCLE
+            state = RegistrationUiState(vehicle = VehicleType.MOTORCYCLE, ready = true, editable = true, draftStatus = DraftStatus.SAVED)
         )
     }
 }
 
 @Composable
 fun OnboardingStep2Screen(
-    currentVehicle: VehicleType = VehicleType.NONE,
+    state: RegistrationUiState,
+    onVehicleChange: (VehicleType) -> Unit = {},
     onNavigateBack: () -> Unit = {},
-    onContinueClick: (vehicleType: VehicleType) -> Unit = {},
-    isLoading: Boolean = false,
-    errorMessage: String? = null
+    onContinueClick: () -> Unit = {},
+    onRetryDraft: () -> Unit = {}
 ) {
-    var selectedVehicle by rememberSaveable { mutableStateOf(currentVehicle) }
+    val selectedVehicle = state.vehicle
+    val isLoading = state.isLoading
+    val errorMessage = state.errorMessage
 
     Column(
         modifier = Modifier
@@ -83,8 +81,9 @@ fun OnboardingStep2Screen(
     ) {
         OnboardingHeader(
             currentStep = 2,
-            onNavigateBack = onNavigateBack
+            onNavigateBack = { if (!isLoading) onNavigateBack() }
         )
+        RegistrationDraftNotice(state.draftStatus, onRetryDraft)
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -109,7 +108,8 @@ fun OnboardingStep2Screen(
             title = stringResource(R.string.text_bicicleta),
             imageRes = R.drawable.vehicle_bicycle,
             isSelected = selectedVehicle == VehicleType.BICYCLE,
-            onClick = { selectedVehicle = VehicleType.BICYCLE }
+            enabled = state.controlsEnabled,
+            onClick = { onVehicleChange(VehicleType.BICYCLE) }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -118,7 +118,8 @@ fun OnboardingStep2Screen(
             title = stringResource(R.string.text_motocicleta),
             imageRes = R.drawable.vehicle_motorcycle,
             isSelected = selectedVehicle == VehicleType.MOTORCYCLE,
-            onClick = { selectedVehicle = VehicleType.MOTORCYCLE }
+            enabled = state.controlsEnabled,
+            onClick = { onVehicleChange(VehicleType.MOTORCYCLE) }
         )
 
 
@@ -135,8 +136,8 @@ fun OnboardingStep2Screen(
         Spacer(modifier = Modifier.height(36.dp))
 
         Button(
-            onClick = { onContinueClick(selectedVehicle) },
-            enabled = !isLoading && selectedVehicle in listOf(VehicleType.BICYCLE, VehicleType.MOTORCYCLE),
+            onClick = onContinueClick,
+            enabled = state.controlsEnabled && state.draftStatus != DraftStatus.ERROR && selectedVehicle in listOf(VehicleType.BICYCLE, VehicleType.MOTORCYCLE),
             shape = CircleShape,
             colors = ButtonDefaults.buttonColors(
                 containerColor = Orange,
@@ -167,6 +168,7 @@ fun VehicleOptionCard(
     title: String,
     imageRes: Int,
     isSelected: Boolean,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
     val borderColor = if (isSelected) Orange else BorderLight
@@ -181,7 +183,7 @@ fun VehicleOptionCard(
                 color = borderColor,
                 shape = RoundedCornerShape(16.dp)
             )
-            .clickable { onClick() }
+            .clickable(enabled = enabled) { onClick() }
             .padding(16.dp)
     ) {
         Row(

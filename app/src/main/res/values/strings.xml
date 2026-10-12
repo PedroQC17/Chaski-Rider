@@ -1,4 +1,7 @@
 <resources>
+    <string name="registration_draft_loading">Recuperando tu registro…</string>
+    <string name="registration_draft_saving">Guardando tus cambios en este dispositivo…</string>
+    <string name="registration_draft_error">No pudimos guardar o recuperar tu avance. Reintenta antes de continuar.</string>
     <string name="app_name">Chaski Rider</string>
     <string name="text_no_hay_una_sesion_activa">"No hay una sesión activa"</string>
     <string name="text_selecciona_un_pdf_jpg_o_png">"Selecciona un PDF, JPG o PNG"</string>

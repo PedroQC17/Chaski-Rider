@@ -8,7 +8,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.platform.app.InstrumentationRegistry
 import com.example.chaskirider.domain.model.*
 import com.example.chaskirider.ui.screens.auth.AccessScreen
-import com.example.chaskirider.ui.screens.onboarding.OnboardingStep3Screen
+import com.example.chaskirider.ui.screens.onboarding.*
 import com.example.chaskirider.ui.theme.ChaskiRiderTheme
 import org.junit.Rule
 import org.junit.Test
@@ -29,7 +29,7 @@ class RegistrationScreensTest {
     @Test fun cannotSubmitMissingMotorcycleDocuments() {
         compose.setContent { ChaskiRiderTheme {
             OnboardingStep3Screen(vehicleType = VehicleType.MOTORCYCLE,
-                initialBankInfo = BankInfo("BCP", "Ana", "12345678", ""))
+                state = RegistrationUiState(ready = true, editable = true, draftStatus = DraftStatus.SAVED, bank = BankInfo("BCP", "Ana", "12345678", "00219100123456780123")))
         } }
         compose.onNodeWithText("Licencia de conducir").assertExists()
         compose.onNodeWithText("SOAT").assertExists()
@@ -40,7 +40,7 @@ class RegistrationScreensTest {
             .associateWith { DocumentFile(id = it, uploadState = DocumentUploadState.UPLOADED) }
         compose.setContent { ChaskiRiderTheme {
             OnboardingStep3Screen(vehicleType = VehicleType.BICYCLE,
-                initialBankInfo = BankInfo("BCP", "Ana", "12345678", ""), documentsMap = docs)
+                state = RegistrationUiState(ready = true, editable = true, draftStatus = DraftStatus.SAVED, bank = BankInfo("BCP", "Ana", "12345678", "00219100123456780123")), documentsMap = docs)
         } }
         compose.onNodeWithText("Licencia de conducir").assertDoesNotExist()
         compose.onNodeWithText("SOAT").assertDoesNotExist()

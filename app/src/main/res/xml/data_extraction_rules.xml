@@ -1,7 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <data-extraction-rules>
     <cloud-backup>
-        
+        <exclude domain="database" path="registration.db" />
+        <exclude domain="database" path="registration.db-wal" />
+        <exclude domain="database" path="registration.db-shm" />
+        <exclude domain="file" path="registration_documents/" />
     </cloud-backup>
-    
+    <device-transfer>
+        <exclude domain="database" path="registration.db" />
+        <exclude domain="database" path="registration.db-wal" />
+        <exclude domain="database" path="registration.db-shm" />
+        <exclude domain="file" path="registration_documents/" />
+    </device-transfer>
 </data-extraction-rules>
