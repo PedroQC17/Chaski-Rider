@@ -33,7 +33,7 @@ fun RegistrationStatusScreen(
     val user = state.user ?: return
     val title = when (stage) {
         RegistrationReviewStage.INCOMPLETE -> R.string.text_registro_incompleto
-        RegistrationReviewStage.PENDING -> R.string.registration_received_title
+        RegistrationReviewStage.PENDING -> R.string.registration_pending_title
         RegistrationReviewStage.CORRECTION -> R.string.text_tu_registro_requiere_correcciones
         RegistrationReviewStage.REJECTED -> R.string.registration_rejected_title
         RegistrationReviewStage.APPROVED -> R.string.text_cuenta_aprobada
@@ -101,7 +101,7 @@ fun RegistrationStatusScreen(
                     }))
                 }
             }
-            if (stage != RegistrationReviewStage.PENDING) TextButton(onClick = onRefresh,
+            if (stage != RegistrationReviewStage.PENDING && (stage != RegistrationReviewStage.REJECTED || state.errorMessage != null)) TextButton(onClick = onRefresh,
                 enabled = !state.isRefreshing, modifier = Modifier.align(Alignment.CenterHorizontally)) {
                 if (state.isRefreshing) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
                 else Text(stringResource(R.string.text_actualizar_estado))

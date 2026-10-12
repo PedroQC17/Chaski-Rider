@@ -6,6 +6,8 @@ Revisión del 11 de octubre de 2026 (America/Lima).
 
 Este documento conserva el contexto de la revisión para futuras conversaciones. Describe el código local observado; no certifica lo desplegado en Firebase ni sustituye pruebas en dispositivo. No se modificó lógica de aplicación, reglas ni backend durante esta revisión.
 
+**Segunda mejora del 12 de octubre:** el flujo local ahora distingue corrección y rechazo definitivo, incorpora revisión documental y protege las decisiones por versión de envío. La implementación y sus límites están en [REGISTRO_REVISION.md](REGISTRO_REVISION.md). Las referencias históricas siguientes a estados de revisión incompletos deben leerse con esa actualización. La publicación del backend y los estados operativos de suspensión, bloqueo y baja todavía están pendientes.
+
 ## Fuentes y alcance
 
 - Android: `C:/Users/Angel/Desktop/Chaski_Rider`.

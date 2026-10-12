@@ -2,6 +2,8 @@
 
 12 de octubre de 2026. Prioridad elegida: conservar el avance antes de ampliar soporte y estados administrativos. El alcance de esta entrega es Android; no modifica ni despliega los backends.
 
+Actualización posterior: [REGISTRO_REVISION.md](REGISTRO_REVISION.md) documenta la segunda entrega, que añade rechazo definitivo y correcciones documentales al flujo de revisión. Las decisiones de producto al final de este documento conservan el contexto de la primera entrega.
+
 ## Arquitectura y ubicación
 
 | Responsabilidad | Archivo bajo `app/src/main/java/com/example/chaskirider/` |

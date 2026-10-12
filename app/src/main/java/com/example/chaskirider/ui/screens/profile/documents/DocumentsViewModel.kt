@@ -27,15 +27,24 @@ class DocumentsViewModel(
     private var pendingCapture: Uri? = null
     private var previewJob: kotlinx.coroutines.Job? = null
     private var sessionUid: String? = null
+    private var editable = false
     private val _uiState = MutableStateFlow(DocumentsUiState())
     val uiState = _uiState.asStateFlow()
     init { viewModelScope.launch { session.user.collect { acceptUser(it) } } }
     private fun acceptUser(user: RiderUser?) {
+        val wasEditable = editable
+        editable = user?.isEnabled == true && user.status in listOf(RegistrationStatus.INCOMPLETE, RegistrationStatus.NEEDS_CORRECTION)
         if (sessionUid != user?.id) {
             previewJob?.cancel(); uploadJob?.cancel(); captureJob?.cancel()
             pendingCapture = null
             _uiState.value = DocumentsUiState(); sessionUid = user?.id
             if (user != null) recoverCapture()
+        } else if (wasEditable && !editable) {
+            uploadJob?.cancel(); captureJob?.cancel()
+            pendingCapture = null
+            _uiState.update { it.copy(captureType = null, captureUri = null, isLoading = false) }
+        } else if (!wasEditable && editable) {
+            recoverCapture()
         }
         val docs = user?.let { RegistrationValidation.documentPaths(it) }.orEmpty()
             .filterValues { it.isNotBlank() }.mapValues { (key, path) ->
@@ -51,7 +60,7 @@ class DocumentsViewModel(
     fun clearError() { _uiState.update { it.copy(errorMessage = null, message = null) } }
 
     fun uploadDocument(docType: String, uri: Uri) {
-        if (_uiState.value.isLoading) return
+        if (!editable || _uiState.value.isLoading) return
         val owner = sessionUid ?: return
         _uiState.update { it.copy(isLoading = true, errorMessage = null, documentsMap = it.documentsMap +
             (docType to DocumentFile(id = docType, uploadState = DocumentUploadState.UPLOADING))) }
@@ -80,7 +89,7 @@ class DocumentsViewModel(
 
     fun recoverCapture() {
         val owner = sessionUid ?: return
-        if (captureJob?.isActive == true || _uiState.value.isLoading) return
+        if (!editable || captureJob?.isActive == true || _uiState.value.isLoading) return
         captureJob = viewModelScope.launch {
             try {
                 val capture = drafts.loadCapture(owner) ?: return@launch
@@ -107,7 +116,7 @@ class DocumentsViewModel(
 
     // HU03: captura con cámara; la foto se confirma en vista previa antes de subirla.
     fun prepareCapture(docType: String, onReady: (Uri) -> Unit) {
-        if (captureJob?.isActive == true || _uiState.value.captureType != null || _uiState.value.isLoading) return
+        if (!editable || captureJob?.isActive == true || _uiState.value.captureType != null || _uiState.value.isLoading) return
         val owner = sessionUid ?: return
         _uiState.update { it.copy(isLoading = true, errorMessage = null) }
         captureJob = viewModelScope.launch {

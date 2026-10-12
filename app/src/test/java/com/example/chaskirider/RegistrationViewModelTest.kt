@@ -161,8 +161,37 @@ class RegistrationViewModelTest {
         assertFalse(vm.uiState.value.editable); assertNull(drafts.load("ana"))
     }
 
+    @Test fun definitiveRejectionClosesRegistrationAndDiscardsLocalDraft() = runTest {
+        drafts.save(RegistrationDraft("ana", name = "Stale", personalDirty = true))
+        session.user.value = RiderUser(id = "ana", status = RegistrationStatus.REJECTED)
+        val vm = model(); advanceUntilIdle()
+        vm.selectVehicle(VehicleType.BICYCLE); vm.saveVehicle { fail("Must not navigate") }
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.editable); assertEquals(0, profiles.vehicleCalls)
+        assertNull(drafts.load("ana"))
+    }
+
+    @Test fun observedUploadedDocumentMustBeReplacedBeforeResubmission() = runTest {
+        session.user.value = RiderUser(id = "ana", hasPassword = true, vehicleType = VehicleType.BICYCLE,
+            status = RegistrationStatus.NEEDS_CORRECTION, rejectionReason = "Reemplaza el DNI",
+            dniFrontUrl = "front", dniBackUrl = "back", bankStatementUrl = "bank",
+            bankInfo = BankInfo("BCP", "Ana", "123", "00219100123456780123"),
+            documentReviews = mapOf("dniFront" to DocumentReview(DocumentReviewStatus.OBSERVED, "Borrosa")))
+        val vm = model(); advanceUntilIdle()
+        vm.submit { fail("Must not navigate") }; advanceUntilIdle()
+        assertEquals(TextKey.REGISTRATION_REPLACE_OBSERVED.name, vm.uiState.value.errorMessage)
+        assertEquals(0, profiles.submitCalls)
+        session.user.value = session.user.value!!.copy(dniFrontUrl = "new-front",
+            documentReviews = mapOf("dniFront" to DocumentReview()))
+        advanceUntilIdle()
+        var submitted = false
+        vm.submit { submitted = true }; advanceUntilIdle()
+        assertTrue(submitted); assertEquals(1, profiles.submitCalls)
+    }
+
     private inner class Profiles : RiderProfileRepository {
         var vehicleCalls = 0
+        var submitCalls = 0
         var failSubmit = false
         private fun update(user: RiderUser): Result<RiderUser> {
             session.user.value = user
@@ -175,8 +204,11 @@ class RegistrationViewModelTest {
             return update(session.user.value!!.copy(vehicleType = vehicle))
         }
         override suspend fun saveBankInfo(bank: BankInfo) = update(session.user.value!!.copy(bankInfo = bank))
-        override suspend fun submitRegistration() = if (failSubmit) Result.failure(IllegalStateException("server unavailable"))
-            else update(session.user.value!!.copy(status = RegistrationStatus.PENDING_REVIEW))
+        override suspend fun submitRegistration(): Result<RiderUser> {
+            submitCalls++
+            return if (failSubmit) Result.failure(IllegalStateException("server unavailable"))
+                else update(session.user.value!!.copy(status = RegistrationStatus.PENDING_REVIEW))
+        }
         override suspend fun setAvailability(available: Boolean) = error("unused")
     }
 }

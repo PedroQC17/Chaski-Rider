@@ -303,6 +303,7 @@
     <string name="orders_notification">Tienes una oferta de ejemplo. Ábrela para ver el recorrido y el pago.</string>
 
     <string name="registration_rejected_title">Registro no aprobado</string>
+    <string name="registration_pending_title">Registro en revisión</string>
     <string name="registration_rejected_body">Después de revisar tu solicitud, no podemos habilitarte para trabajar con Chaski Rider. Esta decisión cierra el registro: no permite correcciones ni nuevos envíos desde la app.</string>
     <string name="registration_incomplete_explanation">Completa tus datos y documentos. Tu solicitud se enviará a revisión cuando finalices el registro.</string>
     <string name="registration_pending_explanation">Recibimos tu solicitud y estamos revisando tus datos y documentos. Por ahora no necesitas volver a enviarlos. Puedes consultar aquí el resultado de la revisión.</string>

@@ -14,6 +14,7 @@ import androidx.core.content.ContextCompat
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import coil.compose.AsyncImage
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.createSavedStateHandle
 import com.example.chaskirider.ui.screens.profile.photo.*
@@ -103,6 +104,10 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
             navController.navigate(destination(user)) { popUpTo(navController.graph.id) { inclusive = true }; launchSingleTop = true }
         } else if (user != null && (!user.isEnabled || user.status !in listOf(RegistrationStatus.INCOMPLETE, RegistrationStatus.NEEDS_CORRECTION)) && route?.startsWith("onboarding_") == true) {
             navController.navigate(destination(user)) { popUpTo(navController.graph.id) { inclusive = true }; launchSingleTop = true }
+        } else if (user != null && (user.status != RegistrationStatus.APPROVED || !user.isEnabled) && route in listOf(
+                Screen.Home.route, Screen.Orders.route, Screen.DemoOrders.route, Screen.Profile.route,
+                Screen.ProfilePersonalData.route, Screen.ProfileVehicle.route, Screen.ProfileDocuments.route, Screen.Notifications.route)) {
+            navController.navigate(Screen.RegistrationStatus.route) { popUpTo(navController.graph.id) { inclusive = true }; launchSingleTop = true }
         } else if (route == Screen.Startup.route) {
             navController.navigate(user?.let(::destination) ?: Screen.Access.route) {
                 popUpTo(Screen.Startup.route) { inclusive = true }; launchSingleTop = true
@@ -230,6 +235,10 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
             }
             composable(Screen.RegistrationStatus.route) {
                 user?.let {
+                    LifecycleResumeEffect(it.id) {
+                        reviewViewModel.refresh()
+                        onPauseOrDispose { }
+                    }
                     RegistrationStatusScreen(state = reviewState,
                         onResumeRegistrationClick = { if (reviewState.canEdit) {
                             personalViewModel.clearError(); navController.navigate(Screen.OnboardingStep1.route) { launchSingleTop = true }

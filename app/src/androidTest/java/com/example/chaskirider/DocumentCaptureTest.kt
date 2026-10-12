@@ -81,4 +81,16 @@ class DocumentCaptureTest {
         vm.discardCapture(); advanceUntilIdle()
         assertNull(drafts.loadCapture("ana")); assertTrue(deleted)
     }
+
+    @Test fun definitiveRejectionHidesPendingCaptureAndPreventsUploadingIt() = runTest {
+        drafts.saveCapture(PendingDocumentCapture("ana", "dniFront", uri.toString()))
+        val vm = model(); advanceUntilIdle()
+        assertEquals(uri, vm.uiState.value.captureUri)
+        session.user.value = session.user.value!!.copy(status = RegistrationStatus.REJECTED)
+        advanceUntilIdle()
+        vm.confirmCapture(); vm.uploadDocument("dniFront", uri); advanceUntilIdle()
+        assertNull(vm.uiState.value.captureUri)
+        assertNull(vm.uiState.value.errorMessage)
+        assertFalse(vm.uiState.value.isLoading)
+    }
 }
