@@ -60,6 +60,7 @@ class RegistrationViewModel(
         }
         if (user == null) return
         state.update { it.copy(email = user.email, editable = canEdit(user), needsPassword = !user.hasPassword,
+            registrationStatus = user.status, reviewReason = user.rejectionReason, documentReviews = user.documentReviews,
             password = if (user.hasPassword) "" else it.password,
             confirmation = if (user.hasPassword) "" else it.confirmation) }
         if (!canEdit(user) && draft != null) {
@@ -87,6 +88,7 @@ class RegistrationViewModel(
                 state.value = RegistrationUiState(name = restored.name, lastName = restored.lastName,
                     dni = restored.dni, phone = restored.phone, termsAccepted = restored.termsAccepted,
                     email = current.email, needsPassword = !current.hasPassword,
+                    registrationStatus = current.status, reviewReason = current.rejectionReason, documentReviews = current.documentReviews,
                     vehicle = restored.vehicle, bank = restored.bank, ready = true, editable = true,
                     draftStatus = DraftStatus.SAVED)
             } catch (e: CancellationException) { throw e }
@@ -218,6 +220,9 @@ class RegistrationViewModel(
         if (RegistrationValidation.requiredDocuments(user.vehicleType).any {
             RegistrationValidation.documentPaths(user)[it].isNullOrBlank()
         }) { error(TextKey.TEXT_SUBE_TODOS_LOS_DOCUMENTOS_OBLIGATORIOS_ANTES_DE); return }
+        if (RegistrationValidation.requiredDocuments(user.vehicleType).any {
+            user.documentReviews[it]?.status == DocumentReviewStatus.OBSERVED
+        }) { error(TextKey.REGISTRATION_REPLACE_OBSERVED); return }
         action(onSuccess) {
             profiles.saveBankInfo(bank).getOrThrow()
             profiles.submitRegistration().getOrThrow()

@@ -1,6 +1,7 @@
 package com.example.chaskirider.domain.text
 
 enum class TextKey {
+    REGISTRATION_REPLACE_OBSERVED,
     PROFILE_PHOTO_FAILURE,
     PROFILE_PHOTO_REQUIRED,
     HOME_LOCATION_PERMISSION_REQUIRED,

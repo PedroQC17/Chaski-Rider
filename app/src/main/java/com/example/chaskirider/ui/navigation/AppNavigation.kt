@@ -52,6 +52,9 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
         AppContainer.authRepository, AppContainer.riderProfileRepository, AppContainer.riderSession, AppContainer.textProvider,
         AppContainer.registrationDraftRepository) }
     val personalState by personalViewModel.uiState.collectAsStateWithLifecycle()
+    val reviewViewModel: RegistrationReviewViewModel = viewModel { RegistrationReviewViewModel(
+        AppContainer.authRepository, AppContainer.riderSession, AppContainer.textProvider) }
+    val reviewState by reviewViewModel.uiState.collectAsStateWithLifecycle()
     val profileState by profileViewModel.uiState.collectAsStateWithLifecycle()
     val documentsViewModel: DocumentsViewModel = viewModel { DocumentsViewModel(AppContainer.textProvider, AppContainer.documentRepository, AppContainer.riderSession, AppContainer.documentPreviewRepository,
         AppContainer.registrationDraftRepository) }
@@ -227,12 +230,13 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
             }
             composable(Screen.RegistrationStatus.route) {
                 user?.let {
-                    RegistrationStatusScreen(user = it,
-                        onResumeRegistrationClick = { profileViewModel.clearError(); navController.navigate(Screen.OnboardingStep1.route) },
+                    RegistrationStatusScreen(state = reviewState,
+                        onResumeRegistrationClick = { if (reviewState.canEdit) {
+                            personalViewModel.clearError(); navController.navigate(Screen.OnboardingStep1.route) { launchSingleTop = true }
+                        } },
                         onGoToHomeClick = { if (it.status == RegistrationStatus.APPROVED && it.isEnabled) navController.navigate(destination(it)) },
                         onLogoutClick = { authViewModel.logout() },
-                        onRefresh = authViewModel::checkCurrentUser,
-                        isLoading = state.isLoading, errorMessage = state.errorMessage)
+                        onRefresh = reviewViewModel::refresh)
                 }
             }
             composable(Screen.ProfilePhoto.route) {

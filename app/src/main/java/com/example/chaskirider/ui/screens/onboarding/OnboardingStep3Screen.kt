@@ -1,4 +1,6 @@
 package com.example.chaskirider.ui.screens.onboarding
+import com.example.chaskirider.ui.components.RegistrationCorrectionNotice
+import com.example.chaskirider.domain.model.RegistrationStatus
 
 import com.example.chaskirider.R
 import androidx.compose.ui.res.stringResource
@@ -81,6 +83,7 @@ fun OnboardingStep3Screen(
         .verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 12.dp)) {
         OnboardingHeader(3, onNavigateBack = { if (!isLoading) onNavigateBack() })
         RegistrationDraftNotice(state.draftStatus, onRetryDraft)
+        if (state.registrationStatus == RegistrationStatus.NEEDS_CORRECTION) RegistrationCorrectionNotice(state.reviewReason)
         Spacer(Modifier.height(24.dp))
         Text(stringResource(R.string.text_documentacion), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextDark)
         Spacer(Modifier.height(8.dp))
@@ -88,6 +91,7 @@ fun OnboardingStep3Screen(
         Spacer(Modifier.height(20.dp))
         required.filter { it != "bankStatement" }.forEach { type ->
             DocumentRow(labels.getValue(type), documentsMap[type], enabled,
+                review = state.documentReviews[type],
                 onPick = { selectedType = type; picker.launch(RegistrationValidation.mimeTypes) },
                 onCamera = { onDocumentCamera(type) },
                 onView = { onDocumentView(type) })
@@ -106,6 +110,7 @@ fun OnboardingStep3Screen(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             singleLine = true, modifier = Modifier.fillMaxWidth())
         DocumentRow(stringResource(R.string.text_estado_de_cuenta), documentsMap["bankStatement"], enabled,
+            review = state.documentReviews["bankStatement"],
             onPick = { selectedType = "bankStatement"; picker.launch(RegistrationValidation.mimeTypes) },
             onCamera = { onDocumentCamera("bankStatement") },
             onView = { onDocumentView("bankStatement") })
@@ -114,18 +119,20 @@ fun OnboardingStep3Screen(
         Spacer(Modifier.height(24.dp))
         Button(onClick = onFinishRegistrationClick,
             enabled = enabled && state.draftStatus != DraftStatus.ERROR && required.all { documentsMap[it]?.uploadState == DocumentUploadState.UPLOADED } &&
+                required.none { state.documentReviews[it]?.status == DocumentReviewStatus.OBSERVED } &&
                 RegistrationValidation.bankError(BankInfo(bank,holder,account,cci)) == null,
             modifier = Modifier.fillMaxWidth().height(54.dp), shape = RoundedCornerShape(14.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Orange)) {
             if (isLoading) CircularProgressIndicator(Modifier.size(22.dp), color = Color.White, strokeWidth = 2.dp)
-            else Text(stringResource(R.string.text_finalizar_registro))
+            else Text(stringResource(if (state.registrationStatus == RegistrationStatus.NEEDS_CORRECTION)
+                R.string.registration_send_again else R.string.text_finalizar_registro))
         }
         Spacer(Modifier.height(16.dp))
     }
 }
 
 @Composable
-private fun DocumentRow(title: String, document: DocumentFile?, enabled: Boolean, onPick: () -> Unit, onCamera: () -> Unit, onView: () -> Unit) {
+private fun DocumentRow(title: String, document: DocumentFile?, enabled: Boolean, review: DocumentReview? = null, onPick: () -> Unit, onCamera: () -> Unit, onView: () -> Unit) {
     val state = document?.uploadState ?: DocumentUploadState.NOT_SELECTED
     Surface(shape = RoundedCornerShape(12.dp), border = androidx.compose.foundation.BorderStroke(1.dp, BorderLight), color = Color.White) {
         Column(Modifier.fillMaxWidth().padding(14.dp)) {
@@ -143,6 +150,15 @@ private fun DocumentRow(title: String, document: DocumentFile?, enabled: Boolean
                 }, fontSize = 12.sp, color = TextMuted)
             }
             document?.errorMessage?.let { Text(it, fontSize = 12.sp, color = MaterialTheme.colorScheme.error) }
+            if (state == DocumentUploadState.UPLOADED) {
+                Text(stringResource(when (review?.status) {
+                    DocumentReviewStatus.APPROVED -> R.string.document_review_approved
+                    DocumentReviewStatus.OBSERVED -> R.string.document_review_observed
+                    else -> R.string.document_review_pending
+                }), style = MaterialTheme.typography.bodySmall)
+                if (review?.status == DocumentReviewStatus.OBSERVED) Text(review.reason,
+                    color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            }
             Row {
                 TextButton(onClick = onCamera, enabled = enabled) {
                     Text(stringResource(R.string.text_camara))

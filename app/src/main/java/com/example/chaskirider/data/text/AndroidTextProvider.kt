@@ -7,6 +7,7 @@ import com.example.chaskirider.domain.text.TextProvider
 
 class AndroidTextProvider(private val context: Context) : TextProvider {
     override fun get(key: TextKey): String = context.getString(when (key) {
+        TextKey.REGISTRATION_REPLACE_OBSERVED -> R.string.registration_replace_observed
         TextKey.PROFILE_PHOTO_FAILURE -> R.string.profile_photo_failure
         TextKey.PROFILE_PHOTO_REQUIRED -> R.string.profile_photo_required
         TextKey.HOME_LOCATION_PERMISSION_REQUIRED -> R.string.text_se_requiere_el_permiso_de_ubicacion_para

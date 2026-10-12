@@ -5,17 +5,15 @@ const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 const { getStorage } = require("firebase-admin/storage");
 const { createHash } = require("node:crypto");
 const v = require("./validation");
+const review = require("./registration-review");
 initializeApp();
 const db = getFirestore();
 const reservation = (kind, value) => db.collection("riderUnique").doc(kind + "_" + createHash("sha256").update(value).digest("hex"));
 const validated = (fn) => { try { return fn(); } catch (e) { throw new HttpsError("invalid-argument", e.message); } };
 // Estados en los que se permite editar el perfil; submit solo desde INCOMPLETE/NEEDS_CORRECTION.
-const EDITABLE_STATUSES = ["INCOMPLETE", "NEEDS_CORRECTION"];
-const editable = (rider, action) => {
-  if (!rider) return;
-  const statuses = action === "submit" ? ["INCOMPLETE", "NEEDS_CORRECTION"] : EDITABLE_STATUSES;
-  if (!statuses.includes(rider.status) || rider.isEnabled === false)
-    throw new HttpsError("failed-precondition", "Este registro no admite cambios en su estado actual");
+const checkedReview = (fn) => {
+  try { return fn(); }
+  catch (e) { throw new HttpsError(e.code || "invalid-argument", e.message); }
 };
 
 async function checkDocument(uid, type, path) {
@@ -70,7 +68,7 @@ exports.riderRegistration = onCall({ region: "us-central1", maxInstances: 10, in
     const snapshot = await tx.get(ref);
     const rider = snapshot.exists ? snapshot.data() : null;
     // Repeated submits are idempotent.
-    if (input.action === "submit" && rider?.status === "PENDING_REVIEW") return;
+    if (input.action === "submit" && rider?.status === "PENDING_REVIEW" && rider.isEnabled !== false) return;
     if (input.action === "profilePhoto") {
       if (!rider || rider.status !== "APPROVED" || rider.isEnabled === false)
         throw new HttpsError("failed-precondition", "Solo una cuenta aprobada puede añadir su foto");
@@ -90,7 +88,7 @@ exports.riderRegistration = onCall({ region: "us-central1", maxInstances: 10, in
       tx.set(ref, { ...rider, isAvailable: input.isAvailable === true, updatedAt: FieldValue.serverTimestamp() });
       return;
     }
-    editable(rider, input.action);
+    checkedReview(() => review.assertEditable(rider));
     const base = rider || {
       id: uid, email: request.auth.token.email || "", status: "INCOMPLETE", currentStep: 1,
       vehicleType: "NONE", isEnabled: true, isAvailable: false, rejectionReason: ""
@@ -129,6 +127,11 @@ exports.riderRegistration = onCall({ region: "us-central1", maxInstances: 10, in
         patch.bankInfo = validated(() => v.bank(input.bankInfo));
       } else if (input.action === "document") {
         patch[v.DOC_FIELDS[input.docType]] = input.path;
+        // Repeating the same path must not erase an observation without replacing the file.
+        if (base[v.DOC_FIELDS[input.docType]] !== input.path) {
+          patch.documentReviews = { ...(base.documentReviews || {}),
+            [input.docType]: { status: "PENDING", reason: "" } };
+        }
       } else if (input.action === "submit") {
         validated(() => v.personal(base));
         validated(() => v.bank(base.bankInfo));
@@ -139,8 +142,8 @@ exports.riderRegistration = onCall({ region: "us-central1", maxInstances: 10, in
         if (dniLock.data()?.uid !== uid || phoneLock.data()?.uid !== uid)
           throw new HttpsError("failed-precondition", "Vuelve al paso 1 para validar tu DNI y celular");
         await Promise.all(required.map(type => checkDocument(uid, type, base[v.DOC_FIELDS[type]])));
-        Object.assign(patch, { status: "PENDING_REVIEW", currentStep: 3, isAvailable: false,
-          rejectionReason: "", submittedAt: FieldValue.serverTimestamp() });
+        Object.assign(patch, checkedReview(() => review.submissionPatch(base)),
+          { submittedAt: FieldValue.serverTimestamp() });
       }
     }
     tx.set(ref, { ...base, ...patch });
@@ -152,20 +155,19 @@ exports.riderRegistration = onCall({ region: "us-central1", maxInstances: 10, in
 // Assign the claim using Admin SDK in a trusted environment; never from the Android app.
 exports.reviewRider = onCall({ region: "us-central1", maxInstances: 5, invoker: "public" }, async (request) => {
   if (request.auth?.token.riderReviewer !== true) throw new HttpsError("permission-denied", "Acceso restringido");
-  const { uid, status, reason } = request.data || {};
-  if (typeof uid !== "string" || !uid || uid.includes("/") || !["APPROVED", "NEEDS_CORRECTION"].includes(status))
+  const input = request.data || {};
+  const { uid } = input;
+  if (typeof uid !== "string" || !uid || uid.includes("/") || uid.length > 128)
     throw new HttpsError("invalid-argument", "Revisión no válida");
-  const rejectionReason = status === "NEEDS_CORRECTION" ? validated(() => vText(reason)) : "";
   await db.runTransaction(async tx => {
     const ref = db.collection("riders").doc(uid), snap = await tx.get(ref);
-    if (snap.data()?.status !== "PENDING_REVIEW") throw new HttpsError("failed-precondition", "El registro no está pendiente");
-    tx.update(ref, { status, rejectionReason, reviewedAt: FieldValue.serverTimestamp(), reviewedBy: request.auth.uid });
+    const patch = checkedReview(() => review.reviewPatch(snap.data(), input));
+    const audit = { ...patch, submissionVersion: input.submissionVersion,
+      reviewedAt: FieldValue.serverTimestamp(), reviewedBy: request.auth.uid };
+    tx.update(ref, { ...audit, updatedAt: FieldValue.serverTimestamp() });
+    tx.create(ref.collection("registrationReviews").doc(String(input.submissionVersion)), audit);
   });
   return { ok: true };
 });
-function vText(value) {
-  if (typeof value !== "string" || !value.trim() || value.length > 1000) throw Error("Indica el motivo de corrección");
-  return value.trim();
-}
 
 exports.riderOfferDemo = require('./offers/demo-handler').riderOfferDemo;

@@ -1,5 +1,7 @@
 
 package com.example.chaskirider.ui.screens.onboarding
+import com.example.chaskirider.ui.components.RegistrationCorrectionNotice
+import com.example.chaskirider.domain.model.RegistrationStatus
 
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.Image
@@ -84,6 +86,7 @@ fun OnboardingStep2Screen(
             onNavigateBack = { if (!isLoading) onNavigateBack() }
         )
         RegistrationDraftNotice(state.draftStatus, onRetryDraft)
+        if (state.registrationStatus == RegistrationStatus.NEEDS_CORRECTION) RegistrationCorrectionNotice(state.reviewReason)
 
         Spacer(modifier = Modifier.height(24.dp))
 

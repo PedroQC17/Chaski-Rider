@@ -11,6 +11,9 @@ data class RegistrationUiState(
     val email: String = "", val termsAccepted: Boolean = false,
     val needsPassword: Boolean = true, val password: String = "", val confirmation: String = "",
     val vehicle: VehicleType = VehicleType.NONE, val bank: BankInfo = BankInfo(),
+    val registrationStatus: RegistrationStatus = RegistrationStatus.INCOMPLETE,
+    val reviewReason: String = "",
+    val documentReviews: Map<String, DocumentReview> = emptyMap(),
     val ready: Boolean = false, val editable: Boolean = false,
     val draftStatus: DraftStatus = DraftStatus.LOADING,
     val isLoading: Boolean = false, val errorMessage: String? = null

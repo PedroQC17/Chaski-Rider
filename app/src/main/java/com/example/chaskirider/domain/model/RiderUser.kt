@@ -19,6 +19,8 @@ data class RiderUser(
     val vehicleType: VehicleType = VehicleType.NONE,
     val status: RegistrationStatus = RegistrationStatus.INCOMPLETE,
     val rejectionReason: String = "",
+    val documentReviews: Map<String, DocumentReview> = emptyMap(),
+    val submissionVersion: Long = 0,
     val currentStep: Int = 1,
     val termsAccepted: Boolean = false,
     val bankInfo: BankInfo = BankInfo(),

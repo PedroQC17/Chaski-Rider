@@ -4,5 +4,6 @@ enum class RegistrationStatus {
     INCOMPLETE,
     PENDING_REVIEW,
     APPROVED,
-    NEEDS_CORRECTION
+    NEEDS_CORRECTION,
+    REJECTED
 }

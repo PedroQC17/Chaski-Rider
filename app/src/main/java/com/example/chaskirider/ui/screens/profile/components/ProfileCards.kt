@@ -109,6 +109,11 @@ fun AccountStatusCard(user: RiderUser) {
             chipColor = WarningAmber
             subtitle = stringResource(R.string.text_completa_tus_datos_y_documentos_para_continuar)
         }
+        RegistrationStatus.REJECTED -> {
+            chipLabel = stringResource(R.string.registration_rejected_title)
+            chipColor = DangerRed
+            subtitle = user.rejectionReason.ifBlank { stringResource(R.string.registration_rejected_body) }
+        }
     }
     Column(
         modifier = Modifier

@@ -1,4 +1,6 @@
 package com.example.chaskirider.ui.screens.onboarding
+import com.example.chaskirider.ui.components.RegistrationCorrectionNotice
+import com.example.chaskirider.domain.model.RegistrationStatus
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -34,6 +36,7 @@ fun OnboardingStep1Screen(
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
             OnboardingHeader(1, onNavigateBack = { if (!state.isLoading) onNavigateBack() })
             RegistrationDraftNotice(state.draftStatus, onRetryDraft)
+            if (state.registrationStatus == RegistrationStatus.NEEDS_CORRECTION) RegistrationCorrectionNotice(state.reviewReason)
             Spacer(Modifier.height(8.dp))
             Text(stringResource(R.string.text_datos_personales), style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold)
