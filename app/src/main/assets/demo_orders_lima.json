@@ -1,0 +1,1787 @@
+[
+  {
+    "id": "LIM-01-1",
+    "merchantName": "Cocina Chaski Miraflores",
+    "pickupZone": "Miraflores",
+    "pickupAddress": "Punto de prueba 1 de recojo en Miraflores",
+    "pickup": {
+      "latitude": -12.121,
+      "longitude": -77.03
+    },
+    "deliveryZone": "Miraflores",
+    "deliveryAddress": "Punto de prueba 1 de entrega en Miraflores",
+    "delivery": {
+      "latitude": -12.128,
+      "longitude": -77.021
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-01-2",
+    "merchantName": "Cafe del Barrio Miraflores",
+    "pickupZone": "Miraflores",
+    "pickupAddress": "Punto de prueba 2 de recojo en Miraflores",
+    "pickup": {
+      "latitude": -12.117,
+      "longitude": -77.027
+    },
+    "deliveryZone": "Miraflores",
+    "deliveryAddress": "Punto de prueba 2 de entrega en Miraflores",
+    "delivery": {
+      "latitude": -12.125,
+      "longitude": -77.023
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-01-3",
+    "merchantName": "Mercado Express Miraflores",
+    "pickupZone": "Miraflores",
+    "pickupAddress": "Punto de prueba 3 de recojo en Miraflores",
+    "pickup": {
+      "latitude": -12.113,
+      "longitude": -77.024
+    },
+    "deliveryZone": "Miraflores",
+    "deliveryAddress": "Punto de prueba 3 de entrega en Miraflores",
+    "delivery": {
+      "latitude": -12.122,
+      "longitude": -77.025
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-02-1",
+    "merchantName": "Cocina Chaski Barranco",
+    "pickupZone": "Barranco",
+    "pickupAddress": "Punto de prueba 1 de recojo en Barranco",
+    "pickup": {
+      "latitude": -12.145,
+      "longitude": -77.022
+    },
+    "deliveryZone": "Barranco",
+    "deliveryAddress": "Punto de prueba 1 de entrega en Barranco",
+    "delivery": {
+      "latitude": -12.152,
+      "longitude": -77.013
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-02-2",
+    "merchantName": "Cafe del Barrio Barranco",
+    "pickupZone": "Barranco",
+    "pickupAddress": "Punto de prueba 2 de recojo en Barranco",
+    "pickup": {
+      "latitude": -12.141,
+      "longitude": -77.019
+    },
+    "deliveryZone": "Barranco",
+    "deliveryAddress": "Punto de prueba 2 de entrega en Barranco",
+    "delivery": {
+      "latitude": -12.149,
+      "longitude": -77.015
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-02-3",
+    "merchantName": "Mercado Express Barranco",
+    "pickupZone": "Barranco",
+    "pickupAddress": "Punto de prueba 3 de recojo en Barranco",
+    "pickup": {
+      "latitude": -12.137,
+      "longitude": -77.016
+    },
+    "deliveryZone": "Barranco",
+    "deliveryAddress": "Punto de prueba 3 de entrega en Barranco",
+    "delivery": {
+      "latitude": -12.146,
+      "longitude": -77.017
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-03-1",
+    "merchantName": "Cocina Chaski San Isidro",
+    "pickupZone": "San Isidro",
+    "pickupAddress": "Punto de prueba 1 de recojo en San Isidro",
+    "pickup": {
+      "latitude": -12.096,
+      "longitude": -77.037
+    },
+    "deliveryZone": "San Isidro",
+    "deliveryAddress": "Punto de prueba 1 de entrega en San Isidro",
+    "delivery": {
+      "latitude": -12.103,
+      "longitude": -77.028
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-03-2",
+    "merchantName": "Cafe del Barrio San Isidro",
+    "pickupZone": "San Isidro",
+    "pickupAddress": "Punto de prueba 2 de recojo en San Isidro",
+    "pickup": {
+      "latitude": -12.092,
+      "longitude": -77.034
+    },
+    "deliveryZone": "San Isidro",
+    "deliveryAddress": "Punto de prueba 2 de entrega en San Isidro",
+    "delivery": {
+      "latitude": -12.1,
+      "longitude": -77.03
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-03-3",
+    "merchantName": "Mercado Express San Isidro",
+    "pickupZone": "San Isidro",
+    "pickupAddress": "Punto de prueba 3 de recojo en San Isidro",
+    "pickup": {
+      "latitude": -12.088,
+      "longitude": -77.031
+    },
+    "deliveryZone": "San Isidro",
+    "deliveryAddress": "Punto de prueba 3 de entrega en San Isidro",
+    "delivery": {
+      "latitude": -12.097,
+      "longitude": -77.032
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-04-1",
+    "merchantName": "Cocina Chaski Surquillo",
+    "pickupZone": "Surquillo",
+    "pickupAddress": "Punto de prueba 1 de recojo en Surquillo",
+    "pickup": {
+      "latitude": -12.113,
+      "longitude": -77.013
+    },
+    "deliveryZone": "Surquillo",
+    "deliveryAddress": "Punto de prueba 1 de entrega en Surquillo",
+    "delivery": {
+      "latitude": -12.12,
+      "longitude": -77.004
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-04-2",
+    "merchantName": "Cafe del Barrio Surquillo",
+    "pickupZone": "Surquillo",
+    "pickupAddress": "Punto de prueba 2 de recojo en Surquillo",
+    "pickup": {
+      "latitude": -12.109,
+      "longitude": -77.01
+    },
+    "deliveryZone": "Surquillo",
+    "deliveryAddress": "Punto de prueba 2 de entrega en Surquillo",
+    "delivery": {
+      "latitude": -12.117,
+      "longitude": -77.006
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-04-3",
+    "merchantName": "Mercado Express Surquillo",
+    "pickupZone": "Surquillo",
+    "pickupAddress": "Punto de prueba 3 de recojo en Surquillo",
+    "pickup": {
+      "latitude": -12.105,
+      "longitude": -77.007
+    },
+    "deliveryZone": "Surquillo",
+    "deliveryAddress": "Punto de prueba 3 de entrega en Surquillo",
+    "delivery": {
+      "latitude": -12.114,
+      "longitude": -77.008
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-05-1",
+    "merchantName": "Cocina Chaski San Borja",
+    "pickupZone": "San Borja",
+    "pickupAddress": "Punto de prueba 1 de recojo en San Borja",
+    "pickup": {
+      "latitude": -12.1,
+      "longitude": -77.001
+    },
+    "deliveryZone": "San Borja",
+    "deliveryAddress": "Punto de prueba 1 de entrega en San Borja",
+    "delivery": {
+      "latitude": -12.107,
+      "longitude": -76.992
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-05-2",
+    "merchantName": "Cafe del Barrio San Borja",
+    "pickupZone": "San Borja",
+    "pickupAddress": "Punto de prueba 2 de recojo en San Borja",
+    "pickup": {
+      "latitude": -12.096,
+      "longitude": -76.998
+    },
+    "deliveryZone": "San Borja",
+    "deliveryAddress": "Punto de prueba 2 de entrega en San Borja",
+    "delivery": {
+      "latitude": -12.104,
+      "longitude": -76.994
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-05-3",
+    "merchantName": "Mercado Express San Borja",
+    "pickupZone": "San Borja",
+    "pickupAddress": "Punto de prueba 3 de recojo en San Borja",
+    "pickup": {
+      "latitude": -12.092,
+      "longitude": -76.995
+    },
+    "deliveryZone": "San Borja",
+    "deliveryAddress": "Punto de prueba 3 de entrega en San Borja",
+    "delivery": {
+      "latitude": -12.101,
+      "longitude": -76.996
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-06-1",
+    "merchantName": "Cocina Chaski Santiago de Surco",
+    "pickupZone": "Santiago de Surco",
+    "pickupAddress": "Punto de prueba 1 de recojo en Santiago de Surco",
+    "pickup": {
+      "latitude": -12.137,
+      "longitude": -76.994
+    },
+    "deliveryZone": "Santiago de Surco",
+    "deliveryAddress": "Punto de prueba 1 de entrega en Santiago de Surco",
+    "delivery": {
+      "latitude": -12.144,
+      "longitude": -76.985
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-06-2",
+    "merchantName": "Cafe del Barrio Santiago de Surco",
+    "pickupZone": "Santiago de Surco",
+    "pickupAddress": "Punto de prueba 2 de recojo en Santiago de Surco",
+    "pickup": {
+      "latitude": -12.133,
+      "longitude": -76.991
+    },
+    "deliveryZone": "Santiago de Surco",
+    "deliveryAddress": "Punto de prueba 2 de entrega en Santiago de Surco",
+    "delivery": {
+      "latitude": -12.141,
+      "longitude": -76.987
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-06-3",
+    "merchantName": "Mercado Express Santiago de Surco",
+    "pickupZone": "Santiago de Surco",
+    "pickupAddress": "Punto de prueba 3 de recojo en Santiago de Surco",
+    "pickup": {
+      "latitude": -12.129,
+      "longitude": -76.988
+    },
+    "deliveryZone": "Santiago de Surco",
+    "deliveryAddress": "Punto de prueba 3 de entrega en Santiago de Surco",
+    "delivery": {
+      "latitude": -12.138,
+      "longitude": -76.989
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-07-1",
+    "merchantName": "Cocina Chaski Chorrillos",
+    "pickupZone": "Chorrillos",
+    "pickupAddress": "Punto de prueba 1 de recojo en Chorrillos",
+    "pickup": {
+      "latitude": -12.174,
+      "longitude": -77.014
+    },
+    "deliveryZone": "Chorrillos",
+    "deliveryAddress": "Punto de prueba 1 de entrega en Chorrillos",
+    "delivery": {
+      "latitude": -12.181,
+      "longitude": -77.005
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-07-2",
+    "merchantName": "Cafe del Barrio Chorrillos",
+    "pickupZone": "Chorrillos",
+    "pickupAddress": "Punto de prueba 2 de recojo en Chorrillos",
+    "pickup": {
+      "latitude": -12.17,
+      "longitude": -77.011
+    },
+    "deliveryZone": "Chorrillos",
+    "deliveryAddress": "Punto de prueba 2 de entrega en Chorrillos",
+    "delivery": {
+      "latitude": -12.178,
+      "longitude": -77.007
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-07-3",
+    "merchantName": "Mercado Express Chorrillos",
+    "pickupZone": "Chorrillos",
+    "pickupAddress": "Punto de prueba 3 de recojo en Chorrillos",
+    "pickup": {
+      "latitude": -12.166,
+      "longitude": -77.008
+    },
+    "deliveryZone": "Chorrillos",
+    "deliveryAddress": "Punto de prueba 3 de entrega en Chorrillos",
+    "delivery": {
+      "latitude": -12.175,
+      "longitude": -77.009
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-08-1",
+    "merchantName": "Cocina Chaski La Molina",
+    "pickupZone": "La Molina",
+    "pickupAddress": "Punto de prueba 1 de recojo en La Molina",
+    "pickup": {
+      "latitude": -12.085,
+      "longitude": -76.951
+    },
+    "deliveryZone": "La Molina",
+    "deliveryAddress": "Punto de prueba 1 de entrega en La Molina",
+    "delivery": {
+      "latitude": -12.092,
+      "longitude": -76.942
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-08-2",
+    "merchantName": "Cafe del Barrio La Molina",
+    "pickupZone": "La Molina",
+    "pickupAddress": "Punto de prueba 2 de recojo en La Molina",
+    "pickup": {
+      "latitude": -12.081,
+      "longitude": -76.948
+    },
+    "deliveryZone": "La Molina",
+    "deliveryAddress": "Punto de prueba 2 de entrega en La Molina",
+    "delivery": {
+      "latitude": -12.089,
+      "longitude": -76.944
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-08-3",
+    "merchantName": "Mercado Express La Molina",
+    "pickupZone": "La Molina",
+    "pickupAddress": "Punto de prueba 3 de recojo en La Molina",
+    "pickup": {
+      "latitude": -12.077,
+      "longitude": -76.945
+    },
+    "deliveryZone": "La Molina",
+    "deliveryAddress": "Punto de prueba 3 de entrega en La Molina",
+    "delivery": {
+      "latitude": -12.086,
+      "longitude": -76.946
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-09-1",
+    "merchantName": "Cocina Chaski Ate",
+    "pickupZone": "Ate",
+    "pickupAddress": "Punto de prueba 1 de recojo en Ate",
+    "pickup": {
+      "latitude": -12.035,
+      "longitude": -76.936
+    },
+    "deliveryZone": "Ate",
+    "deliveryAddress": "Punto de prueba 1 de entrega en Ate",
+    "delivery": {
+      "latitude": -12.042,
+      "longitude": -76.927
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-09-2",
+    "merchantName": "Cafe del Barrio Ate",
+    "pickupZone": "Ate",
+    "pickupAddress": "Punto de prueba 2 de recojo en Ate",
+    "pickup": {
+      "latitude": -12.031,
+      "longitude": -76.933
+    },
+    "deliveryZone": "Ate",
+    "deliveryAddress": "Punto de prueba 2 de entrega en Ate",
+    "delivery": {
+      "latitude": -12.039,
+      "longitude": -76.929
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-09-3",
+    "merchantName": "Mercado Express Ate",
+    "pickupZone": "Ate",
+    "pickupAddress": "Punto de prueba 3 de recojo en Ate",
+    "pickup": {
+      "latitude": -12.027,
+      "longitude": -76.93
+    },
+    "deliveryZone": "Ate",
+    "deliveryAddress": "Punto de prueba 3 de entrega en Ate",
+    "delivery": {
+      "latitude": -12.036,
+      "longitude": -76.931
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-10-1",
+    "merchantName": "Cocina Chaski Santa Anita",
+    "pickupZone": "Santa Anita",
+    "pickupAddress": "Punto de prueba 1 de recojo en Santa Anita",
+    "pickup": {
+      "latitude": -12.044,
+      "longitude": -76.972
+    },
+    "deliveryZone": "Santa Anita",
+    "deliveryAddress": "Punto de prueba 1 de entrega en Santa Anita",
+    "delivery": {
+      "latitude": -12.051,
+      "longitude": -76.963
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-10-2",
+    "merchantName": "Cafe del Barrio Santa Anita",
+    "pickupZone": "Santa Anita",
+    "pickupAddress": "Punto de prueba 2 de recojo en Santa Anita",
+    "pickup": {
+      "latitude": -12.04,
+      "longitude": -76.969
+    },
+    "deliveryZone": "Santa Anita",
+    "deliveryAddress": "Punto de prueba 2 de entrega en Santa Anita",
+    "delivery": {
+      "latitude": -12.048,
+      "longitude": -76.965
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-10-3",
+    "merchantName": "Mercado Express Santa Anita",
+    "pickupZone": "Santa Anita",
+    "pickupAddress": "Punto de prueba 3 de recojo en Santa Anita",
+    "pickup": {
+      "latitude": -12.036,
+      "longitude": -76.966
+    },
+    "deliveryZone": "Santa Anita",
+    "deliveryAddress": "Punto de prueba 3 de entrega en Santa Anita",
+    "delivery": {
+      "latitude": -12.045,
+      "longitude": -76.967
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-11-1",
+    "merchantName": "Cocina Chaski El Agustino",
+    "pickupZone": "El Agustino",
+    "pickupAddress": "Punto de prueba 1 de recojo en El Agustino",
+    "pickup": {
+      "latitude": -12.039,
+      "longitude": -76.999
+    },
+    "deliveryZone": "El Agustino",
+    "deliveryAddress": "Punto de prueba 1 de entrega en El Agustino",
+    "delivery": {
+      "latitude": -12.046,
+      "longitude": -76.99
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-11-2",
+    "merchantName": "Cafe del Barrio El Agustino",
+    "pickupZone": "El Agustino",
+    "pickupAddress": "Punto de prueba 2 de recojo en El Agustino",
+    "pickup": {
+      "latitude": -12.035,
+      "longitude": -76.996
+    },
+    "deliveryZone": "El Agustino",
+    "deliveryAddress": "Punto de prueba 2 de entrega en El Agustino",
+    "delivery": {
+      "latitude": -12.043,
+      "longitude": -76.992
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-11-3",
+    "merchantName": "Mercado Express El Agustino",
+    "pickupZone": "El Agustino",
+    "pickupAddress": "Punto de prueba 3 de recojo en El Agustino",
+    "pickup": {
+      "latitude": -12.031,
+      "longitude": -76.993
+    },
+    "deliveryZone": "El Agustino",
+    "deliveryAddress": "Punto de prueba 3 de entrega en El Agustino",
+    "delivery": {
+      "latitude": -12.04,
+      "longitude": -76.994
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-12-1",
+    "merchantName": "Cocina Chaski San Luis",
+    "pickupZone": "San Luis",
+    "pickupAddress": "Punto de prueba 1 de recojo en San Luis",
+    "pickup": {
+      "latitude": -12.073,
+      "longitude": -76.997
+    },
+    "deliveryZone": "San Luis",
+    "deliveryAddress": "Punto de prueba 1 de entrega en San Luis",
+    "delivery": {
+      "latitude": -12.08,
+      "longitude": -76.988
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-12-2",
+    "merchantName": "Cafe del Barrio San Luis",
+    "pickupZone": "San Luis",
+    "pickupAddress": "Punto de prueba 2 de recojo en San Luis",
+    "pickup": {
+      "latitude": -12.069,
+      "longitude": -76.994
+    },
+    "deliveryZone": "San Luis",
+    "deliveryAddress": "Punto de prueba 2 de entrega en San Luis",
+    "delivery": {
+      "latitude": -12.077,
+      "longitude": -76.99
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-12-3",
+    "merchantName": "Mercado Express San Luis",
+    "pickupZone": "San Luis",
+    "pickupAddress": "Punto de prueba 3 de recojo en San Luis",
+    "pickup": {
+      "latitude": -12.065,
+      "longitude": -76.991
+    },
+    "deliveryZone": "San Luis",
+    "deliveryAddress": "Punto de prueba 3 de entrega en San Luis",
+    "delivery": {
+      "latitude": -12.074,
+      "longitude": -76.992
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-13-1",
+    "merchantName": "Cocina Chaski La Victoria",
+    "pickupZone": "La Victoria",
+    "pickupAddress": "Punto de prueba 1 de recojo en La Victoria",
+    "pickup": {
+      "latitude": -12.071,
+      "longitude": -77.018
+    },
+    "deliveryZone": "La Victoria",
+    "deliveryAddress": "Punto de prueba 1 de entrega en La Victoria",
+    "delivery": {
+      "latitude": -12.078,
+      "longitude": -77.009
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-13-2",
+    "merchantName": "Cafe del Barrio La Victoria",
+    "pickupZone": "La Victoria",
+    "pickupAddress": "Punto de prueba 2 de recojo en La Victoria",
+    "pickup": {
+      "latitude": -12.067,
+      "longitude": -77.015
+    },
+    "deliveryZone": "La Victoria",
+    "deliveryAddress": "Punto de prueba 2 de entrega en La Victoria",
+    "delivery": {
+      "latitude": -12.075,
+      "longitude": -77.011
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-13-3",
+    "merchantName": "Mercado Express La Victoria",
+    "pickupZone": "La Victoria",
+    "pickupAddress": "Punto de prueba 3 de recojo en La Victoria",
+    "pickup": {
+      "latitude": -12.063,
+      "longitude": -77.012
+    },
+    "deliveryZone": "La Victoria",
+    "deliveryAddress": "Punto de prueba 3 de entrega en La Victoria",
+    "delivery": {
+      "latitude": -12.072,
+      "longitude": -77.013
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-14-1",
+    "merchantName": "Cocina Chaski Lince",
+    "pickupZone": "Lince",
+    "pickupAddress": "Punto de prueba 1 de recojo en Lince",
+    "pickup": {
+      "latitude": -12.084,
+      "longitude": -77.034
+    },
+    "deliveryZone": "Lince",
+    "deliveryAddress": "Punto de prueba 1 de entrega en Lince",
+    "delivery": {
+      "latitude": -12.091,
+      "longitude": -77.025
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-14-2",
+    "merchantName": "Cafe del Barrio Lince",
+    "pickupZone": "Lince",
+    "pickupAddress": "Punto de prueba 2 de recojo en Lince",
+    "pickup": {
+      "latitude": -12.08,
+      "longitude": -77.031
+    },
+    "deliveryZone": "Lince",
+    "deliveryAddress": "Punto de prueba 2 de entrega en Lince",
+    "delivery": {
+      "latitude": -12.088,
+      "longitude": -77.027
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-14-3",
+    "merchantName": "Mercado Express Lince",
+    "pickupZone": "Lince",
+    "pickupAddress": "Punto de prueba 3 de recojo en Lince",
+    "pickup": {
+      "latitude": -12.076,
+      "longitude": -77.028
+    },
+    "deliveryZone": "Lince",
+    "deliveryAddress": "Punto de prueba 3 de entrega en Lince",
+    "delivery": {
+      "latitude": -12.085,
+      "longitude": -77.029
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-15-1",
+    "merchantName": "Cocina Chaski Jesus Maria",
+    "pickupZone": "Jesus Maria",
+    "pickupAddress": "Punto de prueba 1 de recojo en Jesus Maria",
+    "pickup": {
+      "latitude": -12.075,
+      "longitude": -77.051
+    },
+    "deliveryZone": "Jesus Maria",
+    "deliveryAddress": "Punto de prueba 1 de entrega en Jesus Maria",
+    "delivery": {
+      "latitude": -12.082,
+      "longitude": -77.042
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-15-2",
+    "merchantName": "Cafe del Barrio Jesus Maria",
+    "pickupZone": "Jesus Maria",
+    "pickupAddress": "Punto de prueba 2 de recojo en Jesus Maria",
+    "pickup": {
+      "latitude": -12.071,
+      "longitude": -77.048
+    },
+    "deliveryZone": "Jesus Maria",
+    "deliveryAddress": "Punto de prueba 2 de entrega en Jesus Maria",
+    "delivery": {
+      "latitude": -12.079,
+      "longitude": -77.044
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-15-3",
+    "merchantName": "Mercado Express Jesus Maria",
+    "pickupZone": "Jesus Maria",
+    "pickupAddress": "Punto de prueba 3 de recojo en Jesus Maria",
+    "pickup": {
+      "latitude": -12.067,
+      "longitude": -77.045
+    },
+    "deliveryZone": "Jesus Maria",
+    "deliveryAddress": "Punto de prueba 3 de entrega en Jesus Maria",
+    "delivery": {
+      "latitude": -12.076,
+      "longitude": -77.046
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-16-1",
+    "merchantName": "Cocina Chaski Magdalena",
+    "pickupZone": "Magdalena",
+    "pickupAddress": "Punto de prueba 1 de recojo en Magdalena",
+    "pickup": {
+      "latitude": -12.091,
+      "longitude": -77.07
+    },
+    "deliveryZone": "Magdalena",
+    "deliveryAddress": "Punto de prueba 1 de entrega en Magdalena",
+    "delivery": {
+      "latitude": -12.098,
+      "longitude": -77.061
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-16-2",
+    "merchantName": "Cafe del Barrio Magdalena",
+    "pickupZone": "Magdalena",
+    "pickupAddress": "Punto de prueba 2 de recojo en Magdalena",
+    "pickup": {
+      "latitude": -12.087,
+      "longitude": -77.067
+    },
+    "deliveryZone": "Magdalena",
+    "deliveryAddress": "Punto de prueba 2 de entrega en Magdalena",
+    "delivery": {
+      "latitude": -12.095,
+      "longitude": -77.063
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-16-3",
+    "merchantName": "Mercado Express Magdalena",
+    "pickupZone": "Magdalena",
+    "pickupAddress": "Punto de prueba 3 de recojo en Magdalena",
+    "pickup": {
+      "latitude": -12.083,
+      "longitude": -77.064
+    },
+    "deliveryZone": "Magdalena",
+    "deliveryAddress": "Punto de prueba 3 de entrega en Magdalena",
+    "delivery": {
+      "latitude": -12.092,
+      "longitude": -77.065
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-17-1",
+    "merchantName": "Cocina Chaski Pueblo Libre",
+    "pickupZone": "Pueblo Libre",
+    "pickupAddress": "Punto de prueba 1 de recojo en Pueblo Libre",
+    "pickup": {
+      "latitude": -12.073,
+      "longitude": -77.064
+    },
+    "deliveryZone": "Pueblo Libre",
+    "deliveryAddress": "Punto de prueba 1 de entrega en Pueblo Libre",
+    "delivery": {
+      "latitude": -12.08,
+      "longitude": -77.055
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-17-2",
+    "merchantName": "Cafe del Barrio Pueblo Libre",
+    "pickupZone": "Pueblo Libre",
+    "pickupAddress": "Punto de prueba 2 de recojo en Pueblo Libre",
+    "pickup": {
+      "latitude": -12.069,
+      "longitude": -77.061
+    },
+    "deliveryZone": "Pueblo Libre",
+    "deliveryAddress": "Punto de prueba 2 de entrega en Pueblo Libre",
+    "delivery": {
+      "latitude": -12.077,
+      "longitude": -77.057
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-17-3",
+    "merchantName": "Mercado Express Pueblo Libre",
+    "pickupZone": "Pueblo Libre",
+    "pickupAddress": "Punto de prueba 3 de recojo en Pueblo Libre",
+    "pickup": {
+      "latitude": -12.065,
+      "longitude": -77.058
+    },
+    "deliveryZone": "Pueblo Libre",
+    "deliveryAddress": "Punto de prueba 3 de entrega en Pueblo Libre",
+    "delivery": {
+      "latitude": -12.074,
+      "longitude": -77.059
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-18-1",
+    "merchantName": "Cocina Chaski San Miguel",
+    "pickupZone": "San Miguel",
+    "pickupAddress": "Punto de prueba 1 de recojo en San Miguel",
+    "pickup": {
+      "latitude": -12.077,
+      "longitude": -77.091
+    },
+    "deliveryZone": "San Miguel",
+    "deliveryAddress": "Punto de prueba 1 de entrega en San Miguel",
+    "delivery": {
+      "latitude": -12.084,
+      "longitude": -77.082
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-18-2",
+    "merchantName": "Cafe del Barrio San Miguel",
+    "pickupZone": "San Miguel",
+    "pickupAddress": "Punto de prueba 2 de recojo en San Miguel",
+    "pickup": {
+      "latitude": -12.073,
+      "longitude": -77.088
+    },
+    "deliveryZone": "San Miguel",
+    "deliveryAddress": "Punto de prueba 2 de entrega en San Miguel",
+    "delivery": {
+      "latitude": -12.081,
+      "longitude": -77.084
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-18-3",
+    "merchantName": "Mercado Express San Miguel",
+    "pickupZone": "San Miguel",
+    "pickupAddress": "Punto de prueba 3 de recojo en San Miguel",
+    "pickup": {
+      "latitude": -12.069,
+      "longitude": -77.085
+    },
+    "deliveryZone": "San Miguel",
+    "deliveryAddress": "Punto de prueba 3 de entrega en San Miguel",
+    "delivery": {
+      "latitude": -12.078,
+      "longitude": -77.086
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-19-1",
+    "merchantName": "Cocina Chaski Brena",
+    "pickupZone": "Brena",
+    "pickupAddress": "Punto de prueba 1 de recojo en Brena",
+    "pickup": {
+      "latitude": -12.059,
+      "longitude": -77.051
+    },
+    "deliveryZone": "Brena",
+    "deliveryAddress": "Punto de prueba 1 de entrega en Brena",
+    "delivery": {
+      "latitude": -12.066,
+      "longitude": -77.042
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-19-2",
+    "merchantName": "Cafe del Barrio Brena",
+    "pickupZone": "Brena",
+    "pickupAddress": "Punto de prueba 2 de recojo en Brena",
+    "pickup": {
+      "latitude": -12.055,
+      "longitude": -77.048
+    },
+    "deliveryZone": "Brena",
+    "deliveryAddress": "Punto de prueba 2 de entrega en Brena",
+    "delivery": {
+      "latitude": -12.063,
+      "longitude": -77.044
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-19-3",
+    "merchantName": "Mercado Express Brena",
+    "pickupZone": "Brena",
+    "pickupAddress": "Punto de prueba 3 de recojo en Brena",
+    "pickup": {
+      "latitude": -12.051,
+      "longitude": -77.045
+    },
+    "deliveryZone": "Brena",
+    "deliveryAddress": "Punto de prueba 3 de entrega en Brena",
+    "delivery": {
+      "latitude": -12.06,
+      "longitude": -77.046
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-20-1",
+    "merchantName": "Cocina Chaski Cercado de Lima",
+    "pickupZone": "Cercado de Lima",
+    "pickupAddress": "Punto de prueba 1 de recojo en Cercado de Lima",
+    "pickup": {
+      "latitude": -12.046,
+      "longitude": -77.037
+    },
+    "deliveryZone": "Cercado de Lima",
+    "deliveryAddress": "Punto de prueba 1 de entrega en Cercado de Lima",
+    "delivery": {
+      "latitude": -12.053,
+      "longitude": -77.028
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-20-2",
+    "merchantName": "Cafe del Barrio Cercado de Lima",
+    "pickupZone": "Cercado de Lima",
+    "pickupAddress": "Punto de prueba 2 de recojo en Cercado de Lima",
+    "pickup": {
+      "latitude": -12.042,
+      "longitude": -77.034
+    },
+    "deliveryZone": "Cercado de Lima",
+    "deliveryAddress": "Punto de prueba 2 de entrega en Cercado de Lima",
+    "delivery": {
+      "latitude": -12.05,
+      "longitude": -77.03
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-20-3",
+    "merchantName": "Mercado Express Cercado de Lima",
+    "pickupZone": "Cercado de Lima",
+    "pickupAddress": "Punto de prueba 3 de recojo en Cercado de Lima",
+    "pickup": {
+      "latitude": -12.038,
+      "longitude": -77.031
+    },
+    "deliveryZone": "Cercado de Lima",
+    "deliveryAddress": "Punto de prueba 3 de entrega en Cercado de Lima",
+    "delivery": {
+      "latitude": -12.047,
+      "longitude": -77.032
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-21-1",
+    "merchantName": "Cocina Chaski Rimac",
+    "pickupZone": "Rimac",
+    "pickupAddress": "Punto de prueba 1 de recojo en Rimac",
+    "pickup": {
+      "latitude": -12.026,
+      "longitude": -77.035
+    },
+    "deliveryZone": "Rimac",
+    "deliveryAddress": "Punto de prueba 1 de entrega en Rimac",
+    "delivery": {
+      "latitude": -12.033,
+      "longitude": -77.026
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-21-2",
+    "merchantName": "Cafe del Barrio Rimac",
+    "pickupZone": "Rimac",
+    "pickupAddress": "Punto de prueba 2 de recojo en Rimac",
+    "pickup": {
+      "latitude": -12.022,
+      "longitude": -77.032
+    },
+    "deliveryZone": "Rimac",
+    "deliveryAddress": "Punto de prueba 2 de entrega en Rimac",
+    "delivery": {
+      "latitude": -12.03,
+      "longitude": -77.028
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-21-3",
+    "merchantName": "Mercado Express Rimac",
+    "pickupZone": "Rimac",
+    "pickupAddress": "Punto de prueba 3 de recojo en Rimac",
+    "pickup": {
+      "latitude": -12.018,
+      "longitude": -77.029
+    },
+    "deliveryZone": "Rimac",
+    "deliveryAddress": "Punto de prueba 3 de entrega en Rimac",
+    "delivery": {
+      "latitude": -12.027,
+      "longitude": -77.03
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-22-1",
+    "merchantName": "Cocina Chaski San Martin de Porres",
+    "pickupZone": "San Martin de Porres",
+    "pickupAddress": "Punto de prueba 1 de recojo en San Martin de Porres",
+    "pickup": {
+      "latitude": -12.009,
+      "longitude": -77.083
+    },
+    "deliveryZone": "San Martin de Porres",
+    "deliveryAddress": "Punto de prueba 1 de entrega en San Martin de Porres",
+    "delivery": {
+      "latitude": -12.016,
+      "longitude": -77.074
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-22-2",
+    "merchantName": "Cafe del Barrio San Martin de Porres",
+    "pickupZone": "San Martin de Porres",
+    "pickupAddress": "Punto de prueba 2 de recojo en San Martin de Porres",
+    "pickup": {
+      "latitude": -12.005,
+      "longitude": -77.08
+    },
+    "deliveryZone": "San Martin de Porres",
+    "deliveryAddress": "Punto de prueba 2 de entrega en San Martin de Porres",
+    "delivery": {
+      "latitude": -12.013,
+      "longitude": -77.076
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-22-3",
+    "merchantName": "Mercado Express San Martin de Porres",
+    "pickupZone": "San Martin de Porres",
+    "pickupAddress": "Punto de prueba 3 de recojo en San Martin de Porres",
+    "pickup": {
+      "latitude": -12.001,
+      "longitude": -77.077
+    },
+    "deliveryZone": "San Martin de Porres",
+    "deliveryAddress": "Punto de prueba 3 de entrega en San Martin de Porres",
+    "delivery": {
+      "latitude": -12.01,
+      "longitude": -77.078
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-23-1",
+    "merchantName": "Cocina Chaski Los Olivos",
+    "pickupZone": "Los Olivos",
+    "pickupAddress": "Punto de prueba 1 de recojo en Los Olivos",
+    "pickup": {
+      "latitude": -11.976,
+      "longitude": -77.07
+    },
+    "deliveryZone": "Los Olivos",
+    "deliveryAddress": "Punto de prueba 1 de entrega en Los Olivos",
+    "delivery": {
+      "latitude": -11.983,
+      "longitude": -77.061
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-23-2",
+    "merchantName": "Cafe del Barrio Los Olivos",
+    "pickupZone": "Los Olivos",
+    "pickupAddress": "Punto de prueba 2 de recojo en Los Olivos",
+    "pickup": {
+      "latitude": -11.972,
+      "longitude": -77.067
+    },
+    "deliveryZone": "Los Olivos",
+    "deliveryAddress": "Punto de prueba 2 de entrega en Los Olivos",
+    "delivery": {
+      "latitude": -11.98,
+      "longitude": -77.063
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-23-3",
+    "merchantName": "Mercado Express Los Olivos",
+    "pickupZone": "Los Olivos",
+    "pickupAddress": "Punto de prueba 3 de recojo en Los Olivos",
+    "pickup": {
+      "latitude": -11.968,
+      "longitude": -77.064
+    },
+    "deliveryZone": "Los Olivos",
+    "deliveryAddress": "Punto de prueba 3 de entrega en Los Olivos",
+    "delivery": {
+      "latitude": -11.977,
+      "longitude": -77.065
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-24-1",
+    "merchantName": "Cocina Chaski Independencia",
+    "pickupZone": "Independencia",
+    "pickupAddress": "Punto de prueba 1 de recojo en Independencia",
+    "pickup": {
+      "latitude": -11.99,
+      "longitude": -77.054
+    },
+    "deliveryZone": "Independencia",
+    "deliveryAddress": "Punto de prueba 1 de entrega en Independencia",
+    "delivery": {
+      "latitude": -11.997,
+      "longitude": -77.045
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-24-2",
+    "merchantName": "Cafe del Barrio Independencia",
+    "pickupZone": "Independencia",
+    "pickupAddress": "Punto de prueba 2 de recojo en Independencia",
+    "pickup": {
+      "latitude": -11.986,
+      "longitude": -77.051
+    },
+    "deliveryZone": "Independencia",
+    "deliveryAddress": "Punto de prueba 2 de entrega en Independencia",
+    "delivery": {
+      "latitude": -11.994,
+      "longitude": -77.047
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-24-3",
+    "merchantName": "Mercado Express Independencia",
+    "pickupZone": "Independencia",
+    "pickupAddress": "Punto de prueba 3 de recojo en Independencia",
+    "pickup": {
+      "latitude": -11.982,
+      "longitude": -77.048
+    },
+    "deliveryZone": "Independencia",
+    "deliveryAddress": "Punto de prueba 3 de entrega en Independencia",
+    "delivery": {
+      "latitude": -11.991,
+      "longitude": -77.049
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-25-1",
+    "merchantName": "Cocina Chaski Comas",
+    "pickupZone": "Comas",
+    "pickupAddress": "Punto de prueba 1 de recojo en Comas",
+    "pickup": {
+      "latitude": -11.941,
+      "longitude": -77.053
+    },
+    "deliveryZone": "Comas",
+    "deliveryAddress": "Punto de prueba 1 de entrega en Comas",
+    "delivery": {
+      "latitude": -11.948,
+      "longitude": -77.044
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-25-2",
+    "merchantName": "Cafe del Barrio Comas",
+    "pickupZone": "Comas",
+    "pickupAddress": "Punto de prueba 2 de recojo en Comas",
+    "pickup": {
+      "latitude": -11.937,
+      "longitude": -77.05
+    },
+    "deliveryZone": "Comas",
+    "deliveryAddress": "Punto de prueba 2 de entrega en Comas",
+    "delivery": {
+      "latitude": -11.945,
+      "longitude": -77.046
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-25-3",
+    "merchantName": "Mercado Express Comas",
+    "pickupZone": "Comas",
+    "pickupAddress": "Punto de prueba 3 de recojo en Comas",
+    "pickup": {
+      "latitude": -11.933,
+      "longitude": -77.047
+    },
+    "deliveryZone": "Comas",
+    "deliveryAddress": "Punto de prueba 3 de entrega en Comas",
+    "delivery": {
+      "latitude": -11.942,
+      "longitude": -77.048
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-26-1",
+    "merchantName": "Cocina Chaski Carabayllo",
+    "pickupZone": "Carabayllo",
+    "pickupAddress": "Punto de prueba 1 de recojo en Carabayllo",
+    "pickup": {
+      "latitude": -11.9,
+      "longitude": -77.037
+    },
+    "deliveryZone": "Carabayllo",
+    "deliveryAddress": "Punto de prueba 1 de entrega en Carabayllo",
+    "delivery": {
+      "latitude": -11.907,
+      "longitude": -77.028
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-26-2",
+    "merchantName": "Cafe del Barrio Carabayllo",
+    "pickupZone": "Carabayllo",
+    "pickupAddress": "Punto de prueba 2 de recojo en Carabayllo",
+    "pickup": {
+      "latitude": -11.896,
+      "longitude": -77.034
+    },
+    "deliveryZone": "Carabayllo",
+    "deliveryAddress": "Punto de prueba 2 de entrega en Carabayllo",
+    "delivery": {
+      "latitude": -11.904,
+      "longitude": -77.03
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-26-3",
+    "merchantName": "Mercado Express Carabayllo",
+    "pickupZone": "Carabayllo",
+    "pickupAddress": "Punto de prueba 3 de recojo en Carabayllo",
+    "pickup": {
+      "latitude": -11.892,
+      "longitude": -77.031
+    },
+    "deliveryZone": "Carabayllo",
+    "deliveryAddress": "Punto de prueba 3 de entrega en Carabayllo",
+    "delivery": {
+      "latitude": -11.901,
+      "longitude": -77.032
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-27-1",
+    "merchantName": "Cocina Chaski Puente Piedra",
+    "pickupZone": "Puente Piedra",
+    "pickupAddress": "Punto de prueba 1 de recojo en Puente Piedra",
+    "pickup": {
+      "latitude": -11.865,
+      "longitude": -77.074
+    },
+    "deliveryZone": "Puente Piedra",
+    "deliveryAddress": "Punto de prueba 1 de entrega en Puente Piedra",
+    "delivery": {
+      "latitude": -11.872,
+      "longitude": -77.065
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-27-2",
+    "merchantName": "Cafe del Barrio Puente Piedra",
+    "pickupZone": "Puente Piedra",
+    "pickupAddress": "Punto de prueba 2 de recojo en Puente Piedra",
+    "pickup": {
+      "latitude": -11.861,
+      "longitude": -77.071
+    },
+    "deliveryZone": "Puente Piedra",
+    "deliveryAddress": "Punto de prueba 2 de entrega en Puente Piedra",
+    "delivery": {
+      "latitude": -11.869,
+      "longitude": -77.067
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-27-3",
+    "merchantName": "Mercado Express Puente Piedra",
+    "pickupZone": "Puente Piedra",
+    "pickupAddress": "Punto de prueba 3 de recojo en Puente Piedra",
+    "pickup": {
+      "latitude": -11.857,
+      "longitude": -77.068
+    },
+    "deliveryZone": "Puente Piedra",
+    "deliveryAddress": "Punto de prueba 3 de entrega en Puente Piedra",
+    "delivery": {
+      "latitude": -11.866,
+      "longitude": -77.069
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-28-1",
+    "merchantName": "Cocina Chaski San Juan de Lurigancho",
+    "pickupZone": "San Juan de Lurigancho",
+    "pickupAddress": "Punto de prueba 1 de recojo en San Juan de Lurigancho",
+    "pickup": {
+      "latitude": -11.998,
+      "longitude": -77.005
+    },
+    "deliveryZone": "San Juan de Lurigancho",
+    "deliveryAddress": "Punto de prueba 1 de entrega en San Juan de Lurigancho",
+    "delivery": {
+      "latitude": -12.005,
+      "longitude": -76.996
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-28-2",
+    "merchantName": "Cafe del Barrio San Juan de Lurigancho",
+    "pickupZone": "San Juan de Lurigancho",
+    "pickupAddress": "Punto de prueba 2 de recojo en San Juan de Lurigancho",
+    "pickup": {
+      "latitude": -11.994,
+      "longitude": -77.002
+    },
+    "deliveryZone": "San Juan de Lurigancho",
+    "deliveryAddress": "Punto de prueba 2 de entrega en San Juan de Lurigancho",
+    "delivery": {
+      "latitude": -12.002,
+      "longitude": -76.998
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-28-3",
+    "merchantName": "Mercado Express San Juan de Lurigancho",
+    "pickupZone": "San Juan de Lurigancho",
+    "pickupAddress": "Punto de prueba 3 de recojo en San Juan de Lurigancho",
+    "pickup": {
+      "latitude": -11.99,
+      "longitude": -76.999
+    },
+    "deliveryZone": "San Juan de Lurigancho",
+    "deliveryAddress": "Punto de prueba 3 de entrega en San Juan de Lurigancho",
+    "delivery": {
+      "latitude": -11.999,
+      "longitude": -77.0
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-29-1",
+    "merchantName": "Cocina Chaski San Juan de Miraflores",
+    "pickupZone": "San Juan de Miraflores",
+    "pickupAddress": "Punto de prueba 1 de recojo en San Juan de Miraflores",
+    "pickup": {
+      "latitude": -12.158,
+      "longitude": -76.971
+    },
+    "deliveryZone": "San Juan de Miraflores",
+    "deliveryAddress": "Punto de prueba 1 de entrega en San Juan de Miraflores",
+    "delivery": {
+      "latitude": -12.165,
+      "longitude": -76.962
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-29-2",
+    "merchantName": "Cafe del Barrio San Juan de Miraflores",
+    "pickupZone": "San Juan de Miraflores",
+    "pickupAddress": "Punto de prueba 2 de recojo en San Juan de Miraflores",
+    "pickup": {
+      "latitude": -12.154,
+      "longitude": -76.968
+    },
+    "deliveryZone": "San Juan de Miraflores",
+    "deliveryAddress": "Punto de prueba 2 de entrega en San Juan de Miraflores",
+    "delivery": {
+      "latitude": -12.162,
+      "longitude": -76.964
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-29-3",
+    "merchantName": "Mercado Express San Juan de Miraflores",
+    "pickupZone": "San Juan de Miraflores",
+    "pickupAddress": "Punto de prueba 3 de recojo en San Juan de Miraflores",
+    "pickup": {
+      "latitude": -12.15,
+      "longitude": -76.965
+    },
+    "deliveryZone": "San Juan de Miraflores",
+    "deliveryAddress": "Punto de prueba 3 de entrega en San Juan de Miraflores",
+    "delivery": {
+      "latitude": -12.159,
+      "longitude": -76.966
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-30-1",
+    "merchantName": "Cocina Chaski Villa Maria del Triunfo",
+    "pickupZone": "Villa Maria del Triunfo",
+    "pickupAddress": "Punto de prueba 1 de recojo en Villa Maria del Triunfo",
+    "pickup": {
+      "latitude": -12.168,
+      "longitude": -76.944
+    },
+    "deliveryZone": "Villa Maria del Triunfo",
+    "deliveryAddress": "Punto de prueba 1 de entrega en Villa Maria del Triunfo",
+    "delivery": {
+      "latitude": -12.175,
+      "longitude": -76.935
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-30-2",
+    "merchantName": "Cafe del Barrio Villa Maria del Triunfo",
+    "pickupZone": "Villa Maria del Triunfo",
+    "pickupAddress": "Punto de prueba 2 de recojo en Villa Maria del Triunfo",
+    "pickup": {
+      "latitude": -12.164,
+      "longitude": -76.941
+    },
+    "deliveryZone": "Villa Maria del Triunfo",
+    "deliveryAddress": "Punto de prueba 2 de entrega en Villa Maria del Triunfo",
+    "delivery": {
+      "latitude": -12.172,
+      "longitude": -76.937
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-30-3",
+    "merchantName": "Mercado Express Villa Maria del Triunfo",
+    "pickupZone": "Villa Maria del Triunfo",
+    "pickupAddress": "Punto de prueba 3 de recojo en Villa Maria del Triunfo",
+    "pickup": {
+      "latitude": -12.16,
+      "longitude": -76.938
+    },
+    "deliveryZone": "Villa Maria del Triunfo",
+    "deliveryAddress": "Punto de prueba 3 de entrega en Villa Maria del Triunfo",
+    "delivery": {
+      "latitude": -12.169,
+      "longitude": -76.939
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-31-1",
+    "merchantName": "Cocina Chaski Villa El Salvador",
+    "pickupZone": "Villa El Salvador",
+    "pickupAddress": "Punto de prueba 1 de recojo en Villa El Salvador",
+    "pickup": {
+      "latitude": -12.215,
+      "longitude": -76.942
+    },
+    "deliveryZone": "Villa El Salvador",
+    "deliveryAddress": "Punto de prueba 1 de entrega en Villa El Salvador",
+    "delivery": {
+      "latitude": -12.222,
+      "longitude": -76.933
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-31-2",
+    "merchantName": "Cafe del Barrio Villa El Salvador",
+    "pickupZone": "Villa El Salvador",
+    "pickupAddress": "Punto de prueba 2 de recojo en Villa El Salvador",
+    "pickup": {
+      "latitude": -12.211,
+      "longitude": -76.939
+    },
+    "deliveryZone": "Villa El Salvador",
+    "deliveryAddress": "Punto de prueba 2 de entrega en Villa El Salvador",
+    "delivery": {
+      "latitude": -12.219,
+      "longitude": -76.935
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-31-3",
+    "merchantName": "Mercado Express Villa El Salvador",
+    "pickupZone": "Villa El Salvador",
+    "pickupAddress": "Punto de prueba 3 de recojo en Villa El Salvador",
+    "pickup": {
+      "latitude": -12.207,
+      "longitude": -76.936
+    },
+    "deliveryZone": "Villa El Salvador",
+    "deliveryAddress": "Punto de prueba 3 de entrega en Villa El Salvador",
+    "delivery": {
+      "latitude": -12.216,
+      "longitude": -76.937
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-32-1",
+    "merchantName": "Cocina Chaski Callao",
+    "pickupZone": "Callao",
+    "pickupAddress": "Punto de prueba 1 de recojo en Callao",
+    "pickup": {
+      "latitude": -12.046,
+      "longitude": -77.135
+    },
+    "deliveryZone": "Callao",
+    "deliveryAddress": "Punto de prueba 1 de entrega en Callao",
+    "delivery": {
+      "latitude": -12.053,
+      "longitude": -77.126
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-32-2",
+    "merchantName": "Cafe del Barrio Callao",
+    "pickupZone": "Callao",
+    "pickupAddress": "Punto de prueba 2 de recojo en Callao",
+    "pickup": {
+      "latitude": -12.042,
+      "longitude": -77.132
+    },
+    "deliveryZone": "Callao",
+    "deliveryAddress": "Punto de prueba 2 de entrega en Callao",
+    "delivery": {
+      "latitude": -12.05,
+      "longitude": -77.128
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-32-3",
+    "merchantName": "Mercado Express Callao",
+    "pickupZone": "Callao",
+    "pickupAddress": "Punto de prueba 3 de recojo en Callao",
+    "pickup": {
+      "latitude": -12.038,
+      "longitude": -77.129
+    },
+    "deliveryZone": "Callao",
+    "deliveryAddress": "Punto de prueba 3 de entrega en Callao",
+    "delivery": {
+      "latitude": -12.047,
+      "longitude": -77.13
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-33-1",
+    "merchantName": "Cocina Chaski Bellavista",
+    "pickupZone": "Bellavista",
+    "pickupAddress": "Punto de prueba 1 de recojo en Bellavista",
+    "pickup": {
+      "latitude": -12.057,
+      "longitude": -77.102
+    },
+    "deliveryZone": "Bellavista",
+    "deliveryAddress": "Punto de prueba 1 de entrega en Bellavista",
+    "delivery": {
+      "latitude": -12.064,
+      "longitude": -77.093
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-33-2",
+    "merchantName": "Cafe del Barrio Bellavista",
+    "pickupZone": "Bellavista",
+    "pickupAddress": "Punto de prueba 2 de recojo en Bellavista",
+    "pickup": {
+      "latitude": -12.053,
+      "longitude": -77.099
+    },
+    "deliveryZone": "Bellavista",
+    "deliveryAddress": "Punto de prueba 2 de entrega en Bellavista",
+    "delivery": {
+      "latitude": -12.061,
+      "longitude": -77.095
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-33-3",
+    "merchantName": "Mercado Express Bellavista",
+    "pickupZone": "Bellavista",
+    "pickupAddress": "Punto de prueba 3 de recojo en Bellavista",
+    "pickup": {
+      "latitude": -12.049,
+      "longitude": -77.096
+    },
+    "deliveryZone": "Bellavista",
+    "deliveryAddress": "Punto de prueba 3 de entrega en Bellavista",
+    "delivery": {
+      "latitude": -12.058,
+      "longitude": -77.097
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-34-1",
+    "merchantName": "Cocina Chaski La Perla",
+    "pickupZone": "La Perla",
+    "pickupAddress": "Punto de prueba 1 de recojo en La Perla",
+    "pickup": {
+      "latitude": -12.065,
+      "longitude": -77.111
+    },
+    "deliveryZone": "La Perla",
+    "deliveryAddress": "Punto de prueba 1 de entrega en La Perla",
+    "delivery": {
+      "latitude": -12.072,
+      "longitude": -77.102
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-34-2",
+    "merchantName": "Cafe del Barrio La Perla",
+    "pickupZone": "La Perla",
+    "pickupAddress": "Punto de prueba 2 de recojo en La Perla",
+    "pickup": {
+      "latitude": -12.061,
+      "longitude": -77.108
+    },
+    "deliveryZone": "La Perla",
+    "deliveryAddress": "Punto de prueba 2 de entrega en La Perla",
+    "delivery": {
+      "latitude": -12.069,
+      "longitude": -77.104
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-34-3",
+    "merchantName": "Mercado Express La Perla",
+    "pickupZone": "La Perla",
+    "pickupAddress": "Punto de prueba 3 de recojo en La Perla",
+    "pickup": {
+      "latitude": -12.057,
+      "longitude": -77.105
+    },
+    "deliveryZone": "La Perla",
+    "deliveryAddress": "Punto de prueba 3 de entrega en La Perla",
+    "delivery": {
+      "latitude": -12.066,
+      "longitude": -77.106
+    },
+    "tipCents": 200
+  },
+  {
+    "id": "LIM-35-1",
+    "merchantName": "Cocina Chaski Ventanilla",
+    "pickupZone": "Ventanilla",
+    "pickupAddress": "Punto de prueba 1 de recojo en Ventanilla",
+    "pickup": {
+      "latitude": -11.874,
+      "longitude": -77.127
+    },
+    "deliveryZone": "Ventanilla",
+    "deliveryAddress": "Punto de prueba 1 de entrega en Ventanilla",
+    "delivery": {
+      "latitude": -11.881,
+      "longitude": -77.118
+    },
+    "tipCents": 0
+  },
+  {
+    "id": "LIM-35-2",
+    "merchantName": "Cafe del Barrio Ventanilla",
+    "pickupZone": "Ventanilla",
+    "pickupAddress": "Punto de prueba 2 de recojo en Ventanilla",
+    "pickup": {
+      "latitude": -11.87,
+      "longitude": -77.124
+    },
+    "deliveryZone": "Ventanilla",
+    "deliveryAddress": "Punto de prueba 2 de entrega en Ventanilla",
+    "delivery": {
+      "latitude": -11.878,
+      "longitude": -77.12
+    },
+    "tipCents": 100
+  },
+  {
+    "id": "LIM-35-3",
+    "merchantName": "Mercado Express Ventanilla",
+    "pickupZone": "Ventanilla",
+    "pickupAddress": "Punto de prueba 3 de recojo en Ventanilla",
+    "pickup": {
+      "latitude": -11.866,
+      "longitude": -77.121
+    },
+    "deliveryZone": "Ventanilla",
+    "deliveryAddress": "Punto de prueba 3 de entrega en Ventanilla",
+    "delivery": {
+      "latitude": -11.875,
+      "longitude": -77.122
+    },
+    "tipCents": 200
+  }
+]

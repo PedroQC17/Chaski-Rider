@@ -3,6 +3,7 @@ package com.example.chaskirider.data.location
 import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
+import android.os.SystemClock
 import com.example.chaskirider.domain.model.GeoPoint
 import com.example.chaskirider.domain.repository.LocationRepository
 import com.google.android.gms.location.LocationServices
@@ -30,7 +31,9 @@ class DeviceLocationRepository(context: Context) : LocationRepository {
             } else {
                 Log.w("DeviceLocationRepo", "Location is still null after lastLocation fallback.")
             }
-            Result.success(location?.let { GeoPoint(it.latitude, it.longitude) })
+            Result.success(location?.takeIf {
+                SystemClock.elapsedRealtime() - it.elapsedRealtimeNanos / 1_000_000 <= 120_000
+            }?.let { GeoPoint(it.latitude, it.longitude) })
         } catch (error: CancellationException) { throw error
         } catch (error: Exception) {
             Log.e("DeviceLocationRepo", "Error obtaining location", error)

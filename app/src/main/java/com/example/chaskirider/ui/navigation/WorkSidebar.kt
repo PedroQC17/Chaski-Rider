@@ -86,7 +86,6 @@ fun WorkSidebar(route: String?, unread: Int, busy: Boolean, onNavigate: (String)
         listOf(
             Triple(Screen.Home.route, R.string.home_map_menu, Icons.Default.Home),
             Triple(Screen.Orders.route, R.string.orders_real_menu, Icons.Default.ShoppingCart),
-            Triple(Screen.DemoOrders.route, R.string.orders_demo_menu, Icons.Default.Build),
             Triple(Screen.Profile.route, R.string.text_perfil, Icons.Default.Person),
             Triple(Screen.Notifications.route, R.string.text_notificaciones, Icons.Default.Notifications)
         ).forEach { (target, label, icon) ->

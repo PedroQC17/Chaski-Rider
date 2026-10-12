@@ -1,335 +1,95 @@
 package com.example.chaskirider.data.orders
 
+import com.example.chaskirider.domain.location.LocationUtils
 import com.example.chaskirider.domain.orders.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.util.UUID
+import kotlin.math.max
+import kotlin.math.roundToInt
+import kotlin.random.Random
 
-/**
- * Repositorio de demo puramente local con datos simulados sin conexión al backend.
- * Útil para pruebas y demostraciones cuando no hay backend disponible.
- */
-class LocalDemoOfferRepository : OfferRepository {
-    
-    override suspend fun execute(
-        action: OfferAction,
-        offerId: String?,
-        lat: Double?,
-        lng: Double?
-    ): OfferSnapshot {
-        return when (action) {
-            OfferAction.OFFER -> generateMockOffer()
-            OfferAction.ACCEPT -> generateMockAcceptedOffer(offerId ?: "")
-            OfferAction.REJECT -> generateEmptySnapshot()
-            OfferAction.STATE -> generateEmptySnapshot()
-            OfferAction.ARRIVE_MERCHANT -> generateArrivedAtMerchant()
-            OfferAction.REPORT_NOT_READY -> generateNotReadyReported()
-            OfferAction.PICKUP -> generatePickedUp()
-            OfferAction.DELIVER -> generateDelivered()
-            OfferAction.RESET -> generateEmptySnapshot()
+class LocalDemoOfferRepository(
+    private val store: DemoOrderStore,
+    private val currentUid: () -> String?,
+    private val catalog: suspend () -> List<DemoOrder>,
+    private val clock: () -> Long = System::currentTimeMillis,
+    private val hasOffer: () -> Boolean = { Random.nextInt(100) < 70 }
+) : OfferRepository {
+    private val mutex = Mutex()
+    override suspend fun execute(action: OfferAction, offerId: String?, lat: Double?, lng: Double?): OfferSnapshot = mutex.withLock {
+        val uid = currentUid() ?: throw OfferRequestException(401)
+        val now = clock()
+        val saved = store.load(uid) ?: DemoOrderState(empty(now))
+        var snapshot = saved.snapshot.copy(serverTime = now)
+        val recent = saved.recent.filterValues { now - it < 5 * 60_000 }.toMutableMap()
+        if (snapshot.offer != null && snapshot.offer!!.expiresAt <= now) snapshot = empty(now)
+        snapshot = when (action) {
+            OfferAction.STATE -> snapshot
+            OfferAction.OFFER -> {
+                if (snapshot.offer != null || snapshot.batch != null) snapshot
+                else {
+                    require(lat != null && lng != null && lat.isFinite() && lng.isFinite()) { "Ubicación necesaria" }
+                    val order = DemoOrderCatalog.nearest(catalog(), lat, lng, recent.keys)
+                    if (order == null || !hasOffer()) empty(now) else {
+                        recent[order.id] = now
+                        offer(order, lat, lng, now)
+                    }
+                }
+            }
+            OfferAction.ACCEPT -> {
+                val offer = snapshot.offer ?: throw OfferRequestException(409)
+                if (offer.id != offerId) throw OfferRequestException(409)
+                snapshot.copy(batch = offer.quote, offer = null)
+            }
+            OfferAction.REJECT -> {
+                if (snapshot.offer?.id != offerId || offerId == null) throw OfferRequestException(409)
+                empty(now)
+            }
+            OfferAction.ARRIVE_MERCHANT -> {
+                checkActive(snapshot)
+                if (snapshot.pickedUp) throw OfferRequestException(409)
+                snapshot.copy(arrivedAt = snapshot.arrivedAt ?: now)
+            }
+            OfferAction.REPORT_NOT_READY -> {
+                checkActive(snapshot)
+                if (snapshot.arrivedAt == null || snapshot.pickedUp) throw OfferRequestException(409)
+                snapshot.copy(isNotReadyReported = true, waitStartedAt = snapshot.waitStartedAt ?: now)
+            }
+            OfferAction.PICKUP -> {
+                checkActive(snapshot)
+                if (snapshot.arrivedAt == null) throw OfferRequestException(409)
+                snapshot.copy(pickedUp = true, pickedUpAt = snapshot.pickedUpAt ?: now)
+            }
+            OfferAction.DELIVER -> {
+                if (snapshot.batch == null || !snapshot.pickedUp) throw OfferRequestException(409)
+                snapshot.copy(isDelivered = true, deliveredAt = snapshot.deliveredAt ?: now)
+            }
+            OfferAction.RESET -> empty(now)
         }
+        val waitEnd = snapshot.pickedUpAt ?: now
+        val extraMillis = snapshot.waitStartedAt?.let { (waitEnd - it - 300_000).coerceAtLeast(0) } ?: 0
+        snapshot = snapshot.copy(waitingCompensationCents = ((extraMillis + 59_999) / 60_000).toInt() * 20)
+        store.save(uid, DemoOrderState(snapshot, recent))
+        snapshot
     }
-    
-    private fun generateMockOffer(): OfferSnapshot {
-        val now = System.currentTimeMillis()
-        val expiresAt = now + 60_000 // 1 minuto para aceptar
-        
-        return OfferSnapshot(
-            serverTime = now,
-            pickedUp = false,
-            batch = null,
-            offer = DeliveryOffer(
-                id = UUID.randomUUID().toString(),
-                expiresAt = expiresAt,
-                quote = DeliveryQuote(
-                    stops = listOf(
-                        DeliveryStop(
-                            id = "stop_1",
-                            orderId = "order_123",
-                            zone = "Miraflores",
-                            point = RoutePoint(-12.1195, -77.0302)
-                        )
-                    ),
-                    approachMeters = 1200,
-                    deliveryMeters = 3500,
-                    durationSeconds = 1800,
-                    baseCents = 500,
-                    approachCents = 200,
-                    deliveryCents = 800,
-                    tipCents = 150,
-                    guaranteeCents = 650,
-                    totalCents = 1150,
-                    additionalCents = 0,
-                    path = listOf(
-                        RoutePoint(-12.1195, -77.0302),
-                        RoutePoint(-12.1215, -77.0285),
-                        RoutePoint(-12.1240, -77.0270)
-                    )
-                ),
-                reason = "proximidad",
-                reasonMeters = 1200
-            ),
-            merchant = RoutePoint(-12.1195, -77.0302),
-            merchantName = "Restaurant Central",
-            merchantZone = "Miraflores",
-            demandZones = emptyList(),
-            arrivedAt = null,
-            waitStartedAt = null,
-            isNotReadyReported = false,
-            waitingCompensationCents = 0,
-            pickedUpAt = null,
-            deliveredAt = null,
-            isDelivered = false
-        )
+    private fun checkActive(snapshot: OfferSnapshot) {
+        if (snapshot.batch == null || snapshot.isDelivered) throw OfferRequestException(409)
     }
-    
-    private fun generateMockAcceptedOffer(offerId: String): OfferSnapshot {
-        val now = System.currentTimeMillis()
-        
-        return OfferSnapshot(
-            serverTime = now,
-            pickedUp = false,
-            batch = DeliveryQuote(
-                stops = listOf(
-                    DeliveryStop(
-                        id = "stop_1",
-                        orderId = "order_123",
-                        zone = "Miraflores",
-                        point = RoutePoint(-12.1195, -77.0302)
-                    )
-                ),
-                approachMeters = 1200,
-                deliveryMeters = 3500,
-                durationSeconds = 1800,
-                baseCents = 500,
-                approachCents = 200,
-                deliveryCents = 800,
-                tipCents = 150,
-                guaranteeCents = 650,
-                totalCents = 1150,
-                additionalCents = 0,
-                path = listOf(
-                    RoutePoint(-12.1195, -77.0302),
-                    RoutePoint(-12.1215, -77.0285),
-                    RoutePoint(-12.1240, -77.0270)
-                )
-            ),
-            offer = null,
-            merchant = RoutePoint(-12.1195, -77.0302),
-            merchantName = "Restaurant Central",
-            merchantZone = "Miraflores",
-            demandZones = emptyList(),
-            arrivedAt = null,
-            waitStartedAt = null,
-            isNotReadyReported = false,
-            waitingCompensationCents = 0,
-            pickedUpAt = null,
-            deliveredAt = null,
-            isDelivered = false
+    private fun empty(now: Long) = OfferSnapshot(now, false, null, null, RoutePoint(0.0, 0.0))
+    private fun offer(order: DemoOrder, lat: Double, lng: Double, now: Long): OfferSnapshot {
+        val approach = LocationUtils.distanceMeters(lat, lng, order.pickup.latitude, order.pickup.longitude)
+        val delivery = LocationUtils.distanceMeters(order.pickup.latitude, order.pickup.longitude, order.delivery.latitude, order.delivery.longitude)
+        val approachCents = (approach / 1000.0 * 80).roundToInt()
+        val deliveryCents = (delivery / 1000.0 * 120).roundToInt()
+        val guarantee = max(0, 600 - 300 - approachCents - deliveryCents)
+        val quote = DeliveryQuote(
+            listOf(DeliveryStop("1", order.id, order.deliveryZone, order.delivery, order.deliveryAddress)),
+            approach, delivery, ((approach + delivery) / 4.0).roundToInt() + 300,
+            300, approachCents, deliveryCents, order.tipCents, guarantee,
+            300 + approachCents + deliveryCents + order.tipCents + guarantee, 0, emptyList()
         )
-    }
-    
-    private fun generateArrivedAtMerchant(): OfferSnapshot {
-        val now = System.currentTimeMillis()
-        
-        return OfferSnapshot(
-            serverTime = now,
-            pickedUp = false,
-            batch = DeliveryQuote(
-                stops = listOf(
-                    DeliveryStop(
-                        id = "stop_1",
-                        orderId = "order_123",
-                        zone = "Miraflores",
-                        point = RoutePoint(-12.1195, -77.0302)
-                    )
-                ),
-                approachMeters = 1200,
-                deliveryMeters = 3500,
-                durationSeconds = 1800,
-                baseCents = 500,
-                approachCents = 200,
-                deliveryCents = 800,
-                tipCents = 150,
-                guaranteeCents = 650,
-                totalCents = 1150,
-                additionalCents = 0,
-                path = listOf(
-                    RoutePoint(-12.1195, -77.0302),
-                    RoutePoint(-12.1215, -77.0285),
-                    RoutePoint(-12.1240, -77.0270)
-                )
-            ),
-            offer = null,
-            merchant = RoutePoint(-12.1195, -77.0302),
-            merchantName = "Restaurant Central",
-            merchantZone = "Miraflores",
-            demandZones = emptyList(),
-            arrivedAt = now,
-            waitStartedAt = null,
-            isNotReadyReported = false,
-            waitingCompensationCents = 0,
-            pickedUpAt = null,
-            deliveredAt = null,
-            isDelivered = false
-        )
-    }
-    
-    private fun generateNotReadyReported(): OfferSnapshot {
-        val now = System.currentTimeMillis()
-        
-        return OfferSnapshot(
-            serverTime = now,
-            pickedUp = false,
-            batch = DeliveryQuote(
-                stops = listOf(
-                    DeliveryStop(
-                        id = "stop_1",
-                        orderId = "order_123",
-                        zone = "Miraflores",
-                        point = RoutePoint(-12.1195, -77.0302)
-                    )
-                ),
-                approachMeters = 1200,
-                deliveryMeters = 3500,
-                durationSeconds = 1800,
-                baseCents = 500,
-                approachCents = 200,
-                deliveryCents = 800,
-                tipCents = 150,
-                guaranteeCents = 650,
-                totalCents = 1150,
-                additionalCents = 0,
-                path = listOf(
-                    RoutePoint(-12.1195, -77.0302),
-                    RoutePoint(-12.1215, -77.0285),
-                    RoutePoint(-12.1240, -77.0270)
-                )
-            ),
-            offer = null,
-            merchant = RoutePoint(-12.1195, -77.0302),
-            merchantName = "Restaurant Central",
-            merchantZone = "Miraflores",
-            demandZones = emptyList(),
-            arrivedAt = now,
-            waitStartedAt = now,
-            isNotReadyReported = true,
-            waitingCompensationCents = 100,
-            pickedUpAt = null,
-            deliveredAt = null,
-            isDelivered = false
-        )
-    }
-    
-    private fun generatePickedUp(): OfferSnapshot {
-        val now = System.currentTimeMillis()
-        
-        return OfferSnapshot(
-            serverTime = now,
-            pickedUp = true,
-            batch = DeliveryQuote(
-                stops = listOf(
-                    DeliveryStop(
-                        id = "stop_1",
-                        orderId = "order_123",
-                        zone = "Miraflores",
-                        point = RoutePoint(-12.1195, -77.0302)
-                    )
-                ),
-                approachMeters = 1200,
-                deliveryMeters = 3500,
-                durationSeconds = 1800,
-                baseCents = 500,
-                approachCents = 200,
-                deliveryCents = 800,
-                tipCents = 150,
-                guaranteeCents = 650,
-                totalCents = 1150,
-                additionalCents = 0,
-                path = listOf(
-                    RoutePoint(-12.1195, -77.0302),
-                    RoutePoint(-12.1215, -77.0285),
-                    RoutePoint(-12.1240, -77.0270)
-                )
-            ),
-            offer = null,
-            merchant = RoutePoint(-12.1195, -77.0302),
-            merchantName = "Restaurant Central",
-            merchantZone = "Miraflores",
-            demandZones = emptyList(),
-            arrivedAt = now,
-            waitStartedAt = null,
-            isNotReadyReported = false,
-            waitingCompensationCents = 0,
-            pickedUpAt = now,
-            deliveredAt = null,
-            isDelivered = false
-        )
-    }
-    
-    private fun generateDelivered(): OfferSnapshot {
-        val now = System.currentTimeMillis()
-        
-        return OfferSnapshot(
-            serverTime = now,
-            pickedUp = true,
-            batch = DeliveryQuote(
-                stops = listOf(
-                    DeliveryStop(
-                        id = "stop_1",
-                        orderId = "order_123",
-                        zone = "Miraflores",
-                        point = RoutePoint(-12.1195, -77.0302)
-                    )
-                ),
-                approachMeters = 1200,
-                deliveryMeters = 3500,
-                durationSeconds = 1800,
-                baseCents = 500,
-                approachCents = 200,
-                deliveryCents = 800,
-                tipCents = 150,
-                guaranteeCents = 650,
-                totalCents = 1150,
-                additionalCents = 0,
-                path = listOf(
-                    RoutePoint(-12.1195, -77.0302),
-                    RoutePoint(-12.1215, -77.0285),
-                    RoutePoint(-12.1240, -77.0270)
-                )
-            ),
-            offer = null,
-            merchant = RoutePoint(-12.1195, -77.0302),
-            merchantName = "Restaurant Central",
-            merchantZone = "Miraflores",
-            demandZones = emptyList(),
-            arrivedAt = now,
-            waitStartedAt = null,
-            isNotReadyReported = false,
-            waitingCompensationCents = 0,
-            pickedUpAt = now,
-            deliveredAt = now,
-            isDelivered = true
-        )
-    }
-    
-    private fun generateEmptySnapshot(): OfferSnapshot {
-        val now = System.currentTimeMillis()
-        
-        return OfferSnapshot(
-            serverTime = now,
-            pickedUp = false,
-            batch = null,
-            offer = null,
-            merchant = RoutePoint(-12.1195, -77.0302),
-            merchantName = "Restaurant Central",
-            merchantZone = "Miraflores",
-            demandZones = emptyList(),
-            arrivedAt = null,
-            waitStartedAt = null,
-            isNotReadyReported = false,
-            waitingCompensationCents = 0,
-            pickedUpAt = null,
-            deliveredAt = null,
-            isDelivered = false
-        )
+        return OfferSnapshot(now, false, null, DeliveryOffer(UUID.randomUUID().toString(), now + 45_000, quote, "PROXIMITY", approach),
+            order.pickup, order.merchantName, order.pickupZone, merchantAddress = order.pickupAddress)
     }
 }

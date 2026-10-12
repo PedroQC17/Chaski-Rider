@@ -122,28 +122,22 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
     val workArea = user?.status == RegistrationStatus.APPROVED && user.isEnabled && !needsPhoto
     // HU04: las ofertas (notificación de tiempo y navegación) solo existen conectado.
     val offersActive = workArea && user?.isAvailable == true
-    val realOrdersViewModel: OrdersViewModel = viewModel(key = "real_orders") {
-        OrdersViewModel(AppContainer.realOfferRepository, AppContainer.riderSession)
-    }
     val demoOrdersViewModel: OrdersViewModel = viewModel(key = "demo_orders") {
         OrdersViewModel(AppContainer.demoOfferRepository, AppContainer.riderSession)
     }
+    val ordersState by demoOrdersViewModel.uiState.collectAsStateWithLifecycle()
     val offerNotifier = remember { OfferNotifier(context.applicationContext) }
-    LaunchedEffect(realOrdersViewModel, demoOrdersViewModel, offersActive) {
-        if (!offersActive) { offerNotifier.update(null, 0); return@LaunchedEffect }
-        launch {
-            realOrdersViewModel.uiState.collect { orders ->
-                if (orders.snapshot?.offer != null) {
-                    offerNotifier.update(orders.snapshot?.offer?.id, orders.secondsLeft)
-                }
-            }
-        }
-        launch {
-            demoOrdersViewModel.uiState.collect { orders ->
-                if (orders.snapshot?.offer != null) {
-                    offerNotifier.update(orders.snapshot?.offer?.id, orders.secondsLeft)
-                }
-            }
+    androidx.lifecycle.compose.LifecycleStartEffect(demoOrdersViewModel) {
+        demoOrdersViewModel.setForeground(true)
+        onStopOrDispose { demoOrdersViewModel.setForeground(false) }
+    }
+    LaunchedEffect(ordersState.snapshot?.offer?.id, ordersState.secondsLeft, offersActive) {
+        offerNotifier.update(if (offersActive) ordersState.snapshot?.offer?.id else null, ordersState.secondsLeft)
+    }
+    LaunchedEffect(ordersState.snapshot?.offer?.id, ordersState.snapshot?.batch, route, workArea, offersActive) {
+        val snapshot = ordersState.snapshot
+        if (workArea && route == Screen.Home.route && ((snapshot?.offer != null && offersActive) || (snapshot?.batch != null && !snapshot.isDelivered))) {
+            navController.navigate(Screen.Orders.route) { launchSingleTop = true }
         }
     }
     LaunchedEffect(demoRequest, offersActive) {
@@ -254,9 +248,9 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
             composable(Screen.Orders.route) {
                 if (workArea)
                     OrdersRoute(
-                        viewModel = realOrdersViewModel,
+                        viewModel = demoOrdersViewModel,
                         onMenu = { scope.launch { drawerState.open() } },
-                        isDemo = false
+                        isDemo = true
                     )
             }
             composable(Screen.DemoOrders.route) {

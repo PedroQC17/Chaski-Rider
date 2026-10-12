@@ -3,5 +3,8 @@
     <exclude domain="database" path="registration.db" />
     <exclude domain="database" path="registration.db-wal" />
     <exclude domain="database" path="registration.db-shm" />
+    <exclude domain="database" path="demo_orders.db" />
+    <exclude domain="database" path="demo_orders.db-wal" />
+    <exclude domain="database" path="demo_orders.db-shm" />
     <exclude domain="file" path="registration_documents/" />
 </full-backup-content>

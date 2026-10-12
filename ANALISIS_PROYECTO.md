@@ -10,6 +10,8 @@ Este documento conserva el contexto de la revisión para futuras conversaciones.
 
 ## Fuentes y alcance
 
+**Simulación de pedidos actualizada el 12 de octubre:** catálogo local de Lima seleccionado por GPS, un único flujo persistente en Room, acciones por etapa y mapa gris sin polilíneas. El contrato y los límites de esta entrega están en [SIMULACION_PEDIDOS.md](SIMULACION_PEDIDOS.md). La simulación ya no reconstruye un pedido fijo por acción ni convierte los errores en avances automáticos.
+
 - Android: `C:/Users/Angel/Desktop/Chaski_Rider`.
 - Backend separado: `C:/Users/Angel/Desktop/Chaski_Rider_Backend`.
 - Backlog: `C:/Users/Angel/Downloads/ChaskiRiders-backlogpropuesta (2).xlsx`, hojas `PLANIFICACION` (filas 1–131) y `REQUISITOS` (filas 1–15). Se leyeron ambas completas; no contienen comentarios de celda.

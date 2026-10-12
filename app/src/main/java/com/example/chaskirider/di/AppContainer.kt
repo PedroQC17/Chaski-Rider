@@ -37,11 +37,20 @@ object AppContainer {
 
     // Repositorio de demostración (Datos simulados locales para test)
     val demoOfferRepository: OfferRepository by lazy {
-        LocalDemoOfferRepository()
+        val database = androidx.room.Room.databaseBuilder(applicationContext,
+            com.example.chaskirider.data.orders.DemoOrderDatabase::class.java, "demo_orders.db").build()
+        LocalDemoOfferRepository(com.example.chaskirider.data.orders.RoomDemoOrderStore(database.orders()),
+            { riderSession.user.value?.id }, {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    applicationContext.assets.open("demo_orders_lima.json").bufferedReader().use {
+                        com.example.chaskirider.data.orders.DemoOrderCatalog.parse(it.readText())
+                    }
+                }
+            })
     }
 
     val offerRepository: OfferRepository by lazy {
-        realOfferRepository
+        demoOfferRepository
     }
     val textProvider: TextProvider by lazy { AndroidTextProvider(applicationContext) }
     private val profiles by lazy { RiderProfileRemoteDataSource(textProvider, sessionStore) }

@@ -15,7 +15,7 @@ data class OfferSnapshot(val serverTime: Long, val pickedUp: Boolean,
     val isNotReadyReported: Boolean = false, val waitingCompensationCents: Int = 0,
     // tiempo de recojo y entrega
     val pickedUpAt: Long? = null, val deliveredAt: Long? = null,
-    val isDelivered: Boolean = false)
+    val isDelivered: Boolean = false, val merchantAddress: String? = null)
 enum class OfferAction { STATE, OFFER, ACCEPT, REJECT, ARRIVE_MERCHANT, REPORT_NOT_READY, PICKUP, DELIVER, RESET }
 interface OfferRepository {
     suspend fun execute(

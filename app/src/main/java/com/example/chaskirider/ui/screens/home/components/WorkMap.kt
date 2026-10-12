@@ -11,6 +11,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.platform.LocalContext
+import com.google.android.gms.maps.model.MapStyleOptions
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.chaskirider.BuildConfig
@@ -39,6 +41,8 @@ fun WorkMap(state: HomeUiState, bottomInset: androidx.compose.ui.unit.Dp,
         position = CameraPosition.fromLatLngZoom(LatLng(-12.0464, -77.0428), 12f)
     }
     var loaded by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val mapStyle = remember(context) { MapStyleOptions.loadRawResourceStyle(context, R.raw.map_grayscale) }
     LaunchedEffect(loaded, state.cameraRequest, state.location) {
         val point = state.location
         Log.d("WorkMap", "LaunchedEffect: loaded=$loaded, location=$point, cameraRequest=${state.cameraRequest}")
@@ -50,7 +54,8 @@ fun WorkMap(state: HomeUiState, bottomInset: androidx.compose.ui.unit.Dp,
     }
     GoogleMap(
         modifier = Modifier.fillMaxSize(), cameraPositionState = camera,
-        properties = MapProperties(isMyLocationEnabled = state.hasLocationPermission && state.user?.isAvailable == true),
+        properties = MapProperties(mapStyleOptions = mapStyle,
+            isMyLocationEnabled = state.hasLocationPermission && state.user?.isAvailable == true),
         uiSettings = MapUiSettings(zoomControlsEnabled = false, myLocationButtonEnabled = false,
             mapToolbarEnabled = false, compassEnabled = false, rotationGesturesEnabled = false),
         contentPadding = PaddingValues(top = 96.dp, bottom = bottomInset),

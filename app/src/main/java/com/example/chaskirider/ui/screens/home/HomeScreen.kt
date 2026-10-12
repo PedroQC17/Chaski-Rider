@@ -66,7 +66,7 @@ fun HomeScreen(state: HomeUiState, onOpenMenu: () -> Unit,
                 Spacer(Modifier.height(8.dp))
             }
             val zonesUpdatedAt = state.zonesUpdatedAt
-            if (zonesUpdatedAt != null) {
+            if (zonesUpdatedAt != null && state.demandZones.isNotEmpty()) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (state.isRefreshingZones) CircularProgressIndicator(Modifier.size(14.dp), strokeWidth = 2.dp)
                     else Text(stringResource(R.string.home_zones_updated,
@@ -76,10 +76,6 @@ fun HomeScreen(state: HomeUiState, onOpenMenu: () -> Unit,
                         Text(stringResource(R.string.home_zones_refresh))
                     }
                 }
-            }
-            if (state.zonesLoaded && state.demandZones.isEmpty()) {
-                Text(stringResource(R.string.home_zones_empty), style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(end = 4.dp))
             }
             FilledIconButton(onClick = onLocate, enabled = !state.isLocating && state.user?.isAvailable == true, modifier = Modifier.size(48.dp),
                 colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surface)) {

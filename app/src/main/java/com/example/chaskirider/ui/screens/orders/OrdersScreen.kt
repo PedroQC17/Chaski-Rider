@@ -17,6 +17,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -72,7 +75,6 @@ fun OrdersRoute(viewModel: OrdersViewModel, onMenu: () -> Unit, isDemo: Boolean 
         onReset = viewModel::reset,
         onRefresh = viewModel::refresh,
         onClearError = viewModel::clearError,
-        onSchedule = viewModel::scheduleOffer
     )
 }
 
@@ -93,27 +95,29 @@ private fun OrdersScreen(
     onReset: () -> Unit,
     onRefresh: () -> Unit,
     onClearError: () -> Unit,
-    onSchedule: () -> Unit
 ) {
     val snapshot = state.snapshot
     val actionsEnabled = !state.busy
     val offer = snapshot?.offer
     val quote = offer?.quote ?: snapshot?.batch
     var isBottomCardMinimized by remember { mutableStateOf(false) }
+    var bottomCardHeight by remember { mutableStateOf(300.dp) }
+    val density = LocalDensity.current
 
     Box(Modifier.fillMaxSize()) {
-        OrdersMap(snapshot)
+        OrdersMap(snapshot, state.riderLocation, bottomCardHeight)
 
         OrdersTopHeader(isDemo = isDemo, onMenu = onMenu)
 
-        if (quote != null) {
+        if (snapshot?.batch != null && !snapshot.isDelivered) {
             ChatFloatingActionButton(
                 onClick = { chatViewModel.openChat() }
             )
         }
 
         Surface(
-            Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(12.dp).fillMaxWidth(),
+            Modifier.align(Alignment.BottomCenter).onSizeChanged { bottomCardHeight = with(density) { it.height.toDp() } }
+                .navigationBarsPadding().padding(12.dp).fillMaxWidth(),
             shape = RoundedCornerShape(24.dp),
             shadowElevation = 8.dp
         ) {
@@ -142,7 +146,6 @@ private fun OrdersScreen(
                     onDeliver = onDeliver,
                     onReset = onReset,
                     onOffer = onOffer,
-                    onSchedule = onSchedule
                 )
             }
         }
@@ -225,8 +228,8 @@ private fun MinimizedOrderSummary(
                     snapshot?.isDelivered == true -> " ¡Entrega completada!"
                     snapshot?.pickedUp == true -> " En camino al cliente"
                     snapshot?.arrivedAt != null -> " En establecimiento"
+                    offer != null -> " Nueva oferta de pedido"
                     quote != null -> " Pedido activo (Toca para expandir)"
-                    offer != null -> " ¡Nueva oferta de pedido!"
                     else -> if (isDemo) " Demo de pedidos" else " Pedidos"
                 },
                 fontWeight = FontWeight.Bold,
@@ -262,121 +265,133 @@ private fun ExpandedOrderContent(
     onDeliver: () -> Unit,
     onReset: () -> Unit,
     onOffer: () -> Unit,
-    onSchedule: () -> Unit
 ) {
     val snapshot = state.snapshot
     val offer = snapshot?.offer
     val quote = offer?.quote ?: snapshot?.batch
+    val scroll = rememberScrollState()
+    LaunchedEffect(offer?.id, snapshot?.batch?.stops?.firstOrNull()?.orderId,
+        snapshot?.arrivedAt, snapshot?.pickedUp, snapshot?.isDelivered) { scroll.scrollTo(0) }
 
-    Column(
-        Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()).padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+    val maxHeight = (LocalConfiguration.current.screenHeightDp.dp * 0.55f).coerceAtMost(480.dp)
+    Column(Modifier.heightIn(max = maxHeight)) {
+        Column(
+            Modifier.weight(1f, fill = false).verticalScroll(scroll).padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            if (isDemo) {
-                Text(
-                    stringResource(R.string.orders_demo_note),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            } else {
-                Text(
-                    "Pedidos",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-            IconButton(
-                onClick = onMinimize,
-                modifier = Modifier.size(32.dp)
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Minimizar")
-            }
-        }
-
-        if (state.busy) LinearProgressIndicator(Modifier.fillMaxWidth())
-
-        state.error?.let { errorRes ->
-            Surface(
-                color = MaterialTheme.colorScheme.errorContainer,
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                if (isDemo) {
                     Text(
-                        stringResource(errorRes),
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        style = MaterialTheme.typography.bodyMedium
+                        stringResource(R.string.orders_demo_note),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary
                     )
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        TextButton(onClick = onRefresh, enabled = !state.busy) {
-                            Text(stringResource(R.string.orders_refresh))
-                        }
-                        if (isDemo) {
-                            Button(
-                                onClick = onClearError,
-                                enabled = !state.busy,
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                            ) {
-                                Text("Saltar error (Demo)")
+                } else {
+                    Text(
+                        "Pedidos",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                IconButton(
+                    onClick = onMinimize,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Minimizar")
+                }
+            }
+
+            if (state.busy) LinearProgressIndicator(Modifier.fillMaxWidth())
+
+            state.error?.let { errorRes ->
+                Surface(
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(
+                            stringResource(errorRes),
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            TextButton(onClick = onRefresh, enabled = !state.busy) {
+                                Text(stringResource(R.string.orders_refresh))
+                            }
+                            if (isDemo) {
+                                Button(
+                                    onClick = onClearError,
+                                    enabled = !state.busy,
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                                ) {
+                                    Text("Cerrar aviso")
+                                }
                             }
                         }
                     }
                 }
             }
-        }
 
-        if (offer != null) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(stringResource(R.string.orders_new_offer), fontWeight = FontWeight.Bold)
-                Text(stringResource(R.string.orders_seconds, state.secondsLeft), color = MaterialTheme.colorScheme.primary)
+            if (offer != null) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(stringResource(R.string.orders_new_offer), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.orders_seconds, state.secondsLeft), color = MaterialTheme.colorScheme.primary)
+                }
+                LinearProgressIndicator(progress = { (state.secondsLeft / 45f).coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth())
+            } else {
+                val title = when {
+                    snapshot?.isDelivered == true -> " ¡Entrega completada con éxito!"
+                    snapshot?.pickedUp == true -> " En camino al cliente"
+                    snapshot?.arrivedAt != null -> " En establecimiento"
+                    quote != null -> stringResource(R.string.orders_accepted)
+                    else -> stringResource(R.string.orders_empty)
+                }
+                Text(title, fontWeight = FontWeight.Bold)
             }
-            LinearProgressIndicator(progress = { state.secondsLeft / 45f }, modifier = Modifier.fillMaxWidth())
-        } else {
-            val title = when {
-                snapshot?.isDelivered == true -> " ¡Entrega completada con éxito!"
-                snapshot?.pickedUp == true -> " En camino al cliente"
-                snapshot?.arrivedAt != null -> " En establecimiento"
-                quote != null -> stringResource(R.string.orders_accepted)
-                else -> stringResource(R.string.orders_empty)
-            }
-            Text(title, fontWeight = FontWeight.Bold)
-        }
 
-        quote?.let {
-            OrderQuoteCard(
-                quote = it,
-                additional = offer != null && snapshot.batch != null,
-                merchantName = snapshot?.merchantName,
-                merchantZone = snapshot?.merchantZone,
-                offerReason = offer?.reason,
-                reasonMeters = offer?.reasonMeters,
-                waitingCompensationCents = snapshot?.waitingCompensationCents ?: 0
+            quote?.let {
+                OrderQuoteCard(
+                    quote = it,
+                    additional = offer != null && snapshot.batch != null,
+                    merchantName = snapshot?.merchantName,
+                    merchantZone = snapshot?.merchantZone,
+                    merchantAddress = snapshot?.merchantAddress,
+                    offerReason = offer?.reason,
+                    reasonMeters = offer?.reasonMeters,
+                    waitingCompensationCents = snapshot?.waitingCompensationCents ?: 0,
+                    showPaymentDetails = offer != null || snapshot?.isDelivered == true
+                )
+            }
+
+        }
+        Column(Modifier.padding(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (offer != null) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("Ganancia simulada", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.orders_money, offer.quote.totalCents / 100.0), fontWeight = FontWeight.Bold)
+            }
+            OrderActionControls(
+                state = state,
+                isDemo = isDemo,
+                actionsEnabled = actionsEnabled,
+                onReject = onReject,
+                onAccept = onAccept,
+                onArriveMerchant = onArriveMerchant,
+                onReportNotReady = onReportNotReady,
+                onPickup = onPickup,
+                onDeliver = onDeliver,
+                onReset = onReset,
+                onOffer = onOffer,
             )
         }
-
-        OrderActionControls(
-            state = state,
-            isDemo = isDemo,
-            actionsEnabled = actionsEnabled,
-            onReject = onReject,
-            onAccept = onAccept,
-            onArriveMerchant = onArriveMerchant,
-            onReportNotReady = onReportNotReady,
-            onPickup = onPickup,
-            onDeliver = onDeliver,
-            onReset = onReset,
-            onOffer = onOffer,
-            onSchedule = onSchedule
-        )
     }
 }
 
@@ -393,7 +408,6 @@ private fun OrderActionControls(
     onDeliver: () -> Unit,
     onReset: () -> Unit,
     onOffer: () -> Unit,
-    onSchedule: () -> Unit
 ) {
     val snapshot = state.snapshot
     val offer = snapshot?.offer
@@ -403,13 +417,13 @@ private fun OrderActionControls(
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedButton(
                 onClick = onReject,
-                enabled = actionsEnabled && state.secondsLeft > 0,
+                enabled = actionsEnabled && state.secondsLeft > 0 && state.isAvailable,
                 modifier = Modifier.weight(1f)
             ) { Text(stringResource(R.string.orders_reject)) }
 
             Button(
                 onClick = onAccept,
-                enabled = actionsEnabled && state.secondsLeft > 0,
+                enabled = actionsEnabled && state.secondsLeft > 0 && state.isAvailable,
                 modifier = Modifier.weight(1f)
             ) { Text(stringResource(R.string.orders_accept)) }
         }
@@ -419,7 +433,7 @@ private fun OrderActionControls(
 
         if (isDelivered) {
             Surface(
-                color = MaterialTheme.colorScheme.tertiaryContainer,
+                color = MaterialTheme.colorScheme.surfaceVariant,
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
             ) {
@@ -430,7 +444,7 @@ private fun OrderActionControls(
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
-                        "Tracking de ruta finalizado correctamente.",
+                        "La simulación de este pedido ha finalizado.",
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -458,13 +472,13 @@ private fun OrderActionControls(
                 enabled = actionsEnabled,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Confirmar Entrega al Cliente")
+                Text(if (isDemo) "Simular entrega al cliente" else "Confirmar entrega")
             }
 
             if (isDemo) {
                 TextButton(
                     onClick = onReset,
-                    enabled = actionsEnabled && !state.scheduling,
+                    enabled = actionsEnabled,
                     modifier = Modifier.fillMaxWidth()
                 ) { Text(stringResource(R.string.orders_reset)) }
             }
@@ -481,15 +495,13 @@ private fun OrderActionControls(
                     )
                 }
 
-                val canConfirmArrival = state.isWithinGeofence || dist == null
                 Button(
                     onClick = onArriveMerchant,
                     enabled = actionsEnabled,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        if (canConfirmArrival || !isDemo) "Confirmar llegada al establecimiento"
-                        else "Continuar (Saltar demo - a $dist m)"
+                        if (isDemo) "Simular llegada al recojo" else "Confirmar llegada al establecimiento"
                     )
                 }
             } else {
@@ -536,36 +548,31 @@ private fun OrderActionControls(
                     enabled = actionsEnabled,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Confirmar Recojo de Pedido")
+                    Text(if (isDemo) "Simular pedido recogido" else "Confirmar recojo")
                 }
             }
 
             if (isDemo) {
                 TextButton(
                     onClick = onReset,
-                    enabled = actionsEnabled && !state.scheduling,
+                    enabled = actionsEnabled,
                     modifier = Modifier.fillMaxWidth()
                 ) { Text(stringResource(R.string.orders_reset)) }
             }
         }
     } else {
         if (isDemo) {
-            val canOffer = snapshot != null && !snapshot.pickedUp && (snapshot.batch?.stops?.size ?: 0) < 3
+            val canOffer = snapshot != null && state.isAvailable
+            Text(stringResource(if (!state.isAvailable) R.string.orders_connect_to_search else if (state.searched) R.string.orders_wait_nearby else R.string.orders_searching_nearby), style = MaterialTheme.typography.bodySmall)
             if (canOffer) {
                 Button(
                     onClick = onOffer,
-                    enabled = actionsEnabled && !state.scheduling,
+                    enabled = actionsEnabled,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(stringResource(R.string.orders_generate))
                 }
-                TextButton(
-                    onClick = onSchedule,
-                    enabled = actionsEnabled && !state.scheduling,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(stringResource(if (state.scheduling) R.string.orders_scheduled else R.string.orders_schedule))
-                }
+
             }
         } else {
             Text(
