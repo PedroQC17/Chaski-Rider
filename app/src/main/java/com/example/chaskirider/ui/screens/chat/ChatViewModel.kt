@@ -32,7 +32,7 @@ class ChatViewModel : ViewModel() {
         _uiState.update { it.copy(inputText = text) }
     }
 
-    // HU10: Dictado por voz inserta el texto en la caja para revisión previa, sin enviar automáticamente.
+    // dictado por voz sin envio automatico
     fun onSpeechRecognized(recognizedText: String) {
         if (recognizedText.isBlank()) return
         _uiState.update {
@@ -49,7 +49,7 @@ class ChatViewModel : ViewModel() {
         _uiState.update { it.copy(isListeningSpeech = false, speechError = error) }
     }
 
-    // HU10: Envío explícito de mensajes por acción deliberada del repartidor.
+    // envio del mensaje
     fun sendMessage() {
         val text = _uiState.value.inputText.trim()
         if (text.isBlank()) return
@@ -75,7 +75,7 @@ class ChatViewModel : ViewModel() {
         }
     }
 
-    // HU10: Sincronización de reglas de negocio por fase de pedido.
+    // sincornizacion de los pedidos
     fun syncOrderState(snapshot: OfferSnapshot?) {
         if (snapshot == null) {
             _uiState.update { ChatUiState() }
@@ -109,9 +109,9 @@ class ChatViewModel : ViewModel() {
             _uiState.update { it.copy(messages = initialMessages) }
         }
 
-        // HU10 Criterio 4: Chat del establecimiento solo permite mensajes durante el recojo (!pickedUp)
+        // El chat con el establecimiento solo permite en recojo
         val merchantEnabled = !snapshot.pickedUp && !snapshot.isDelivered
-        // HU10 Criterio 5: Chat del cliente pasa a solo lectura al terminar el periodo (!isDelivered)
+        // Chat del cliente solo de lectura cuando termine el pedido
         val customerEnabled = !snapshot.isDelivered
 
         _uiState.update {

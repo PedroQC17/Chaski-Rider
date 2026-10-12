@@ -1,6 +1,8 @@
 package com.example.chaskirider.domain.orders
 
 data class RoutePoint(val latitude: Double, val longitude: Double)
+
+//paradero de entrega donde se debe entregar el pedido
 data class DeliveryStop(val id: String, val orderId: String, val zone: String?, val point: RoutePoint)
 data class DeliveryQuote(
     val stops: List<DeliveryStop>, val approachMeters: Int, val deliveryMeters: Int,

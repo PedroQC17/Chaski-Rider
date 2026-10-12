@@ -5,7 +5,7 @@ package com.example.chaskirider.domain.model
 
 import com.google.firebase.firestore.IgnoreExtraProperties
 import com.google.firebase.firestore.PropertyName
-
+// es la clase que contiene los datos del usuario del rider que se guardan en la base de datos de firebase
 @IgnoreExtraProperties
 data class RiderUser(
     val id: String = "",

@@ -16,6 +16,8 @@ import java.util.concurrent.TimeUnit
  * Usa la API real del backend para procesar pedidos.
  */
 class RealOfferRepository : OfferRepository {
+
+    //variable que conecta con la api con firebase con el servidor de la nube
     private val api = Retrofit.Builder()
         .baseUrl("https://us-central1-chaski-rider.cloudfunctions.net/")
         .client(OkHttpClient.Builder().callTimeout(25, TimeUnit.SECONDS).build())
@@ -27,9 +29,12 @@ class RealOfferRepository : OfferRepository {
         lat: Double?,
         lng: Double?
     ): OfferSnapshot {
+
+        //user es el usuario actual de firebase y token es el token de acceso
         val user = FirebaseAuth.getInstance().currentUser ?: throw OfferRequestException(401)
         val token = user.getIdToken(false).await().token ?: throw OfferRequestException(401)
         try {
+            // se usa el token para autenticar la peticion y se hace la peticion a la api
             return api.execute("Bearer $token", OfferRequest(action.name.lowercase(Locale.ROOT), offerId,
                 UUID.randomUUID().toString(), lat, lng)).toDomain()
         } catch (e: HttpException) { throw OfferRequestException(e.code()) }

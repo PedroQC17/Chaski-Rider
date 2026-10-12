@@ -1,5 +1,7 @@
 package com.example.chaskirider.domain.chat
 
+
+//clase que detemrina si se conversa con el establecimiento o con el cliente
 enum class ChatChannel {
     MERCHANT,
     CUSTOMER
