@@ -6,9 +6,6 @@ import kotlin.math.*
 object LocationUtils {
     private const val EARTH_RADIUS_METERS = 6371000.0
 
-    /**
-     * HU08: Calcula la distancia en metros entre dos coordenadas geográficas usando la fórmula de Haversine.
-     */
     fun distanceMeters(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Int {
         return exactDistanceMeters(lat1, lon1, lat2, lon2).roundToInt()
     }
@@ -23,9 +20,6 @@ object LocationUtils {
         return EARTH_RADIUS_METERS * c
     }
 
-    /**
-     * HU08: Retorna true si la distancia del repartidor al objetivo es menor o igual al radio de geocerca (por defecto 100m).
-     */
     fun isWithinGeofence(
         riderLat: Double, riderLon: Double,
         targetLat: Double, targetLon: Double,
@@ -34,9 +28,6 @@ object LocationUtils {
         return distanceMeters(riderLat, riderLon, targetLat, targetLon) <= radiusMeters
     }
 
-    /**
-     * HU08: Detecta si la posición del repartidor se ha desviado significativamente de la ruta (más de thresholdMeters).
-     */
     fun isOffRoute(
         riderLat: Double, riderLon: Double,
         path: List<RoutePoint>,

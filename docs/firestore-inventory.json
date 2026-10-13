@@ -1,0 +1,60 @@
+{
+  "project": "chaski-rider",
+  "checkedAt": "2026-10-12T22:44:36.591Z",
+  "collections": [
+    {
+      "path": "riderOfferDemos",
+      "documents": 2,
+      "fields": {
+        "offer": "null",
+        "revision": "integer",
+        "decisions": "map",
+        "batch": "null",
+        "requests": "map",
+        "pickedUp": "boolean"
+      }
+    },
+    {
+      "path": "riderUnique",
+      "documents": 10,
+      "fields": {
+        "uid": "string"
+      }
+    },
+    {
+      "path": "riders",
+      "documents": 5,
+      "fields": {
+        "isAvailable": "boolean",
+        "termsAcceptedAt": "timestamp",
+        "name": "string",
+        "id": "string",
+        "termsAccepted": "boolean",
+        "currentStep": "integer",
+        "phone": "string",
+        "lastName": "string",
+        "updatedAt": "timestamp",
+        "isEnabled": "boolean",
+        "status": "string",
+        "vehicleType": "string",
+        "email": "string",
+        "rejectionReason": "string",
+        "phoneVerified": "boolean",
+        "dni": "string",
+        "dniBackUrl": "string",
+        "dniFrontUrl": "string",
+        "profilePhotoCreatedAt": "timestamp",
+        "bankStatementUrl": "string",
+        "profilePhotoPath": "string",
+        "bankInfo": "map",
+        "bankInfo.cci": "string",
+        "bankInfo.holderName": "string",
+        "bankInfo.accountNumber": "string",
+        "bankInfo.bankName": "string",
+        "submittedAt": "timestamp",
+        "soatUrl": "string",
+        "driverLicenseUrl": "string"
+      }
+    }
+  ]
+}
