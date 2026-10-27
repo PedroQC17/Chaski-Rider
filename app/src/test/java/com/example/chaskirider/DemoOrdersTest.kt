@@ -8,6 +8,38 @@ import org.junit.Test
 import java.io.File
 
 class DemoOrdersTest {
+    @Test fun repeatingCatalogRouteCreatesAnotherOrderIdentity() = runTest {
+        val repo = repository()
+        val one = offer(repo)
+        val id = one.offer!!.quote.stops.single().orderId
+        assertNotEquals(first.id, id)
+        repo.execute(OfferAction.REJECT, one.offer.id)
+        now += 300_001
+        val two = offer(repository())
+        assertEquals(first.pickup, two.merchant)
+        assertNotEquals(id, two.offer!!.quote.stops.single().orderId)
+        assertEquals(two.offer.quote.stops.single().orderId, repository().execute(OfferAction.STATE).offer!!.quote.stops.single().orderId)
+    }
+
+    @Test fun recordUsesOrderIdentityAndCorrectStageWithoutRiderCoordinates() = runTest {
+        val repo = repository()
+        val pending = offer(repo)
+        assertNull(OrderRecord.from("alice", pending))
+        val accepted = repo.execute(OfferAction.ACCEPT, pending.offer!!.id)
+        assertEquals(now, accepted.acceptedAt)
+        val record = OrderRecord.from("alice", accepted)!!
+        assertEquals(pending.offer.quote.stops.single().orderId, record.orderId)
+        assertEquals(OrderStatus.ACCEPTED, record.status)
+        val arrived = repo.execute(OfferAction.ARRIVE_MERCHANT, lat = first.pickup.latitude, lng = first.pickup.longitude)
+        assertEquals(OrderStatus.AT_MERCHANT, OrderRecord.from("alice", arrived)!!.status)
+        val picked = repo.execute(OfferAction.PICKUP, lat = first.pickup.latitude, lng = first.pickup.longitude)
+        assertEquals(OrderStatus.ON_THE_WAY, OrderRecord.from("alice", picked)!!.status)
+        val delivered = repo.execute(OfferAction.DELIVER, lat = first.delivery.latitude, lng = first.delivery.longitude)
+        assertEquals(OrderStatus.DELIVERED, OrderRecord.from("alice", delivered)!!.status)
+        try { repo.execute(OfferAction.PICKUP, lat = first.pickup.latitude, lng = first.pickup.longitude); fail() }
+        catch (error: OfferRequestException) { assertEquals(409, error.status) }
+    }
+
     private val first = DemoOrder("one", "Cocina", "Lima", "Recojo 1", RoutePoint(-12.046, -77.037),
         "Lima", "Entrega 1", RoutePoint(-12.055, -77.030), 100)
     private val second = first.copy(id = "two", pickup = RoutePoint(-12.050, -77.039))
@@ -50,14 +82,40 @@ class DemoOrdersTest {
         now += 3000
         val delivered = repo.execute(OfferAction.DELIVER, lat = first.delivery.latitude, lng = first.delivery.longitude)
         assertTrue(delivered.isDelivered); assertTrue(delivered.pickedUp)
-        assertEquals(first.id, delivered.batch!!.stops.single().orderId)
+        assertEquals(pending.offer.quote.stops.single().orderId, delivered.batch!!.stops.single().orderId)
         assertNotNull(delivered.arrivedAt); assertNotNull(delivered.pickedUpAt)
         assertEquals(delivered.deliveredAt, repo.execute(OfferAction.DELIVER, lat = first.delivery.latitude, lng = first.delivery.longitude).deliveredAt)
     }
+    @Test fun arrivalRecordsMeasuredLocationAndKeepsFirstConfirmation() = runTest {
+        val repo = repository()
+        val pending = offer(repo)
+        repo.execute(OfferAction.ACCEPT, pending.offer!!.id)
+        val measured = first.pickup.copy(latitude = first.pickup.latitude + 0.0001)
+        val arrived = repo.execute(OfferAction.ARRIVE_MERCHANT, lat = measured.latitude, lng = measured.longitude)
+        assertEquals(measured, arrived.arrivalLocation)
+        assertEquals(now, arrived.arrivedAt)
+        now += 5000
+        val repeated = repo.execute(OfferAction.ARRIVE_MERCHANT, lat = first.pickup.latitude, lng = first.pickup.longitude)
+        assertEquals(arrived.arrivedAt, repeated.arrivedAt)
+        assertEquals(measured, repository().execute(OfferAction.STATE).arrivalLocation)
+        repo.execute(OfferAction.PICKUP, lat = first.pickup.latitude, lng = first.pickup.longitude)
+        assertEquals(measured, repository().execute(OfferAction.STATE).arrivalLocation)
+    }
+
+    @Test fun oldSnapshotsDoNotInventAnArrivalLocation() {
+        val gson = com.google.gson.Gson()
+        val old = OfferSnapshot(now, false, null, null, first.pickup, arrivedAt = now)
+        val json = gson.toJsonTree(old).asJsonObject.apply { remove("arrivalLocation") }
+        val restored = gson.fromJson(json, OfferSnapshot::class.java)
+        assertEquals(now, restored.arrivedAt)
+        assertNull(restored.arrivalLocation)
+    }
+
     @Test fun rejectedExpiredAndCompletedOrdersDoNotImmediatelyRepeat() = runTest {
         val repo = repository(); val one = offer(repo)
         repo.execute(OfferAction.REJECT, one.offer!!.id)
-        val two = offer(repo); assertEquals("two", two.offer!!.quote.stops.single().orderId)
+        val two = offer(repo); assertEquals(second.pickup, two.merchant)
+        assertNotEquals(one.offer.quote.stops.single().orderId, two.offer!!.quote.stops.single().orderId)
         now += 45_001
         assertNull(repo.execute(OfferAction.STATE).offer)
         assertNull(offer(repo).offer)
@@ -144,10 +202,10 @@ class DemoOrdersTest {
         assertNull(cancelled.batch)
         val history = saved["alice"]!!.problems!!.single()
         assertTrue(history.cancelled); assertFalse(history.pickedUp)
-        assertEquals(first.id, history.orderId)
+        assertEquals(pending.offer.quote.stops.single().orderId, history.orderId)
         assertEquals(OrderProblemReason.LOCAL_CLOSED, history.reason)
         assertNull(repository().execute(OfferAction.STATE).batch)
-        assertEquals("two", offer(repository()).offer!!.quote.stops.single().orderId)
+        assertEquals(second.pickup, offer(repository()).merchant)
         assertEquals(history, saved["alice"]!!.problems!!.single())
     }
 

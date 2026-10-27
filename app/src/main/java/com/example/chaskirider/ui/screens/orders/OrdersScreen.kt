@@ -312,6 +312,7 @@ private fun ExpandedOrderContent(
                 Text("Ganancia del pedido", fontWeight = FontWeight.Bold)
                 Text(stringResource(R.string.orders_money, offer.quote.totalCents / 100.0), fontWeight = FontWeight.Bold)
             }
+            OrderNavigationButton(snapshot, enabled = actionsEnabled)
             OrderActionControls(
                 state = state,
                 isDemo = isDemo,

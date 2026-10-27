@@ -17,8 +17,12 @@ import com.example.chaskirider.domain.repository.*
 object AppContainer {
     private lateinit var applicationContext: Context
     fun initialize(context: Context) {
+        val firstInitialization = !::applicationContext.isInitialized
         applicationContext = context.applicationContext
         NotificationsInitializer().initialize(applicationContext)
+        if (firstInitialization) com.google.firebase.auth.FirebaseAuth.getInstance().addAuthStateListener { auth ->
+            auth.currentUser?.uid?.let { com.example.chaskirider.data.orders.OrderSyncWorker.schedule(applicationContext, it) }
+        }
     }
     private val sessionStore = RiderSessionStore()
     val riderSession: RiderSession = sessionStore
@@ -39,9 +43,10 @@ object AppContainer {
 
     // Repositorio de demostración (Datos simulados locales para test)
     val demoOfferRepository: OfferRepository by lazy {
-        val database = androidx.room.Room.databaseBuilder(applicationContext,
-            com.example.chaskirider.data.orders.DemoOrderDatabase::class.java, "demo_orders.db").build()
-        LocalDemoOfferRepository(com.example.chaskirider.data.orders.RoomDemoOrderStore(database.orders()),
+        val database = com.example.chaskirider.data.orders.openOrderDatabase(applicationContext)
+        LocalDemoOfferRepository(com.example.chaskirider.data.orders.RoomDemoOrderStore(database.orders()) {
+            com.example.chaskirider.data.orders.OrderSyncWorker.schedule(applicationContext, it)
+        },
             { riderSession.user.value?.id }, {
                 kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                     applicationContext.assets.open("demo_orders_lima.json").bufferedReader().use {

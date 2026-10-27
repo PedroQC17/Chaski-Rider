@@ -1,5 +1,21 @@
 # Simulación de pedidos en Android
 
+## Identidad e historial sincronizable — 27 de octubre de 2026
+
+Las ofertas nuevas ya no reutilizan el ID de la ruta como ID del pedido: generan un UUID por ejecución. La ruta solo queda en el almacenamiento de simulación para controlar repeticiones. Room conserva el pedido activo y una tabla de historial/registros pendientes; WorkManager envía el último estado a `riders/{uid}/deliveryRecords/{orderId}` cuando hay conexión y sesión del propietario. Las reglas de esta ruta se publicaron de forma aislada. No se envía ubicación del repartidor, no hay integración con Chaski Food ni sincronización de los chats en este bloque. Véase [IDENTIDAD_Y_REGISTRO_PEDIDOS.md](IDENTIDAD_Y_REGISTRO_PEDIDOS.md).
+
+## Actualización HU08 — 27 de octubre de 2026
+
+La primera confirmación de llegada guarda `arrivedAt` y `arrivalLocation` (coordenadas medidas del repartidor, no el pin del negocio). Repetir la confirmación no cambia el primer registro. Ambos datos se conservan mediante el estado JSON de Room, sin cambiar la tabla. Los registros antiguos sin coordenadas se mantienen sin inventar una posición histórica.
+
+Después de aceptar aparece Navegar al local. Tras recoger cambia a Navegar al cliente; al finalizar desaparece. El botón abre Google Maps mediante un Intent con las coordenadas de la etapa actual. Si Maps no está instalado, intenta abrir una URL de indicaciones; si no hay aplicación compatible muestra un error. No se fuerza un modo de transporte. La ruta y las indicaciones pertenecen a la aplicación externa; no se incorporan ruta vial, ETA vial ni recálculo dentro del mapa de Chaski.
+
+Abrir navegación no registra llegada, recojo ni entrega. Al volver, el flujo solicita nuevamente ubicación; cada confirmación sigue requiriendo GPS reciente y cercanía de 100 m. No se añade backend, publicación ni sincronización remota de pedidos.
+
+Comprobación manual: aceptar, abrir navegación y revisar que el destino sea el local; volver y confirmar llegada dentro de 100 m; recoger y revisar que el botón dirija al cliente; entregar y comprobar que desaparece. Comprobar también el retorno sin cambiar la etapa y el comportamiento sin Google Maps instalado.
+
+Verificación de esta actualización: 66 pruebas unitarias aprobadas sin fallos; APK debug y APK de pruebas Android compilados. Se ampliaron las pruebas Android para comprobar la recuperación de coordenadas desde Room y el cambio de botón por etapa, pero no se ejecutaron: ADB no detectó un dispositivo conectado. La apertura de Maps, el retorno y la alternativa web quedan pendientes de comprobación en celular.
+
 La app usa un único flujo local de pedidos. Registro, disponibilidad y cuenta siguen usando Firebase. No se modificó ni desplegó el backend de pedidos y no se agregó un panel administrativo.
 
 ## Uso

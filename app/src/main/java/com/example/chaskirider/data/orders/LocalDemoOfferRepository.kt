@@ -22,6 +22,7 @@ class LocalDemoOfferRepository(
         val now = clock()
         val saved = store.load(uid) ?: DemoOrderState(empty(now))
         var snapshot = saved.snapshot.copy(serverTime = now)
+        var routeId = saved.catalogRouteId
         val recent = saved.recent.filterValues { now - it < 5 * 60_000 }.toMutableMap()
         if (snapshot.offer != null && snapshot.offer!!.expiresAt <= now) snapshot = empty(now)
         snapshot = when (action) {
@@ -33,6 +34,7 @@ class LocalDemoOfferRepository(
                     val order = DemoOrderCatalog.nearest(catalog(), lat, lng, recent.keys)
                     if (order == null || !hasOffer()) empty(now) else {
                         recent[order.id] = now
+                        routeId = order.id
                         offer(order, lat, lng, now)
                     }
                 }
@@ -40,7 +42,7 @@ class LocalDemoOfferRepository(
             OfferAction.ACCEPT -> {
                 val offer = snapshot.offer ?: throw OfferRequestException(409)
                 if (offer.id != offerId) throw OfferRequestException(409)
-                snapshot.copy(batch = offer.quote, offer = null)
+                snapshot.copy(batch = offer.quote, offer = null, acceptedAt = now)
             }
             OfferAction.REJECT -> {
                 if (snapshot.offer?.id != offerId || offerId == null) throw OfferRequestException(409)
@@ -50,7 +52,8 @@ class LocalDemoOfferRepository(
                 checkActive(snapshot)
                 if (snapshot.pickedUp) throw OfferRequestException(409)
                 OrderLocationRules.requireNear(lat, lng, snapshot.merchant)
-                snapshot.copy(arrivedAt = snapshot.arrivedAt ?: now)
+                if (snapshot.arrivedAt != null) snapshot else snapshot.copy(
+                    arrivedAt = now, arrivalLocation = RoutePoint(requireNotNull(lat), requireNotNull(lng)))
             }
             OfferAction.REPORT_NOT_READY -> {
                 checkActive(snapshot)
@@ -77,7 +80,7 @@ class LocalDemoOfferRepository(
         val waitEnd = snapshot.pickedUpAt ?: now
         val extraMillis = snapshot.waitStartedAt?.let { (waitEnd - it - 300_000).coerceAtLeast(0) } ?: 0
         snapshot = snapshot.copy(waitingCompensationCents = ((extraMillis + 59_999) / 60_000).toInt() * 20)
-        store.save(uid, DemoOrderState(snapshot, recent, saved.problems.orEmpty()))
+        store.save(uid, DemoOrderState(snapshot, recent, saved.problems.orEmpty(), routeId))
         snapshot
     }
     override suspend fun reportProblem(reason: OrderProblemReason, detail: String, cancel: Boolean): OfferSnapshot = mutex.withLock {
@@ -97,7 +100,7 @@ class LocalDemoOfferRepository(
             reason, detail.trim(), now, snapshot.pickedUp, cancel)
         val result = if (cancel) empty(now) else snapshot.copy(serverTime = now, problem = problem)
         store.save(uid, saved.copy(snapshot = result,
-            recent = if (cancel) saved.recent + (problem.orderId to now) else saved.recent,
+            recent = if (cancel) saved.recent + ((saved.catalogRouteId ?: problem.orderId) to now) else saved.recent,
             problems = saved.problems.orEmpty() + problem))
         result
     }
@@ -112,7 +115,7 @@ class LocalDemoOfferRepository(
         val deliveryCents = (delivery / 1000.0 * 120).roundToInt()
         val guarantee = max(0, 600 - 300 - approachCents - deliveryCents)
         val quote = DeliveryQuote(
-            listOf(DeliveryStop("1", order.id, order.deliveryZone, order.delivery, order.deliveryAddress)),
+            listOf(DeliveryStop("1", UUID.randomUUID().toString(), order.deliveryZone, order.delivery, order.deliveryAddress)),
             approach, delivery, ((approach + delivery) / 4.0).roundToInt() + 300,
             300, approachCents, deliveryCents, order.tipCents, guarantee,
             300 + approachCents + deliveryCents + order.tipCents + guarantee, 0, emptyList()
