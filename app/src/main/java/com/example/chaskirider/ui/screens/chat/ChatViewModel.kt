@@ -1,126 +1,150 @@
 package com.example.chaskirider.ui.screens.chat
 
 import androidx.lifecycle.ViewModel
-import com.example.chaskirider.domain.chat.ChatChannel
-import com.example.chaskirider.domain.chat.ChatMessage
-import com.example.chaskirider.domain.chat.ChatSenderRole
+import androidx.lifecycle.viewModelScope
+import com.example.chaskirider.domain.chat.*
 import com.example.chaskirider.domain.orders.OfferSnapshot
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import com.example.chaskirider.domain.repository.RiderSession
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import java.util.UUID
 
-class ChatViewModel : ViewModel() {
-    private val _uiState = MutableStateFlow(ChatUiState())
-    val uiState = _uiState.asStateFlow()
+class ChatViewModel(private val repository: OrderChatRepository, private val drafts: ChatDraftStore,
+    private val session: RiderSession) : ViewModel() {
+    private val mutable = MutableStateFlow(ChatUiState())
+    val uiState = mutable.asStateFlow()
+    private var uid = session.user.value?.id
+    private var orderId: String? = null
+    private var reader: Job? = null
+    private var sender: Job? = null
+    private var writes: Job? = null
+    private var draft = ChatDraft(newId())
+    private var loadedKey: String? = null
 
-    private var currentOrderId: String? = null
+    init {
+        viewModelScope.launch {
+            session.user.map { it?.id }.distinctUntilChanged().collect { id ->
+                if (id != uid) {
+                    uid = id; orderId = null; loadedKey = null
+                    reader?.cancel(); sender?.cancel()
+                    draft = ChatDraft(newId())
+                    mutable.value = ChatUiState()
+                }
+            }
+        }
+    }
+
+    private fun newId() = UUID.randomUUID().toString()
+    private fun key(): String? = uid?.let { user -> orderId?.let { "$user/$it/${mutable.value.activeChannel.name}" } }
+    private fun canSend(): Boolean = key() != null && if (mutable.value.activeChannel == ChatChannel.MERCHANT)
+        mutable.value.isMerchantChannelEnabled else mutable.value.isCustomerChannelEnabled
+
+    fun syncOrderState(snapshot: OfferSnapshot?) {
+        val id = snapshot?.batch?.stops?.singleOrNull()?.orderId
+        if (id != orderId) {
+            reader?.cancel(); sender?.cancel(); loadedKey = null
+            orderId = id; draft = ChatDraft(newId()); mutable.value = ChatUiState()
+        }
+        mutable.update { it.copy(isMerchantChannelEnabled = id != null && snapshot?.pickedUp == false && !snapshot.isDelivered,
+            isCustomerChannelEnabled = id != null && snapshot?.isDelivered == false) }
+        if (!canSend()) { sender?.cancel(); mutable.update { it.copy(busy = false) } }
+    }
 
     fun openChat() {
-        _uiState.update { it.copy(isOpen = true) }
+        if (key() == null) return
+        mutable.update { it.copy(isOpen = true) }
+        loadChannel()
     }
-
     fun closeChat() {
-        _uiState.update { it.copy(isOpen = false, isListeningSpeech = false) }
+        mutable.update { it.copy(isOpen = false, isListeningSpeech = false) }
+        reader?.cancel()
+    }
+    fun selectChannel(channel: ChatChannel) {
+        if (mutable.value.busy || channel == mutable.value.activeChannel) return
+        mutable.update { it.copy(activeChannel = channel, inputText = "", messages = emptyList(), error = null) }
+        loadChannel()
+    }
+    fun retry() { if (!mutable.value.busy) loadChannel() }
+
+    private fun loadChannel() {
+        val owner = uid ?: return
+        val order = orderId ?: return
+        val channel = mutable.value.activeChannel
+        val target = key() ?: return
+        val previous = draft.takeIf { loadedKey == target }
+        reader?.cancel()
+        mutable.update { it.copy(loading = true, error = null, fromCache = false) }
+        reader = viewModelScope.launch {
+            try {
+                writes?.join()
+                val restored = previous ?: drafts.load(target) ?: ChatDraft(newId())
+                if (target != key()) return@launch
+                draft = restored; loadedKey = target
+                mutable.update { it.copy(inputText = restored.body) }
+                repository.observe(owner, order, channel).collect { conversation ->
+                    if (target == key()) mutable.update { it.copy(messages = conversation.messages,
+                        fromCache = conversation.fromCache, loading = false) }
+                }
+            } catch (error: CancellationException) { throw error }
+            catch (_: Exception) {
+                if (target == key()) mutable.update { it.copy(loading = false,
+                    error = "No se pudo cargar la conversación. Revisa tu conexión y vuelve a intentar.") }
+            }
+        }
     }
 
-    fun selectChannel(channel: ChatChannel) {
-        _uiState.update { it.copy(activeChannel = channel) }
+    private fun saveDraft(target: String, value: ChatDraft) {
+        val previous = writes
+        writes = viewModelScope.launch {
+            previous?.join()
+            try { drafts.save(target, value) }
+            catch (error: CancellationException) { throw error }
+            catch (_: Exception) { if (key() == target) mutable.update { it.copy(error = "No se pudo guardar el borrador en este dispositivo.") } }
+        }
     }
 
     fun updateInputText(text: String) {
-        _uiState.update { it.copy(inputText = text) }
+        if (!canSend() || mutable.value.busy || mutable.value.loading) return
+        val target = key() ?: return
+        draft = draft.copy(body = text.take(2000))
+        mutable.update { it.copy(inputText = draft.body, error = null) }
+        saveDraft(target, draft)
     }
-
-    // dictado por voz sin envio automatico
-    fun onSpeechRecognized(recognizedText: String) {
-        if (recognizedText.isBlank()) return
-        _uiState.update {
-            val combined = if (it.inputText.isBlank()) recognizedText else "${it.inputText} $recognizedText"
-            it.copy(inputText = combined, isListeningSpeech = false, speechError = null)
-        }
-    }
-
-    fun setListeningSpeech(listening: Boolean) {
-        _uiState.update { it.copy(isListeningSpeech = listening, speechError = null) }
-    }
-
-    fun setSpeechError(error: String) {
-        _uiState.update { it.copy(isListeningSpeech = false, speechError = error) }
-    }
-
-    // envio del mensaje
-    fun sendMessage() {
-        val text = _uiState.value.inputText.trim()
+    fun onSpeechRecognized(text: String) {
         if (text.isBlank()) return
-
-        val orderId = currentOrderId ?: "demo_order"
-        val channel = _uiState.value.activeChannel
-
-        val newMessage = ChatMessage(
-            id = UUID.randomUUID().toString(),
-            orderId = orderId,
-            channel = channel,
-            senderName = "Tú (Repartidor)",
-            senderRole = ChatSenderRole.RIDER,
-            text = text,
-            timestamp = System.currentTimeMillis()
-        )
-
-        _uiState.update {
-            it.copy(
-                messages = it.messages + newMessage,
-                inputText = ""
-            )
-        }
+        updateInputText(listOf(mutable.value.inputText, text).filter { it.isNotBlank() }.joinToString(" "))
+        mutable.update { it.copy(isListeningSpeech = false) }
     }
+    fun setListeningSpeech(listening: Boolean) { mutable.update { it.copy(isListeningSpeech = listening, speechError = null) } }
+    fun setSpeechError(error: String) { mutable.update { it.copy(isListeningSpeech = false, speechError = error) } }
 
-    // sincornizacion de los pedidos
-    fun syncOrderState(snapshot: OfferSnapshot?) {
-        if (snapshot == null) {
-            _uiState.update { ChatUiState() }
-            return
-        }
-
-        val orderId = snapshot.batch?.stops?.firstOrNull()?.orderId ?: "demo_order"
-        if (currentOrderId != orderId) {
-            currentOrderId = orderId
-            val merchantName = snapshot.merchantName ?: "Establecimiento"
-            val initialMessages = listOf(
-                ChatMessage(
-                    id = "init_merchant",
-                    orderId = orderId,
-                    channel = ChatChannel.MERCHANT,
-                    senderName = merchantName,
-                    senderRole = ChatSenderRole.MERCHANT,
-                    text = "Hola repartidor, el pedido está en preparación en nuestro local.",
-                    timestamp = snapshot.serverTime - 120_000
-                ),
-                ChatMessage(
-                    id = "init_customer",
-                    orderId = orderId,
-                    channel = ChatChannel.CUSTOMER,
-                    senderName = "Cliente",
-                    senderRole = ChatSenderRole.CUSTOMER,
-                    text = "Hola! Por favor tocar el timbre al llegar, gracias.",
-                    timestamp = snapshot.serverTime - 60_000
-                )
-            )
-            _uiState.update { it.copy(messages = initialMessages) }
-        }
-
-        // El chat con el establecimiento solo permite en recojo
-        val merchantEnabled = !snapshot.pickedUp && !snapshot.isDelivered
-        // Chat del cliente solo de lectura cuando termine el pedido
-        val customerEnabled = !snapshot.isDelivered
-
-        _uiState.update {
-            val targetChannel = if (!merchantEnabled && it.activeChannel == ChatChannel.MERCHANT) ChatChannel.CUSTOMER else it.activeChannel
-            it.copy(
-                isMerchantChannelEnabled = merchantEnabled,
-                isCustomerChannelEnabled = customerEnabled,
-                activeChannel = targetChannel
-            )
+    fun sendMessage() {
+        if (!canSend() || mutable.value.busy || mutable.value.loading || draft.body.trim().isEmpty()) return
+        val owner = uid ?: return
+        val order = orderId ?: return
+        val channel = mutable.value.activeChannel
+        val target = key() ?: return
+        val confirmed = mutable.value.messages.firstOrNull { it.id == draft.id }
+        if (confirmed != null && confirmed.text != draft.body.trim()) draft = draft.copy(id = newId())
+        val sending = draft
+        mutable.update { it.copy(busy = true, error = null) }
+        sender = viewModelScope.launch {
+            try {
+                writes?.join()
+                drafts.save(target, sending)
+                if (key() != target || !canSend()) return@launch
+                repository.send(owner, order, channel, sending.id, sending.body)
+                drafts.clear(target, sending)
+                if (key() == target) {
+                    draft = ChatDraft(newId())
+                    mutable.update { it.copy(inputText = "") }
+                }
+            } catch (_: TimeoutCancellationException) {
+                if (key() == target) mutable.update { it.copy(error = "No se confirmó el envío. Tu borrador se conserva; revisa la conversación antes de reintentar.") }
+            } catch (error: CancellationException) { throw error }
+            catch (_: Exception) {
+                if (key() == target) mutable.update { it.copy(error = "No se pudo completar el envío. Tu borrador se conserva; comprueba la conexión y la etapa del pedido.") }
+            } finally { if (key() == target) mutable.update { it.copy(busy = false) } }
         }
     }
 }

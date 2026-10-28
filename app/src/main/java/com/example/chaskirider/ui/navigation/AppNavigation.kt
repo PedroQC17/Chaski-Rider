@@ -129,6 +129,14 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
         OrdersViewModel(AppContainer.demoOfferRepository, AppContainer.riderSession, automaticSearch = false)
     }
     val ordersState by demoOrdersViewModel.uiState.collectAsStateWithLifecycle()
+    val trackingOrderId = ordersState.snapshot?.batch?.stops?.singleOrNull()?.orderId
+    val shouldTrack = workArea && ordersState.snapshot?.pickedUp == true && ordersState.snapshot?.isDelivered != true
+    androidx.lifecycle.compose.LifecycleStartEffect(user?.id, trackingOrderId, shouldTrack) {
+        if (shouldTrack && trackingOrderId != null && user != null)
+            com.example.chaskirider.data.orders.OrderTrackingService.start(context, user.id, trackingOrderId)
+        else com.example.chaskirider.data.orders.OrderTrackingService.stop(context)
+        onStopOrDispose { }
+    }
     val supportViewModel: SupportViewModel = viewModel {
         SupportViewModel(AppContainer.supportRepository, AppContainer.supportDraftStore, AppContainer.riderSession)
     }
@@ -146,9 +154,10 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
         navController.navigate(Screen.Support.route) { launchSingleTop = true }
     }
     LaunchedEffect(ordersState.snapshot) { supportViewModel.setAvailableOrder(activeSupportOrder()) }
-    androidx.lifecycle.compose.LifecycleStartEffect(demoOrdersViewModel, offersActive, user?.id) {
+    val searchingForOffers = offersActive && ordersState.snapshot?.batch == null
+    androidx.lifecycle.compose.LifecycleStartEffect(demoOrdersViewModel, searchingForOffers, user?.id) {
         demoOrdersViewModel.setForeground(true)
-        if (offersActive) com.example.chaskirider.data.orders.OrderSearchService.start(context)
+        if (searchingForOffers) com.example.chaskirider.data.orders.OrderSearchService.start(context)
         else com.example.chaskirider.data.orders.OrderSearchService.stop(context)
         onStopOrDispose { demoOrdersViewModel.setForeground(false) }
     }

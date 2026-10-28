@@ -62,6 +62,14 @@ object AppContainer {
     val supportRepository: com.example.chaskirider.domain.support.SupportRepository by lazy {
         com.example.chaskirider.data.support.FirebaseSupportRepository()
     }
+    val orderChatRepository: com.example.chaskirider.domain.chat.OrderChatRepository by lazy {
+        com.example.chaskirider.data.chat.FirebaseOrderChatRepository()
+    }
+    val chatDraftStore: com.example.chaskirider.domain.chat.ChatDraftStore by lazy {
+        val database = androidx.room.Room.databaseBuilder(applicationContext,
+            com.example.chaskirider.data.chat.ChatDraftDatabase::class.java, "chat_drafts.db").build()
+        com.example.chaskirider.data.chat.RoomChatDraftStore(database.drafts())
+    }
     val supportDraftStore: com.example.chaskirider.domain.support.SupportDraftStore by lazy {
         val database = androidx.room.Room.databaseBuilder(applicationContext,
             com.example.chaskirider.data.support.SupportDraftDatabase::class.java, "support_drafts.db").build()

@@ -12,6 +12,8 @@ import com.example.chaskirider.domain.model.*
 import com.example.chaskirider.domain.orders.*
 import com.example.chaskirider.domain.repository.*
 import com.example.chaskirider.ui.screens.orders.*
+import com.example.chaskirider.domain.chat.*
+import com.example.chaskirider.ui.screens.chat.ChatViewModel
 import com.example.chaskirider.ui.theme.ChaskiRiderTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
@@ -110,7 +112,15 @@ class DemoOrdersDeviceTest {
         val repo = LocalDemoOfferRepository(RoomDemoOrderStore(database.orders()), { session.user.value?.id }, { catalog() }, hasOffer = { true })
         val vm = OrdersViewModel(repo, session, locations)
         try {
-            compose.setContent { ChaskiRiderTheme { OrdersRoute(vm, {}, isDemo = true) } }
+            val chat = ChatViewModel(object : OrderChatRepository {
+                override fun observe(uid: String, orderId: String, channel: ChatChannel) = kotlinx.coroutines.flow.flowOf(ChatConversation(emptyList()))
+                override suspend fun send(uid: String, orderId: String, channel: ChatChannel, messageId: String, body: String) { }
+            }, object : ChatDraftStore {
+                override suspend fun load(key: String): ChatDraft? = null
+                override suspend fun save(key: String, draft: ChatDraft) { }
+                override suspend fun clear(key: String, draft: ChatDraft) { }
+            }, session)
+            compose.setContent { ChaskiRiderTheme { OrdersRoute(vm, {}, isDemo = true, chatViewModel = chat) } }
             compose.waitUntil(10_000) { vm.uiState.value.snapshot != null && !vm.uiState.value.busy }
             compose.runOnUiThread { vm.createOffer() }
             compose.waitUntil(10_000) { vm.uiState.value.snapshot?.offer != null && !vm.uiState.value.busy }

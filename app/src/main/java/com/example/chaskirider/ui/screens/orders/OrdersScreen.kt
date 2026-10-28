@@ -32,9 +32,13 @@ import com.example.chaskirider.ui.theme.Orange
 import java.util.Locale
 
 @Composable
-fun OrdersRoute(viewModel: OrdersViewModel, onMenu: () -> Unit, isDemo: Boolean = false, onSupport: () -> Unit = {}) {
+fun OrdersRoute(viewModel: OrdersViewModel, onMenu: () -> Unit, isDemo: Boolean = false, onSupport: () -> Unit = {},
+    chatViewModel: ChatViewModel = viewModel {
+        ChatViewModel(com.example.chaskirider.di.AppContainer.orderChatRepository,
+            com.example.chaskirider.di.AppContainer.chatDraftStore,
+            com.example.chaskirider.di.AppContainer.riderSession)
+    }) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val chatViewModel: ChatViewModel = viewModel()
     val chatState by chatViewModel.uiState.collectAsStateWithLifecycle()
 
     val owner = LocalLifecycleOwner.current
@@ -108,7 +112,7 @@ private fun OrdersScreen(
 
         OrdersTopHeader(onMenu = onMenu)
 
-        if (snapshot?.batch != null && !snapshot.isDelivered) {
+        if (snapshot?.batch != null) {
             ChatFloatingActionButton(
                 onClick = { chatViewModel.openChat() }
             )
@@ -144,7 +148,9 @@ private fun OrdersScreen(
             onSelectChannel = chatViewModel::selectChannel,
             onUpdateInputText = chatViewModel::updateInputText,
             onSpeechResult = chatViewModel::onSpeechRecognized,
-            onSendMessage = chatViewModel::sendMessage
+            onSendMessage = chatViewModel::sendMessage,
+            onRetry = chatViewModel::retry,
+            onSpeechError = chatViewModel::setSpeechError
         )
     }
 }

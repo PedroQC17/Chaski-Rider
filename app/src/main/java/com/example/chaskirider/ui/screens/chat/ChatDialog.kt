@@ -10,6 +10,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,6 +23,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -44,7 +46,9 @@ fun ChatDialog(
     onSelectChannel: (ChatChannel) -> Unit,
     onUpdateInputText: (String) -> Unit,
     onSpeechResult: (String) -> Unit,
-    onSendMessage: () -> Unit
+    onSendMessage: () -> Unit,
+    onRetry: () -> Unit = {},
+    onSpeechError: (String) -> Unit = {}
 ) {
     if (!state.isOpen) return
 
@@ -75,9 +79,10 @@ fun ChatDialog(
                     putExtra(RecognizerIntent.EXTRA_LANGUAGE, "es-PE")
                     putExtra(RecognizerIntent.EXTRA_PROMPT, "Dicta tu mensaje para la entrega...")
                 }
-                runCatching { speechLauncher.launch(intent) }
+                runCatching { speechLauncher.launch(intent) }.onFailure { onSpeechError("No se pudo abrir el dictado por voz.") }
             },
-            onSendMessage = onSendMessage
+            onSendMessage = onSendMessage,
+            onRetry = onRetry
         )
     }
 }
@@ -89,7 +94,8 @@ fun ChatDialogContent(
     onSelectChannel: (ChatChannel) -> Unit,
     onUpdateInputText: (String) -> Unit,
     onStartDictation: () -> Unit,
-    onSendMessage: () -> Unit
+    onSendMessage: () -> Unit,
+    onRetry: () -> Unit = {}
 ) {
     Surface(
         modifier = Modifier
@@ -138,7 +144,7 @@ fun ChatDialogContent(
                                     color = TextDark
                                 )
                                 Text(
-                                    text = "Comunicación en tiempo real",
+                                    text = "Mensajes del pedido",
                                     fontSize = 12.sp,
                                     color = TextMuted
                                 )
@@ -172,6 +178,7 @@ fun ChatDialogContent(
                 ) {
                     Tab(
                         selected = state.activeChannel == ChatChannel.MERCHANT,
+                        enabled = !state.busy && !state.loading,
                         onClick = { onSelectChannel(ChatChannel.MERCHANT) },
                         text = {
                             Text(
@@ -183,6 +190,7 @@ fun ChatDialogContent(
                     )
                     Tab(
                         selected = state.activeChannel == ChatChannel.CUSTOMER,
+                        enabled = !state.busy && !state.loading,
                         onClick = { onSelectChannel(ChatChannel.CUSTOMER) },
                         text = {
                             Text(
@@ -195,17 +203,31 @@ fun ChatDialogContent(
                 }
             }
 
+            if (state.loading) LinearProgressIndicator(Modifier.fillMaxWidth())
+            state.error?.let { error ->
+                Text(error, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(horizontal = 16.dp))
+                TextButton(onClick = onRetry, enabled = !state.busy) { Text("Reintentar") }
+            }
+            state.speechError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            if (state.fromCache) Text("Mostrando información guardada; esperando actualización.",
+                modifier = Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.bodySmall)
             val filteredMessages = remember(state.messages, state.activeChannel) {
                 state.messages.filter { it.channel == state.activeChannel }
+            }
+            val messageList = rememberLazyListState()
+            LaunchedEffect(state.activeChannel, filteredMessages.lastOrNull()?.id) {
+                if (filteredMessages.isNotEmpty()) messageList.scrollToItem(filteredMessages.lastIndex)
             }
 
             // Lista de mensajes con fondo limpio
             LazyColumn(
+                state = messageList,
                 modifier = Modifier
                     .weight(1f)
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                if (filteredMessages.isEmpty() && !state.loading) item { Text("Todavía no hay mensajes en este canal.") }
                 items(filteredMessages, key = { it.id }) { msg ->
                     ChatMessageItem(msg)
                 }
@@ -252,6 +274,7 @@ fun ChatDialogContent(
                         // Botón para dictado por voz
                         IconButton(
                             onClick = onStartDictation,
+                            enabled = !state.busy && !state.loading,
                             modifier = Modifier
                                 .size(40.dp)
                                 .background(Orange.copy(alpha = 0.12f), CircleShape)
@@ -266,9 +289,10 @@ fun ChatDialogContent(
 
                         OutlinedTextField(
                             value = state.inputText,
+                            enabled = !state.busy && !state.loading,
                             onValueChange = onUpdateInputText,
                             placeholder = { Text("Escribe o dicta un mensaje...", fontSize = 13.sp, color = TextMuted) },
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.weight(1f).testTag("order_chat_input"),
                             shape = RoundedCornerShape(24.dp),
                             maxLines = 3,
                             colors = OutlinedTextFieldDefaults.colors(
@@ -282,7 +306,7 @@ fun ChatDialogContent(
                         // Botón enviar
                         IconButton(
                             onClick = onSendMessage,
-                            enabled = state.inputText.isNotBlank(),
+                            enabled = state.inputText.isNotBlank() && !state.busy && !state.loading,
                             modifier = Modifier
                                 .size(40.dp)
                                 .clip(CircleShape)
@@ -313,7 +337,7 @@ private fun ChatMessageItem(message: ChatMessage) {
     val textColor = if (isRider) Color.White else TextDark
 
     val timeFormatter = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
-    val timeStr = remember(message.timestamp) { timeFormatter.format(Date(message.timestamp)) }
+    val timeStr = remember(message.timestamp) { if (message.timestamp > 0) timeFormatter.format(Date(message.timestamp)) else "Confirmando hora" }
 
     Column(
         modifier = Modifier.fillMaxWidth(),

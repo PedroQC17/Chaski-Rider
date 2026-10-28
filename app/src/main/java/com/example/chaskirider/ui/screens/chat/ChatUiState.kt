@@ -10,6 +10,10 @@ data class ChatUiState(
     val inputText: String = "",
     val isListeningSpeech: Boolean = false,
     val speechError: String? = null,
-    val isMerchantChannelEnabled: Boolean = true,
-    val isCustomerChannelEnabled: Boolean = true
+    val isMerchantChannelEnabled: Boolean = false,
+    val isCustomerChannelEnabled: Boolean = false,
+    val loading: Boolean = false,
+    val busy: Boolean = false,
+    val fromCache: Boolean = false,
+    val error: String? = null
 )

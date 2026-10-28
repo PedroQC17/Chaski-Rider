@@ -43,6 +43,8 @@
 
         <service android:name=".data.orders.OrderSearchService"
             android:exported="false" android:foregroundServiceType="location" />
+        <service android:name=".data.orders.OrderTrackingService"
+            android:exported="false" android:foregroundServiceType="location" />
         <service
             android:name=".data.notifications.ChaskiFirebaseMessagingService"
             android:exported="false">

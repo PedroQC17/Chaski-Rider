@@ -1,5 +1,7 @@
 # Simulación de pedidos en Android
 
+Chat actualizado: los canales del pedido ahora utilizan Firebase y borradores Room, con cierre de escritura por etapa y sin mensajes iniciales ficticios. La web del establecimiento y el puente con Chaski Food siguen pendientes. Véase [HU10_CHAT.md](HU10_CHAT.md).
+
 ## Identidad e historial sincronizable — 27 de octubre de 2026
 
 Las ofertas nuevas ya no reutilizan el ID de la ruta como ID del pedido: generan un UUID por ejecución. La ruta solo queda en el almacenamiento de simulación para controlar repeticiones. Room conserva el pedido activo y una tabla de historial/registros pendientes; WorkManager envía el último estado a `riders/{uid}/deliveryRecords/{orderId}` cuando hay conexión y sesión del propietario. Las reglas de esta ruta se publicaron de forma aislada. No se envía ubicación del repartidor, no hay integración con Chaski Food ni sincronización de los chats en este bloque. Véase [IDENTIDAD_Y_REGISTRO_PEDIDOS.md](IDENTIDAD_Y_REGISTRO_PEDIDOS.md).

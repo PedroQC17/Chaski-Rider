@@ -34,6 +34,8 @@ interface DemoOrderDao {
     @Upsert suspend fun save(entity: DemoOrderEntity)
     @Query("SELECT * FROM order_records WHERE uid = :uid AND orderId = :orderId")
     suspend fun record(uid: String, orderId: String): OrderRecordEntity?
+    @Query("SELECT * FROM order_records WHERE uid = :uid AND orderId = :orderId")
+    fun observeRecord(uid: String, orderId: String): kotlinx.coroutines.flow.Flow<OrderRecordEntity?>
     @Query("SELECT * FROM order_records WHERE uid = :uid AND pending = 1 ORDER BY revision LIMIT 50")
     suspend fun pending(uid: String): List<OrderRecordEntity>
     @Query("UPDATE order_records SET pending = 0 WHERE uid = :uid AND orderId = :orderId AND revision = :revision")

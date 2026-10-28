@@ -1,5 +1,26 @@
 # Revisión del backlog frente al código actual
 
+## Corte actualizado después de tracking y chat
+
+Esta sección es el diagnóstico vigente. La tabla inferior conserva la revisión anterior a esas implementaciones y no debe usarse como estado actual de HU09/HU10/WorkManager.
+
+| Sprint | Estado actual frente al Excel |
+|---|---|
+| 1: HU01-HU04 | Base técnica, autenticación, perfil y disponibilidad implementados; cierre literal pendiente por automóvil, uso activo de Retrofit en un flujo REST y despacho remoto de ofertas por FCM. No basta incluir dependencias para demostrar el requisito. |
+| 2: HU05-HU07 | Ofertas y cotización simuladas funcionales. Sin fuente funcional de demanda, reserva multiusuario/asignación real por vehículo, ni cálculo vial propio. El origen de pedidos sigue siendo el catálogo local. |
+| 3: HU08-HU10 | Implementación Android de llegada/recojo, tracking y chat persistente probada. Llegada guarda hora y coordenadas en Room; tracking se publica solo después del recojo, continúa minimizado y se elimina al finalizar. Chat tiene borradores, remitente/hora, dictado y restricciones por etapa. Navegación/ruta/recálculo se delegan a Google Maps: requiere aceptar esa interpretación de filas 52-53/59-60. Falta el interlocutor web del negocio y la integración real del cliente de Chaski Food. El dictado utiliza RecognizerIntent, no SpeechRecognizer embebido. |
+| 4: HU11-HU13 | Entrega básica, incidencias locales y soporte Android. Faltan PIN/evidencia según las condiciones del pedido, registro económico completo, ampliación de ayuda/emergencia, publicación/verificación de soporte y web de atención. La sincronización de estados de pedido no incluye por sí sola el detalle de todas las incidencias. |
+| 5: HU14-HU16 | Room y WorkManager con reintentos ya implementados y probados con pérdida real de red. Faltan ganancias/liquidaciones y dashboard. Para cerrar HU16 literalmente, revisar fila 105: la cola actual conserva la última revisión por pedido y no cada acción individual con su propio ID; los detalles de espera/incidencias no integran todavía todos los registros remotos. |
+| 6: HU17-HU20 | Pendientes las tres funciones IA y verificación de release/distribución en Google Play. |
+
+Los tres procesos de negocio exigidos incluyen el económico, todavía pendiente. Material, Authentication, MVVM/UiState, corrutinas, GPS/cámara/dictado, Room/SQLite y WorkManager tienen implementación. El uso de Firebase/SDK no demuestra por sí solo consumo de APIs REST mediante Retrofit; conviene integrarlo cuando exista una API necesaria, no añadir una llamada sin utilidad.
+
+La última entrega pasó 77 pruebas unitarias, cuatro pruebas nuevas de reglas de chat y seis pruebas Android de chat/persistencia/regresión de pedidos. La entrega anterior de tracking pasó además sus pruebas en celular y reglas. Esto no certifica todas las historias del Excel. Esta revisión no ejecutó pruebas nuevas ni modificó el workbook ni la lógica Android.
+
+Prioridad siguiente: terminar la web del negocio con una única cuenta operadora de pruebas (decisión del usuario), manteniendo soporte separado. Después cerrar HU11-HU13 y abordar el proceso económico/dashboard. La integración con Chaski Food sigue dependiendo del otro equipo y no se sustituye por una simulación silenciosa.
+
+## Diagnóstico histórico anterior a las últimas entregas
+
 Actualización posterior a la revisión: se añadió `arrivalLocation` al primer registro de llegada y navegación externa por botón, autorizada por el usuario. La navegación cambia de local a cliente después del recojo. Se verificaron 66 pruebas unitarias y compilación de app y APK de pruebas. Las observaciones inferiores sobre coordenadas pendientes corresponden al diagnóstico inicial; esta brecha ya fue corregida para nuevas llegadas. Sigue pendiente probar Maps en dispositivo y confirmar si la navegación externa satisface el criterio académico de ruta/recálculo. HU09 y HU10 conservan las demás brechas indicadas.
 
 Fecha: 27/10/2026. Fuente: `C:/Users/Angel/Downloads/ChaskiRiders-backlogpropuesta (2).xlsx`, hojas PLANIFICACION y REQUISITOS.
