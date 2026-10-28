@@ -63,6 +63,41 @@ class SupportViewModelTest {
         assertFalse(SupportValidation.validReply(" "))
     }
 
+    @Test fun orderHelpAutomaticallyAttachesExactStageAndIncidentCategory() = runTest(dispatcher) {
+        val vm = SupportViewModel(repository, store, session); runCurrent()
+        val order = SupportOrderContext("order", "Local", "Recojo", "Destino", true, "incident",
+            com.example.chaskirider.domain.orders.OrderStatus.ON_THE_WAY, OrderProblemReason.VEHICLE_PROBLEM)
+        vm.setAvailableOrder(order); vm.selectCategory(SupportCategory.ORDER)
+        vm.selectTopic(SupportTopic.ORDER_OTHER); vm.openForm(); runCurrent()
+        assertEquals(order, vm.uiState.value.draft!!.order)
+        vm.changeBody("El vehículo no puede continuar con la entrega"); runCurrent(); vm.createTicket(); runCurrent()
+        assertEquals(OrderProblemReason.VEHICLE_PROBLEM, created.single().second.order!!.problemCategory)
+    }
+
+    @Test fun emergencyPreparesLocationButNeverSendsBeforeReview() = runTest(dispatcher) {
+        val locations = object : com.example.chaskirider.domain.repository.LocationRepository {
+            override suspend fun currentLocation() = Result.success(com.example.chaskirider.domain.model.GeoPoint(-12.04, -77.03))
+        }
+        val vm = SupportViewModel(repository, store, session, locations); runCurrent()
+        vm.prepareEmergency(); runCurrent()
+        assertEquals(SupportTopic.EMERGENCY, vm.uiState.value.draft!!.topic)
+        assertEquals(-12.04, vm.uiState.value.draft!!.location!!.latitude, 0.0)
+        assertTrue(vm.uiState.value.formOpen)
+        assertTrue(created.isEmpty())
+        assertEquals(vm.uiState.value.draft, saved["alice"])
+    }
+
+    @Test fun emergencyWithoutGpsAllowsDescriptionAndPreservesPreviousDraft() = runTest(dispatcher) {
+        val vm = SupportViewModel(repository, store, session); runCurrent(); form(vm); runCurrent()
+        val original=vm.uiState.value.draft
+        vm.prepareEmergency(); runCurrent()
+        assertEquals(original, vm.uiState.value.draft)
+        vm.discardDraft(); runCurrent(); vm.prepareEmergency(); runCurrent()
+        assertNull(vm.uiState.value.draft!!.location)
+        assertNotNull(vm.uiState.value.notice)
+        assertTrue(created.isEmpty())
+    }
+
     @Test fun draftSurvivesNewViewModelAndDoesNotLeakAcrossAccounts() = runTest(dispatcher) {
         val vm = SupportViewModel(repository, store, session); runCurrent()
         form(vm); runCurrent()

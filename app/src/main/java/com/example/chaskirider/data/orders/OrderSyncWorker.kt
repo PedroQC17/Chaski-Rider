@@ -33,6 +33,10 @@ class OrderSyncWorker(context: Context, params: WorkerParameters) : CoroutineWor
                     withTimeout(20_000) {
                         FirebaseFirestore.getInstance().runTransaction { tx ->
                             val old = tx.get(ref)
+                            val incidents = record.problems.orEmpty().map { problem ->
+                                val incidentRef = ref.collection("incidents").document(problem.id)
+                                Triple(problem, incidentRef, tx.get(incidentRef).exists())
+                            }
                             if ((old.getLong("revision") ?: 0) < entity.revision) {
                                 tx.set(ref, mapOf(
                                 "orderId" to record.orderId, "riderId" to uid, "status" to record.status.name,
@@ -45,6 +49,13 @@ class OrderSyncWorker(context: Context, params: WorkerParameters) : CoroutineWor
                                 if (record.status in listOf(com.example.chaskirider.domain.orders.OrderStatus.DELIVERED,
                                         com.example.chaskirider.domain.orders.OrderStatus.CANCELLED))
                                     tx.delete(ref.collection("tracking").document("current"))
+                            }
+                            incidents.filterNot { it.third }.forEach { (problem, incidentRef, _) ->
+                                tx.set(incidentRef, mapOf("orderId" to record.orderId, "riderId" to uid,
+                                    "category" to problem.reason.name, "description" to problem.detail,
+                                    "occurredAt" to problem.createdAt,
+                                    "orderStatus" to (problem.orderStatus?.name ?: if (problem.pickedUp) "ON_THE_WAY" else "ACCEPTED"),
+                                    "cancelled" to problem.cancelled, "createdAt" to FieldValue.serverTimestamp()))
                             }
                         }.await()
                     }

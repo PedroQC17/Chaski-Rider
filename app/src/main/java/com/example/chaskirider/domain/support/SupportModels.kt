@@ -1,12 +1,16 @@
 package com.example.chaskirider.domain.support
 
 import kotlinx.coroutines.flow.Flow
+import com.example.chaskirider.domain.orders.OrderStatus
+import com.example.chaskirider.domain.orders.OrderProblemReason
 
 enum class SupportCategory(val title: String) {
-    ORDER("Un pedido"), ACCOUNT("Mi cuenta"), PAYMENTS("Ganancias y pagos"), APP("Uso de la app")
+    ORDER("Un pedido"), ACCOUNT("Mi cuenta"), PAYMENTS("Ganancias y pagos"), APP("Uso de la app"), SAFETY("Seguridad y emergencia")
 }
 
 enum class SupportTopic(val category: SupportCategory, val title: String, val guidance: String) {
+    EMERGENCY(SupportCategory.SAFETY, "Accidente o situación de riesgo",
+        "Primero ponte a salvo. Si hay peligro inmediato, contacta a los servicios de emergencia de tu localidad. Cuando puedas, informa a soporte. Este canal no sustituye una llamada de emergencia ni garantiza atención inmediata. Tu pedido seguirá activo."),
     LOCAL_CLOSED(SupportCategory.ORDER, "El local está cerrado",
         "Verifica que estés en el local indicado. Antes del recojo puedes cancelar desde el pedido, indicando el motivo. Si ya tienes el producto, solicita ayuda; el pedido debe seguir activo."),
     ORDER_NOT_READY(SupportCategory.ORDER, "El pedido no está listo",
@@ -30,10 +34,14 @@ enum class SupportTopic(val category: SupportCategory, val title: String, val gu
 }
 
 data class SupportOrderContext(val orderId: String, val merchantName: String, val pickupAddress: String,
-    val deliveryAddress: String, val pickedUp: Boolean, val problemId: String? = null)
+    val deliveryAddress: String, val pickedUp: Boolean, val problemId: String? = null,
+    val orderStatus: OrderStatus? = if (pickedUp) OrderStatus.ON_THE_WAY else OrderStatus.ACCEPTED,
+    val problemCategory: OrderProblemReason? = null)
 
 data class SupportDraft(val id: String, val topic: SupportTopic? = null, val body: String = "",
-    val order: SupportOrderContext? = null)
+    val order: SupportOrderContext? = null, val location: SupportLocation? = null)
+
+data class SupportLocation(val latitude: Double, val longitude: Double, val capturedAt: Long)
 
 enum class SupportTicketStatus { OPEN, CLOSED }
 enum class SupportSender { RIDER, SUPPORT }
@@ -41,7 +49,8 @@ data class SupportMessage(val id: String, val sender: SupportSender, val body: S
     val createdAt: Long, val pending: Boolean = false)
 data class SupportTicket(val id: String, val topic: SupportTopic, val createdAt: Long,
     val status: SupportTicketStatus = SupportTicketStatus.OPEN, val order: SupportOrderContext? = null,
-    val messages: List<SupportMessage> = emptyList(), val pending: Boolean = false)
+    val messages: List<SupportMessage> = emptyList(), val pending: Boolean = false,
+    val location: SupportLocation? = null)
 
 interface SupportDraftStore {
     suspend fun load(uid: String): SupportDraft?

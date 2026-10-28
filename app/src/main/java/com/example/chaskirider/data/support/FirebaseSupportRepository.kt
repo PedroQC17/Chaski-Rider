@@ -48,14 +48,19 @@ class FirebaseSupportRepository(private val auth: FirebaseAuth = FirebaseAuth.ge
         val ref = tickets(uid).document(draft.id)
         val order = draft.order?.let { mapOf("orderId" to it.orderId, "merchantName" to it.merchantName,
             "pickupAddress" to it.pickupAddress, "deliveryAddress" to it.deliveryAddress,
-            "pickedUp" to it.pickedUp, "problemId" to it.problemId) }
+            "pickedUp" to it.pickedUp, "problemId" to it.problemId,
+            "orderStatus" to (it.orderStatus ?: if (it.pickedUp) com.example.chaskirider.domain.orders.OrderStatus.ON_THE_WAY
+                else com.example.chaskirider.domain.orders.OrderStatus.ACCEPTED).name, "problemCategory" to it.problemCategory?.name) }
+        val location = draft.location?.let { mapOf("latitude" to it.latitude, "longitude" to it.longitude, "capturedAt" to it.capturedAt) }
         db.runTransaction { transaction ->
             val existing = transaction.get(ref)
             if (existing.exists()) {
                 check(existing.getString("topic") == topic.name && existing.getString("body") == draft.body.trim()
-                    && existing.get("order") == order) { "Este ticket ya fue registrado con otro contenido" }
+                    && existing.get("order") == order && existing.get("location") == location) { "Este ticket ya fue registrado con otro contenido" }
             } else transaction.set(ref, mapOf("topic" to topic.name, "category" to topic.category.name,
-                "body" to draft.body.trim(), "order" to order, "status" to "OPEN", "createdAt" to FieldValue.serverTimestamp()))
+                "body" to draft.body.trim(), "order" to order, "location" to location,
+                "priority" to if (topic == SupportTopic.EMERGENCY) "URGENT" else "NORMAL",
+                "status" to "OPEN", "createdAt" to FieldValue.serverTimestamp()))
             draft.id
         }.await()
     }
@@ -80,11 +85,17 @@ class FirebaseSupportRepository(private val auth: FirebaseAuth = FirebaseAuth.ge
     private fun ticket(doc: DocumentSnapshot): SupportTicket {
         val order = (doc.get("order") as? Map<*, *>)?.let { SupportOrderContext(
             it["orderId"] as String, it["merchantName"] as String, it["pickupAddress"] as String,
-            it["deliveryAddress"] as String, it["pickedUp"] as Boolean, it["problemId"] as? String) }
+            it["deliveryAddress"] as String, it["pickedUp"] as Boolean, it["problemId"] as? String,
+            (it["orderStatus"] as? String)?.let(com.example.chaskirider.domain.orders.OrderStatus::valueOf)
+                ?: if (it["pickedUp"] == true) com.example.chaskirider.domain.orders.OrderStatus.ON_THE_WAY
+                else com.example.chaskirider.domain.orders.OrderStatus.ACCEPTED,
+            (it["problemCategory"] as? String)?.let(com.example.chaskirider.domain.orders.OrderProblemReason::valueOf)) }
         val time = doc.getTimestamp("createdAt")?.toDate()?.time ?: 0
         val pending = doc.metadata.hasPendingWrites()
+        val location = (doc.get("location") as? Map<*, *>)?.let { SupportLocation(
+            (it["latitude"] as Number).toDouble(), (it["longitude"] as Number).toDouble(), (it["capturedAt"] as Number).toLong()) }
         return SupportTicket(doc.id, SupportTopic.valueOf(requireNotNull(doc.getString("topic"))), time,
             SupportTicketStatus.valueOf(requireNotNull(doc.getString("status"))), order,
-            listOf(SupportMessage("initial", SupportSender.RIDER, requireNotNull(doc.getString("body")), time, pending)), pending)
+            listOf(SupportMessage("initial", SupportSender.RIDER, requireNotNull(doc.getString("body")), time, pending)), pending, location)
     }
 }

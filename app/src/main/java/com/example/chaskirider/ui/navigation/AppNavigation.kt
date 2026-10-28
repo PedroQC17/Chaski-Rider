@@ -138,14 +138,17 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
         onStopOrDispose { }
     }
     val supportViewModel: SupportViewModel = viewModel {
-        SupportViewModel(AppContainer.supportRepository, AppContainer.supportDraftStore, AppContainer.riderSession)
+        SupportViewModel(AppContainer.supportRepository, AppContainer.supportDraftStore, AppContainer.riderSession,
+            AppContainer.locationRepository)
     }
     fun activeSupportOrder(): SupportOrderContext? {
         val snapshot = ordersState.snapshot ?: return null
         val stop = snapshot.batch?.stops?.firstOrNull() ?: return null
         if (snapshot.isDelivered) return null
         return SupportOrderContext(stop.orderId, snapshot.merchantName.orEmpty(), snapshot.merchantAddress.orEmpty(),
-            stop.address.orEmpty(), snapshot.pickedUp, snapshot.problem?.id)
+            stop.address.orEmpty(), snapshot.pickedUp, snapshot.problem?.id,
+            com.example.chaskirider.domain.orders.OrderRecord.from(user?.id.orEmpty(), snapshot)!!.status,
+            snapshot.problem?.reason)
     }
     fun openOrderSupport() {
         val order = activeSupportOrder() ?: return

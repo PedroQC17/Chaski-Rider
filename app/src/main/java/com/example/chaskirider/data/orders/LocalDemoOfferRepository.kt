@@ -97,7 +97,7 @@ class LocalDemoOfferRepository(
         if (!cancel && snapshot.problem != null) return@withLock snapshot
         val now = clock()
         val problem = OrderProblem(UUID.randomUUID().toString(), snapshot.batch!!.stops.first().orderId,
-            reason, detail.trim(), now, snapshot.pickedUp, cancel)
+            reason, detail.trim(), now, snapshot.pickedUp, cancel, OrderRecord.from(uid, snapshot)!!.status)
         val result = if (cancel) empty(now) else snapshot.copy(serverTime = now, problem = problem)
         store.save(uid, saved.copy(snapshot = result,
             recent = if (cancel) saved.recent + ((saved.catalogRouteId ?: problem.orderId) to now) else saved.recent,

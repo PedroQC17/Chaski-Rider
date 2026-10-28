@@ -10,7 +10,8 @@ import kotlinx.coroutines.flow.*
 import java.util.UUID
 
 class SupportViewModel(private val repository: SupportRepository, private val drafts: SupportDraftStore,
-    private val session: RiderSession) : ViewModel() {
+    private val session: RiderSession,
+    private val locations: com.example.chaskirider.domain.repository.LocationRepository? = null) : ViewModel() {
     private val mutable = MutableStateFlow(SupportUiState())
     val uiState = mutable.asStateFlow()
     private var uid: String? = null
@@ -64,7 +65,8 @@ class SupportViewModel(private val repository: SupportRepository, private val dr
         if (draft.body.isNotBlank() && draft.topic != topic) {
             mutable.update { it.copy(formOpen = true, topic = draft.topic, category = draft.topic?.category,
                 notice = "Recuperamos tu borrador anterior. Puedes enviarlo o descartarlo para crear otro.") }
-        } else updateDraft(draft.copy(topic = topic, order = if (topic.category == SupportCategory.ORDER) draft.order else null))
+        } else updateDraft(draft.copy(topic = topic, order = if (topic.category == SupportCategory.ORDER)
+            draft.order ?: state.availableOrder else null, location = null))
         mutable.update { it.copy(formOpen = true) }
     }
 
@@ -93,6 +95,30 @@ class SupportViewModel(private val repository: SupportRepository, private val dr
     }
 
     fun changeBody(body: String) { mutable.value.draft?.let { updateDraft(it.copy(body = body.take(2000))) } }
+    fun prepareEmergency() {
+        val owner = uid ?: return
+        val draft = mutable.value.draft ?: return
+        if (mutable.value.busy) return
+        if (draft.body.isNotBlank() && draft.topic != SupportTopic.EMERGENCY) {
+            mutable.update { it.copy(formOpen = true, topic = draft.topic, category = draft.topic?.category,
+                notice = "Conservamos tu borrador. Envíalo o descártalo antes de abrir el caso de seguridad.") }
+            return
+        }
+        mutable.update { it.copy(busy = true, error = null) }
+        action = viewModelScope.launch {
+            try {
+                val point = locations?.currentLocation()?.getOrNull()
+                if (uid != owner) return@launch
+                mutable.update { it.copy(busy = false) }
+                updateDraft(draft.copy(topic = SupportTopic.EMERGENCY, order = mutable.value.availableOrder,
+                    location = point?.let { SupportLocation(it.latitude, it.longitude, System.currentTimeMillis()) }))
+                mutable.update { it.copy(topic = SupportTopic.EMERGENCY, category = SupportCategory.SAFETY,
+                    formOpen = true, notice = if (point == null) "No pudimos obtener una ubicación reciente. Puedes describir dónde estás y enviar el caso sin coordenadas."
+                    else "Ubicación adjunta. Describe lo ocurrido y confirma el envío del caso urgente.") }
+            } catch (error: CancellationException) { throw error }
+            finally { if (uid == owner) mutable.update { it.copy(busy = false) } }
+        }
+    }
     fun linkOrder(link: Boolean) { mutable.value.draft?.let { updateDraft(it.copy(order = if (link) mutable.value.availableOrder else null)) } }
     private fun updateDraft(draft: SupportDraft) {
         if (mutable.value.busy) return
@@ -127,7 +153,7 @@ class SupportViewModel(private val repository: SupportRepository, private val dr
         val userId = uid ?: return
         if (state.busy || draft.topic == null || !SupportValidation.validBody(draft.body)) return
         val registered = state.tickets.firstOrNull { it.id == draft.id && !it.pending }
-        if (registered != null && (registered.topic != draft.topic || registered.order != draft.order ||
+        if (registered != null && (registered.topic != draft.topic || registered.order != draft.order || registered.location != draft.location ||
                 registered.messages.firstOrNull()?.body != draft.body.trim())) {
             draft = draft.copy(id = newId())
             mutable.update { it.copy(draft = draft) }

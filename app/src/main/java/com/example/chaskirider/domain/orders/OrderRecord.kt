@@ -13,7 +13,8 @@ data class OrderRecord(
     val arrivedAt: Long?,
     val pickedUpAt: Long?,
     val deliveredAt: Long?,
-    val cancelledAt: Long? = null
+    val cancelledAt: Long? = null,
+    val problems: List<OrderProblem>? = emptyList()
 ) {
     companion object {
         fun from(uid: String, snapshot: OfferSnapshot): OrderRecord? {

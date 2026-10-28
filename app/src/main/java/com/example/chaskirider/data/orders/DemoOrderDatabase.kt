@@ -77,6 +77,7 @@ class RoomDemoOrderStore(private val dao: DemoOrderDao, private val scheduleSync
             if (previousRecord != null && cancelled != null) record = previousRecord.copy(
                 status = OrderStatus.CANCELLED, cancelledAt = cancelled.createdAt)
         }
+        record = record?.copy(problems = state.problems.orEmpty().filter { it.orderId == record?.orderId })
         val changed = dao.saveWithRecord(DemoOrderEntity(uid, gson.toJson(state)), record?.orderId, record?.let { gson.toJson(it) })
         try { if (changed) scheduleSync(uid) } catch (error: RuntimeException) {
             android.util.Log.w("OrderSync", "El registro sigue pendiente en Room", error)

@@ -43,7 +43,9 @@ class OrderSyncDeviceTest {
         val gson = Gson()
         val now = System.currentTimeMillis()
         val record = OrderRecord(id, uid, OrderStatus.ACCEPTED, "Prueba tecnica de sincronizacion",
-            RoutePoint(-12.046, -77.037), RoutePoint(-12.055, -77.030), now, null, null, null)
+            RoutePoint(-12.046, -77.037), RoutePoint(-12.055, -77.030), now, null, null, null,
+            problems = listOf(OrderProblem(UUID.randomUUID().toString(), id, OrderProblemReason.VEHICLE_PROBLEM,
+                "Prueba técnica de incidencia sincronizada", now, false, false, OrderStatus.ACCEPTED)))
         val remote = firestore.collection("riders").document(uid).collection("deliveryRecords").document(id)
         val report = File(context.getExternalFilesDir(null), "order-sync-verification.json")
         report.writeText("""{"uid":"$uid","orderId":"$id","result":"STARTED"}""")
@@ -63,6 +65,9 @@ class OrderSyncDeviceTest {
             assertEquals("ACCEPTED", accepted.getString("status"))
             assertEquals(1L, accepted.getLong("revision"))
             assertFalse(accepted.contains("latitude"))
+            val incident = remote.collection("incidents").document(record.problems!!.single().id).get(Source.SERVER).await()
+            assertEquals("VEHICLE_PROBLEM", incident.getString("category"))
+            assertEquals("ACCEPTED", incident.getString("orderStatus"))
 
             shell("svc wifi disable")
             shell("svc data disable")

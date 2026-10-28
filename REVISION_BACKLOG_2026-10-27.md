@@ -1,5 +1,11 @@
 # Revisión del backlog frente al código actual
 
+## Actualización 28/10/2026 — HU12/HU13
+
+Incidencias conservan categoría, descripción, fecha y estado original, y se sincronizan desde Room a Firebase con WorkManager e IDs estables. Cancelar antes del recojo libera el pedido y conserva el evento; después del recojo se mantiene activo. Soporte adjunta automáticamente estado exacto y categoría original de incidencia, guarda borradores y conserva respuestas/estado. Seguridad y emergencia prepara un caso urgente con confirmación y ubicación puntual cuando está disponible, sin llamar a emergencias ni cancelar el pedido. Web separada: https://chaski-rider-soporte.web.app . Permisos de tickets e incidencias publicados y comprobados.
+
+Pasaron 80 pruebas JVM, 12 de servidor/reglas y ocho en celular, incluida sincronización de incidencia con pérdida de red y ticket real con respuesta/cierre controlados. La web se probó localmente; su intercambio desde la sesión Google publicada sigue pendiente. No hay push de respuestas ni resolución administrativa del pedido. HU11 sigue pendiente de sus criterios específicos y esta entrega no cierra todo el sprint 4. Las secciones inferiores son diagnósticos históricos anteriores a esta actualización.
+
 ## Corte actualizado después de tracking y chat
 
 Esta sección es el diagnóstico vigente. La tabla inferior conserva la revisión anterior a esas implementaciones y no debe usarse como estado actual de HU09/HU10/WorkManager.

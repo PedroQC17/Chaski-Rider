@@ -553,8 +553,8 @@ private fun OrderProblemDialog(state: OrdersUiState, onClose: () -> Unit,
         title = { Text(if (pickedUp) "Problema con la entrega" else "Cancelar pedido") },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(if (pickedUp) "El pedido seguirá activo. Esta incidencia se guarda en el dispositivo; luego puedes abrir un ticket para comunicarte con soporte."
-                    else "Si confirmas, dejarás de atender este pedido. El motivo quedará registrado.")
+                Text(if (pickedUp) "El pedido seguirá activo. La incidencia se guardará y se sincronizará al tener conexión. Después solicita ayuda a soporte para resolverla."
+                    else "Si confirmas, dejarás de atender este pedido y no podrás continuar su recojo. El motivo quedará registrado y se sincronizará al tener conexión.")
                 reasons.forEach { reason ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         RadioButton(selected = state.problemReason == reason, onClick = { onReason(reason) }, enabled = !state.busy)
