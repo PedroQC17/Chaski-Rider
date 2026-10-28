@@ -23,7 +23,7 @@ class OrderSyncWorker(context: Context, params: WorkerParameters) : CoroutineWor
         try {
             val dao = database.orders()
             while (auth.currentUser?.uid == uid) {
-                val pending = dao.pending(uid)
+                val pending = dao.pendingActions(uid)
                 if (pending.isEmpty()) return Result.success()
                 for (entity in pending) {
                     if (auth.currentUser?.uid != uid) return Result.success()
@@ -33,6 +33,8 @@ class OrderSyncWorker(context: Context, params: WorkerParameters) : CoroutineWor
                     withTimeout(20_000) {
                         FirebaseFirestore.getInstance().runTransaction { tx ->
                             val old = tx.get(ref)
+                            val action = ref.collection("actions").document(entity.actionId)
+                            val registeredAction = tx.get(action)
                             val incidents = record.problems.orEmpty().map { problem ->
                                 val incidentRef = ref.collection("incidents").document(problem.id)
                                 Triple(problem, incidentRef, tx.get(incidentRef).exists())
@@ -57,10 +59,14 @@ class OrderSyncWorker(context: Context, params: WorkerParameters) : CoroutineWor
                                     "orderStatus" to (problem.orderStatus?.name ?: if (problem.pickedUp) "ON_THE_WAY" else "ACCEPTED"),
                                     "cancelled" to problem.cancelled, "createdAt" to FieldValue.serverTimestamp()))
                             }
+                            if (!registeredAction.exists()) tx.set(action, mapOf(
+                                "actionId" to entity.actionId, "orderId" to entity.orderId, "riderId" to uid,
+                                "revision" to entity.revision, "kind" to entity.kind, "status" to record.status.name,
+                                "waitStartedAt" to record.waitStartedAt, "createdAt" to FieldValue.serverTimestamp()))
                         }.await()
                     }
                     if (auth.currentUser?.uid != uid) return Result.success()
-                    dao.confirm(uid, entity.orderId, entity.revision)
+                    dao.acknowledge(entity)
                 }
             }
             return Result.success()

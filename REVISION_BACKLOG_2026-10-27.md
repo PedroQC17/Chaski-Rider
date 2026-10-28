@@ -1,5 +1,9 @@
 # Revisión del backlog frente al código actual
 
+## Actualización HU16 — 28/10/2026
+
+Room v3 añade una cola por acción con ID estable, revisión, tipo, contenido y estado pendiente/sincronizado. WorkManager publica cada acción de forma idempotente y confirma localmente sin descartar cambios posteriores. Incluye inicio de espera. La migración conserva registros y recupera únicamente el último estado pendiente conocido, sin fabricar historial anterior. Reglas publicadas: `78d4118d-be6e-4933-97df-ecc478e6c9d4`. Detalles y alcance: `HU16_SINCRONIZACION.md`. La observación histórica de fila 105 sobre conservar solo la última revisión queda corregida para acciones nuevas.
+
 ## Actualización 28/10/2026 — HU12/HU13
 
 Incidencias conservan categoría, descripción, fecha y estado original, y se sincronizan desde Room a Firebase con WorkManager e IDs estables. Cancelar antes del recojo libera el pedido y conserva el evento; después del recojo se mantiene activo. Soporte adjunta automáticamente estado exacto y categoría original de incidencia, guarda borradores y conserva respuestas/estado. Seguridad y emergencia prepara un caso urgente con confirmación y ubicación puntual cuando está disponible, sin llamar a emergencias ni cancelar el pedido. Web separada: https://chaski-rider-soporte.web.app . Permisos de tickets e incidencias publicados y comprobados.

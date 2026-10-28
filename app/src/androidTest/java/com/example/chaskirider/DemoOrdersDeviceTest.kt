@@ -23,6 +23,57 @@ import org.junit.Test
 import java.io.File
 
 class DemoOrdersDeviceTest {
+    @Test fun migrationBackfillsOnlyTheKnownPendingSnapshot() = runBlocking {
+        val name = "actions-migration-test.db"
+        context.deleteDatabase(name)
+        val file = context.getDatabasePath(name)
+        file.parentFile!!.mkdirs()
+        android.database.sqlite.SQLiteDatabase.openOrCreateDatabase(file, null).use { old ->
+            old.execSQL("CREATE TABLE demo_orders (uid TEXT NOT NULL PRIMARY KEY, state TEXT NOT NULL)")
+            old.execSQL("CREATE TABLE order_records (uid TEXT NOT NULL, orderId TEXT NOT NULL, content TEXT NOT NULL, revision INTEGER NOT NULL, pending INTEGER NOT NULL, PRIMARY KEY(uid, orderId))")
+            old.execSQL("INSERT INTO order_records VALUES ('alice', 'old', '{}', 7, 1)")
+            old.execSQL("INSERT INTO order_records VALUES ('alice', 'synced', '{}', 3, 0)")
+            old.version = 2
+        }
+        val db = Room.databaseBuilder(context, DemoOrderDatabase::class.java, name)
+            .addMigrations(DemoOrderDatabase.MIGRATION_2_3).build()
+        try {
+            val pending = db.orders().pendingActions("alice")
+            assertEquals(1, pending.size)
+            assertEquals("old_7", pending.single().actionId)
+            assertEquals("RESTORE_SNAPSHOT", pending.single().kind)
+            assertNotNull(db.orders().record("alice", "synced"))
+        } finally { db.close(); context.deleteDatabase(name) }
+    }
+    @Test fun offlineActionsSurviveReopenAndOldAcknowledgementKeepsNewerStatePending() = runBlocking {
+        val name = "actions-restore-test.db"
+        context.deleteDatabase(name)
+        var db = Room.databaseBuilder(context, DemoOrderDatabase::class.java, name).build()
+        try {
+            var dao = db.orders()
+            val gson = com.google.gson.Gson()
+            val point = RoutePoint(-12.0, -77.0)
+            val first = OrderRecord("order", "alice", OrderStatus.ACCEPTED, "Local", point, point, 1000, null, null, null)
+            dao.saveRecord(OrderRecordEntity("alice", "order", gson.toJson(first), 1, true))
+            val arrival = first.copy(status = OrderStatus.AT_MERCHANT, arrivedAt = 2000)
+            dao.saveRecord(OrderRecordEntity("alice", "order", gson.toJson(arrival), 2, true))
+            dao.saveRecord(OrderRecordEntity("alice", "order", gson.toJson(arrival.copy(waitStartedAt = 3000)), 3, true))
+            db.close()
+            db = Room.databaseBuilder(context, DemoOrderDatabase::class.java, name).build()
+            dao = db.orders()
+            val pending = dao.pendingActions("alice")
+            assertEquals(listOf("ACCEPTED", "AT_MERCHANT", "WAIT_STARTED"), pending.map { it.kind })
+            assertEquals(3, pending.map { it.actionId }.distinct().size)
+            assertTrue(dao.pendingActions("bob").isEmpty())
+            dao.acknowledge(pending.first())
+            assertTrue(dao.record("alice", "order")!!.pending)
+            dao.acknowledge(pending.first())
+            assertEquals(2, dao.pendingActions("alice").size)
+            pending.drop(1).forEach { dao.acknowledge(it) }
+            assertFalse(dao.record("alice", "order")!!.pending)
+            assertEquals(3, dao.actions("alice", "order").size)
+        } finally { db.close(); context.deleteDatabase(name) }
+    }
     @Test fun databaseMigrationKeepsExistingState() = runBlocking {
         val name = "order-migration-test.db"
         context.deleteDatabase(name)
@@ -35,7 +86,7 @@ class DemoOrdersDeviceTest {
             old.version = 1
         }
         val migrated = Room.databaseBuilder(context, DemoOrderDatabase::class.java, name)
-            .addMigrations(DemoOrderDatabase.MIGRATION_1_2).build()
+            .addMigrations(DemoOrderDatabase.MIGRATION_1_2, DemoOrderDatabase.MIGRATION_2_3).build()
         try {
             assertEquals(oldState, RoomDemoOrderStore(migrated.orders()).load("alice"))
             assertTrue(migrated.orders().pending("alice").isEmpty())

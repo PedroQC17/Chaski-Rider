@@ -94,6 +94,12 @@ class OrderSyncDeviceTest {
             awaitUpload()
             assertEquals("DELIVERED", remote.get(Source.SERVER).await().getString("status"))
             assertFalse(dao.record(uid, id)!!.pending)
+            assertEquals(3, dao.actions(uid, id).size)
+            assertTrue(dao.actions(uid, id).none { it.pending })
+            assertEquals(3, remote.collection("actions").get(Source.SERVER).await().size())
+            enqueue()
+            delay(1500)
+            assertEquals(3, remote.collection("actions").get(Source.SERVER).await().size())
             report.writeText(
                 """{"uid":"$uid","orderId":"$id","result":"PASSED"}""")
         } finally {

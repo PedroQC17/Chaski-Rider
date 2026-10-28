@@ -27,6 +27,9 @@ data class DemoOrderEntity(@PrimaryKey val uid: String, val state: String)
 @Entity(tableName = "order_records", primaryKeys = ["uid", "orderId"])
 data class OrderRecordEntity(val uid: String, val orderId: String, val content: String,
     val revision: Long, val pending: Boolean)
+@Entity(tableName = "order_actions", primaryKeys = ["uid", "actionId"])
+data class OrderActionEntity(val uid: String, val actionId: String, val orderId: String,
+    val revision: Long, val content: String, val kind: String, val pending: Boolean)
 @Dao
 interface DemoOrderDao {
     @Query("SELECT * FROM demo_orders WHERE uid = :uid")
@@ -40,7 +43,40 @@ interface DemoOrderDao {
     suspend fun pending(uid: String): List<OrderRecordEntity>
     @Query("UPDATE order_records SET pending = 0 WHERE uid = :uid AND orderId = :orderId AND revision = :revision")
     suspend fun confirm(uid: String, orderId: String, revision: Long)
-    @Upsert suspend fun saveRecord(entity: OrderRecordEntity)
+    @Upsert suspend fun putRecord(entity: OrderRecordEntity)
+    @androidx.room.Insert(onConflict = androidx.room.OnConflictStrategy.IGNORE)
+    suspend fun insertAction(entity: OrderActionEntity)
+    @Query("SELECT * FROM order_actions WHERE uid = :uid AND pending = 1 ORDER BY orderId, revision LIMIT 50")
+    suspend fun pendingActions(uid: String): List<OrderActionEntity>
+    @Query("SELECT * FROM order_actions WHERE uid = :uid AND orderId = :orderId ORDER BY revision")
+    suspend fun actions(uid: String, orderId: String): List<OrderActionEntity>
+    @Query("UPDATE order_actions SET pending = 0 WHERE uid = :uid AND actionId = :actionId")
+    suspend fun confirmAction(uid: String, actionId: String)
+    @Transaction
+    suspend fun acknowledge(entity: OrderActionEntity) {
+        confirmAction(entity.uid, entity.actionId)
+        confirm(entity.uid, entity.orderId, entity.revision)
+    }
+    @Transaction
+    suspend fun saveRecord(entity: OrderRecordEntity) {
+        val old = record(entity.uid, entity.orderId)
+        putRecord(entity)
+        if (entity.pending && (old == null || old.revision != entity.revision)) {
+            val gson = Gson()
+            val next = gson.fromJson(entity.content, OrderRecord::class.java)
+            val previous = old?.let { gson.fromJson(it.content, OrderRecord::class.java) }
+            val kind = when {
+                previous == null -> "RESTORE_SNAPSHOT"
+                next.status != previous.status -> next.status.name
+                next.waitStartedAt != previous.waitStartedAt -> "WAIT_STARTED"
+                next.problems.orEmpty() != previous.problems.orEmpty() -> "INCIDENT"
+                else -> "STATE_UPDATED"
+            }
+            insertAction(OrderActionEntity(entity.uid, "${entity.orderId}_${entity.revision}", entity.orderId,
+                entity.revision, entity.content, if (previous == null && entity.revision == 1L && next.status == OrderStatus.ACCEPTED)
+                    "ACCEPTED" else kind, true))
+        }
+    }
     @Transaction
     suspend fun saveWithRecord(entity: DemoOrderEntity, orderId: String?, content: String?): Boolean {
         save(entity)
@@ -54,10 +90,16 @@ interface DemoOrderDao {
         return false
     }
 }
-@Database(entities = [DemoOrderEntity::class, OrderRecordEntity::class], version = 2, exportSchema = true)
+@Database(entities = [DemoOrderEntity::class, OrderRecordEntity::class, OrderActionEntity::class], version = 3, exportSchema = true)
 abstract class DemoOrderDatabase : RoomDatabase() {
     abstract fun orders(): DemoOrderDao
     companion object {
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS order_actions (uid TEXT NOT NULL, actionId TEXT NOT NULL, orderId TEXT NOT NULL, revision INTEGER NOT NULL, content TEXT NOT NULL, kind TEXT NOT NULL, pending INTEGER NOT NULL, PRIMARY KEY(uid, actionId))")
+                db.execSQL("INSERT INTO order_actions SELECT uid, orderId || '_' || revision, orderId, revision, content, 'RESTORE_SNAPSHOT', 1 FROM order_records WHERE pending = 1")
+            }
+        }
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("CREATE TABLE IF NOT EXISTS order_records (uid TEXT NOT NULL, orderId TEXT NOT NULL, content TEXT NOT NULL, revision INTEGER NOT NULL, pending INTEGER NOT NULL, PRIMARY KEY(uid, orderId))")
@@ -87,4 +129,4 @@ class RoomDemoOrderStore(private val dao: DemoOrderDao, private val scheduleSync
 
 fun openOrderDatabase(context: android.content.Context): DemoOrderDatabase = androidx.room.Room
     .databaseBuilder(context.applicationContext, DemoOrderDatabase::class.java, "demo_orders.db")
-    .addMigrations(DemoOrderDatabase.MIGRATION_1_2).build()
+    .addMigrations(DemoOrderDatabase.MIGRATION_1_2, DemoOrderDatabase.MIGRATION_2_3).build()

@@ -14,7 +14,8 @@ data class OrderRecord(
     val pickedUpAt: Long?,
     val deliveredAt: Long?,
     val cancelledAt: Long? = null,
-    val problems: List<OrderProblem>? = emptyList()
+    val problems: List<OrderProblem>? = emptyList(),
+    val waitStartedAt: Long? = null
 ) {
     companion object {
         fun from(uid: String, snapshot: OfferSnapshot): OrderRecord? {
@@ -27,7 +28,7 @@ data class OrderRecord(
             }
             return OrderRecord(stop.orderId, uid, status, snapshot.merchantName.orEmpty(),
                 snapshot.merchant, stop.point, snapshot.acceptedAt, snapshot.arrivedAt,
-                snapshot.pickedUpAt, snapshot.deliveredAt)
+                snapshot.pickedUpAt, snapshot.deliveredAt, waitStartedAt = snapshot.waitStartedAt)
         }
     }
 }
