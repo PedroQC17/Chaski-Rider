@@ -22,6 +22,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.FileProvider
+import java.io.File
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.lifecycle.Lifecycle
@@ -301,7 +304,7 @@ private fun ExpandedOrderContent(
                 LinearProgressIndicator(progress = { (state.secondsLeft / 45f).coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth())
             } else {
                 val title = when {
-                    snapshot?.isDelivered == true -> " ¡Entrega completada con éxito!"
+                    snapshot?.isDelivered == true -> "Entrega completada con éxito"
                     snapshot?.pickedUp == true -> " En camino al cliente"
                     snapshot?.arrivedAt != null -> " En establecimiento"
                     quote != null -> stringResource(R.string.orders_accepted)
@@ -443,7 +446,7 @@ private fun OrderActionControls(
                 stringResource(if (distCustomer == null) R.string.orders_checking_location else R.string.orders_near_delivery),
                 style = MaterialTheme.typography.bodySmall)
 
-            // 📷 FOTO DE EVIDENCIA DE ENTREGA
+            // validacion de la entrega finzalizada
             Surface(
                 color = MaterialTheme.colorScheme.surfaceVariant,
                 shape = RoundedCornerShape(12.dp),
@@ -471,25 +474,34 @@ private fun OrderActionControls(
                             onClick = onClearEvidencePhoto,
                             modifier = Modifier.fillMaxWidth(),
                         ) {
-                            Text(text = "Volver a tomar foto")
+                            Text(
+                                text = "Volver a tomar foto"
+                            )
                         }
                     } else {
+                        val context = LocalContext.current
                         Button(
                             onClick = {
-                                val tempUri = Uri.parse("file:///data/user/0/com.example.chaskirider/cache/temp_evidence.jpg")
-                                onTakeEvidencePhoto(tempUri)
+                                try {
+                                    val dir = File(context.cacheDir, "evidence_photos").apply { mkdirs() }
+                                    val tempFile = File(dir, "evidence_${System.currentTimeMillis()}.jpg")
+                                    val contentUri = FileProvider.getUriForFile(context, "${context.packageName}.files", tempFile)
+                                    onTakeEvidencePhoto(contentUri)
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
                             },
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Icon(Icons.Default.Edit, contentDescription = null)
                             Spacer(Modifier.width(8.dp))
-                            Text("Tomar foto de entrega")
+                            Text(text = "Tomar foto de entrega")
                         }
                     }
                 }
             }
 
-            // 📝 CAMPO OPCIONAL PARA NOTA DE ENTREGA
+            // nota opcional para verificacion de entrega
             OutlinedTextField(
                 value = state.deliveryNote ?: "",
                 onValueChange = onUpdateDeliveryNote,
