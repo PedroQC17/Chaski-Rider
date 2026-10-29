@@ -1,7 +1,9 @@
 package com.example.chaskirider.data.orders
 
+import android.net.Uri
 import com.example.chaskirider.domain.orders.*
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
 import okhttp3.OkHttpClient
 import retrofit2.HttpException
@@ -28,14 +30,27 @@ class RealOfferRepository : OfferRepository {
         offerId: String?,
         lat: Double?,
         lng: Double?,
-        //campos para validar la finalizacion de un pedido
-        evidencePhotoUrl: String?,
+        evidenceUrl: String?,
         deliveryNote: String?,
     ): OfferSnapshot {
 
         //user es el usuario actual de firebase y token es el token de acceso
         val user = FirebaseAuth.getInstance().currentUser ?: throw OfferRequestException(401)
         val token = user.getIdToken(false).await().token ?: throw OfferRequestException(401)
+
+        var finalEvidenceUrl = evidenceUrl
+        if (action == OfferAction.DELIVER && evidenceUrl != null && (evidenceUrl.startsWith("content://") || evidenceUrl.startsWith("file://"))) {
+            try {
+                val uri = Uri.parse(evidenceUrl)
+                val path = "riders/${user.uid}/orders/${offerId ?: "order_${System.currentTimeMillis()}"}/evidence_${System.currentTimeMillis()}.jpg"
+                val fileRef = FirebaseStorage.getInstance().reference.child(path)
+                fileRef.putFile(uri).await()
+                finalEvidenceUrl = fileRef.downloadUrl.await().toString()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
         try {
             // se usa el token para autenticar la peticion y se hace la peticion a la api
             return api.execute("Bearer $token", OfferRequest(
@@ -45,7 +60,7 @@ class RealOfferRepository : OfferRepository {
                 latitude=lat,
                 longitude =lng,
                 //campos para validar la finalizacion de un pedido
-                evidencePhotoUrl = evidencePhotoUrl,
+                evidencePhotoUrl = finalEvidenceUrl,
                 deliveryNote = deliveryNote,
             )).toDomain()
         } catch (e: HttpException) { throw OfferRequestException(e.code()) }

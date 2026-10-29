@@ -1,9 +1,12 @@
 package com.example.chaskirider.data.orders
 
+import android.net.Uri
 import com.example.chaskirider.domain.location.LocationUtils
 import com.example.chaskirider.domain.orders.*
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.tasks.await
 import java.util.UUID
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -22,10 +25,8 @@ class LocalDemoOfferRepository(
         offerId: String?,
         lat: Double?,
         lng: Double?,
-        //campos para validar la finalizacion de un pedido
-        evidencePhotoUrl: String?,
+        evidenceUrl: String?,
         deliveryNote: String?,
-
     ): OfferSnapshot = mutex.withLock {
         val uid = currentUid() ?: throw OfferRequestException(401)
         val now = clock()
@@ -78,10 +79,24 @@ class LocalDemoOfferRepository(
             }
             OfferAction.DELIVER -> {
                 if (snapshot.batch == null || !snapshot.pickedUp) throw OfferRequestException(409)
+                var remoteUrl = evidenceUrl
+                if (evidenceUrl != null && (evidenceUrl.startsWith("content://") || evidenceUrl.startsWith("file://"))) {
+                    try {
+                        val uri = Uri.parse(evidenceUrl)
+                        val orderId = snapshot.batch.stops.firstOrNull()?.orderId ?: "demo_order"
+                        val path = if (uid != null) "riders/$uid/orders/$orderId/evidence_${System.currentTimeMillis()}.jpg"
+                                   else "orders/$orderId/evidence_${System.currentTimeMillis()}.jpg"
+                        val ref = FirebaseStorage.getInstance().reference.child(path)
+                        ref.putFile(uri).await()
+                        remoteUrl = ref.downloadUrl.await().toString()
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
                 snapshot.copy(
                     isDelivered = true,
                     deliveredAt = snapshot.deliveredAt ?: now,
-                    evidencePhotoUrl = evidencePhotoUrl ?: "https://firebasestorage.googleapis.com/v0/b/chaski-rider.appspot.com/o/demo_evidence.jpg",
+                    evidencePhotoUrl = remoteUrl ?: "https://firebasestorage.googleapis.com/v0/b/chaski-rider.appspot.com/o/demo_evidence.jpg",
                     deliveryNote = deliveryNote
                 )
             }
