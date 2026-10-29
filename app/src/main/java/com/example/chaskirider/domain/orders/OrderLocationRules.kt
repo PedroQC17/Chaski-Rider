@@ -4,6 +4,7 @@ import com.example.chaskirider.domain.location.LocationUtils
 
 object OrderLocationRules {
     const val RADIUS_METERS = 100
+    //const val RADIUS_METERS = 100
 
     fun isNear(lat: Double?, lng: Double?, target: RoutePoint): Boolean =
         lat != null && lng != null && lat.isFinite() && lng.isFinite() &&

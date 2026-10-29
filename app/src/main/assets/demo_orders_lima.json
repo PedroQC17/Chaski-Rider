@@ -827,8 +827,8 @@
     "deliveryZone": "El Agustino",
     "deliveryAddress": "Avenida Jose Carlos Mariategui",
     "delivery": {
-      "latitude": -12.033806,
-      "longitude": -76.997834
+      "latitude": -12.05058,
+      "longitude": -76.994355
     },
     "tipCents": 0
   },
@@ -2748,8 +2748,8 @@
     "deliveryZone": "El Agustino",
     "deliveryAddress": "Avenida Jose Carlos Mariategui",
     "delivery": {
-      "latitude": -12.033806,
-      "longitude": -76.997834
+      "latitude": -12.05058,
+      "longitude": -76.994355
     },
     "tipCents": 200
   },
@@ -2963,8 +2963,8 @@
     "pickupZone": "El Agustino",
     "pickupAddress": "Avenida Jose Carlos Mariategui",
     "pickup": {
-      "latitude": -12.033806,
-      "longitude": -76.997834
+      "latitude": -12.05058,
+      "longitude": -76.994355
     },
     "deliveryZone": "San Juan De Lurigancho",
     "deliveryAddress": "Urb. Parcelación Rustica Zarate, Mz B, Lt 23.",
@@ -2980,8 +2980,8 @@
     "pickupZone": "El Agustino",
     "pickupAddress": "Avenida Jose Carlos Mariategui",
     "pickup": {
-      "latitude": -12.033806,
-      "longitude": -76.997834
+      "latitude": -12.05058,
+      "longitude": -76.994355
     },
     "deliveryZone": "Rímac",
     "deliveryAddress": "Jr. Marañon 601-683 Rimac",
@@ -2997,8 +2997,8 @@
     "pickupZone": "El Agustino",
     "pickupAddress": "Avenida Jose Carlos Mariategui",
     "pickup": {
-      "latitude": -12.033806,
-      "longitude": -76.997834
+      "latitude": -12.05058,
+      "longitude": -76.994355
     },
     "deliveryZone": "La Victoria",
     "deliveryAddress": "Urb. San Pablo S/N Mz A 301 Altura de la Cuadra 24 de la Av. MEXICO",

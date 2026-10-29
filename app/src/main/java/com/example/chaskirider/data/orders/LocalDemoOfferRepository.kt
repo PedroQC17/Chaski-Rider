@@ -17,7 +17,16 @@ class LocalDemoOfferRepository(
     private val hasOffer: () -> Boolean = { Random.nextInt(100) < 70 }
 ) : OfferRepository {
     private val mutex = Mutex()
-    override suspend fun execute(action: OfferAction, offerId: String?, lat: Double?, lng: Double?): OfferSnapshot = mutex.withLock {
+    override suspend fun execute(
+        action: OfferAction,
+        offerId: String?,
+        lat: Double?,
+        lng: Double?,
+        //campos para validar la finalizacion de un pedido
+        evidencePhotoUrl: String?,
+        deliveryNote: String?,
+
+    ): OfferSnapshot = mutex.withLock {
         val uid = currentUid() ?: throw OfferRequestException(401)
         val now = clock()
         val saved = store.load(uid) ?: DemoOrderState(empty(now))
@@ -70,7 +79,14 @@ class LocalDemoOfferRepository(
             OfferAction.DELIVER -> {
                 if (snapshot.batch == null || !snapshot.pickedUp) throw OfferRequestException(409)
                 OrderLocationRules.requireNear(lat, lng, snapshot.batch!!.stops.first().point)
-                snapshot.copy(isDelivered = true, deliveredAt = snapshot.deliveredAt ?: now)
+                snapshot.copy(
+                    isDelivered = true,
+                    deliveredAt = snapshot.deliveredAt ?: now,
+                    //campos para validar la finalizacion de un pedido
+                    evidencePhotoUrl = evidencePhotoUrl,
+                    deliveryNote = deliveryNote,
+
+                )
             }
             OfferAction.RESET -> {
                 if (snapshot.batch != null && !snapshot.isDelivered) throw OfferRequestException(409)

@@ -86,7 +86,26 @@ class OrdersViewModel(
     fun arriveAtMerchant() = execute(OfferAction.ARRIVE_MERCHANT)
     fun reportNotReady() = execute(OfferAction.REPORT_NOT_READY)
     fun pickup() = execute(OfferAction.PICKUP)
-    fun deliver() = execute(OfferAction.DELIVER)
+
+
+    //funciones para la validacion de finalizacion de entrega
+    fun setEvidencePhoto(uri: android.net.Uri){
+        mutable.update{it.copy(evidencePhotoUri = uri)}
+    }
+
+    fun clearEvidencePhoto(){
+        mutable.update{it.copy(evidencePhotoUri =null)}
+    }
+
+    fun updateDeliveryNote(note:String){
+        mutable.update{it.copy(deliveryNote=note.take(200))}
+    }
+    fun deliver() = execute(
+
+        action=OfferAction.DELIVER,
+        evidenceUrl= mutable.value.evidencePhotoUri.toString(),
+        deliveryNote= mutable.value.deliveryNote?.ifBlank { null },
+    )
     fun reset() = execute(OfferAction.RESET)
 
     fun openProblem() { mutable.update { it.copy(problemDialogOpen = true, problemReason = null, problemDetail = "") } }
@@ -190,7 +209,11 @@ class OrdersViewModel(
         } else mutable.update { it.copy(elapsedWaitSeconds = 0) }
     }
 
-    private fun execute(action: OfferAction): Job? {
+    private fun execute(
+        action: OfferAction,
+        evidenceUrl: String? = null,
+        deliveryNote: String? = null,
+    ): Job? {
         if (!canWork() || mutable.value.busy) return null
         val requestUid = uid
         val offerId = mutable.value.snapshot?.offer?.id
@@ -214,7 +237,14 @@ class OrdersViewModel(
                 if (requestUid != uid || (action == OfferAction.OFFER && session.user.value?.isAvailable != true)) return@launch
                 if (requiresLocation && point != null) updateRiderLocation(point)
                 val started = elapsed()
-                val snapshot = repository.execute(action, offerId, point?.latitude, point?.longitude)
+                val snapshot = repository.execute(
+                    action=action,
+                    offerId = offerId,
+                    lat=point?.latitude,
+                    lng=point?.longitude,
+                    evidencePhotoUrl=evidenceUrl,
+                    deliveryNote=deliveryNote,
+                )
                 if (requestUid != uid) return@launch
                 applySnapshot(snapshot, started)
                 if (action == OfferAction.OFFER) mutable.update { it.copy(searched = true) }

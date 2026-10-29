@@ -1,5 +1,5 @@
 package com.example.chaskirider.ui.screens.orders
-
+import android.net.Uri
 import com.example.chaskirider.domain.model.GeoPoint
 import com.example.chaskirider.domain.orders.OfferSnapshot
 
@@ -21,5 +21,10 @@ data class OrdersUiState(
     val elapsedWaitSeconds: Int = 0,
     // HU09: tracking hacia el cliente y entrega
     val distanceToCustomerMeters: Int? = null,
-    val isTrackingActive: Boolean = false
+    val isTrackingActive: Boolean = false,
+    // HU11: foto de evidencia
+    val evidencePhotoUri: Uri? = null,
+    val deliveryNote: String? = null,
+    val isUploadingEvidence: Boolean = false,
+
 )
