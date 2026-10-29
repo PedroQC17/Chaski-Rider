@@ -23,6 +23,7 @@ data class OrdersUiState(
     val distanceToCustomerMeters: Int? = null,
     val isTrackingActive: Boolean = false,
     // HU11: foto de evidencia
+    val pendingCaptureUri: Uri? = null,
     val evidencePhotoUri: Uri? = null,
     val deliveryNote: String? = null,
     val isUploadingEvidence: Boolean = false,

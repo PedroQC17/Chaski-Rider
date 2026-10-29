@@ -78,14 +78,11 @@ class LocalDemoOfferRepository(
             }
             OfferAction.DELIVER -> {
                 if (snapshot.batch == null || !snapshot.pickedUp) throw OfferRequestException(409)
-                OrderLocationRules.requireNear(lat, lng, snapshot.batch!!.stops.first().point)
                 snapshot.copy(
                     isDelivered = true,
                     deliveredAt = snapshot.deliveredAt ?: now,
-                    //campos para validar la finalizacion de un pedido
-                    evidencePhotoUrl = evidencePhotoUrl,
-                    deliveryNote = deliveryNote,
-
+                    evidencePhotoUrl = evidencePhotoUrl ?: "https://firebasestorage.googleapis.com/v0/b/chaski-rider.appspot.com/o/demo_evidence.jpg",
+                    deliveryNote = deliveryNote
                 )
             }
             OfferAction.RESET -> {

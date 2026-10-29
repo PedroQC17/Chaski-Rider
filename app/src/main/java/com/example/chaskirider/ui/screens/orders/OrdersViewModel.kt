@@ -1,6 +1,10 @@
 package com.example.chaskirider.ui.screens.orders
 
+import android.content.Context
+import android.net.Uri
 import android.os.SystemClock
+import androidx.core.content.FileProvider
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.chaskirider.R
@@ -13,15 +17,25 @@ import com.example.chaskirider.domain.repository.LocationRepository
 import com.example.chaskirider.domain.repository.RiderSession
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import java.io.File
 
 class OrdersViewModel(
     private val repository: OfferRepository,
     private val session: RiderSession,
+    private val savedStateHandle: SavedStateHandle = SavedStateHandle(),
     private val locations: LocationRepository = AppContainer.locationRepository,
     private val automaticSearch: Boolean = true,
     private val elapsed: () -> Long = SystemClock::elapsedRealtime
 ) : ViewModel() {
-    private val mutable = MutableStateFlow(OrdersUiState())
+    private fun savedUri(key: String) = savedStateHandle.get<String>(key)?.let(Uri::parse)
+
+    private val mutable = MutableStateFlow(
+        OrdersUiState(
+            pendingCaptureUri = savedUri("pending_capture"),
+            evidencePhotoUri = savedUri("evidence_photo"),
+            deliveryNote = savedStateHandle.get<String>("delivery_note")
+        )
+    )
     val uiState = mutable.asStateFlow()
     private var request: Job? = null
     private var ticker: Job? = null
@@ -89,16 +103,43 @@ class OrdersViewModel(
 
 
     //funciones para la validacion de finalizacion de entrega
-    fun setEvidencePhoto(uri: android.net.Uri){
-        mutable.update{it.copy(evidencePhotoUri = uri)}
+    fun prepareEvidenceCapture(context: Context): Uri {
+        val dir = File(context.cacheDir, "captures").apply { mkdirs() }
+        val tempFile = File(dir, "evidence_${System.currentTimeMillis()}.jpg")
+        val contentUri = FileProvider.getUriForFile(context, "${context.packageName}.files", tempFile)
+        savedStateHandle["pending_capture"] = contentUri.toString()
+        mutable.update { it.copy(pendingCaptureUri = contentUri) }
+        return contentUri
+    }
+
+    fun confirmEvidenceCapture(success: Boolean) {
+        val pending = mutable.value.pendingCaptureUri ?: savedUri("pending_capture")
+        if (success && pending != null) {
+            savedStateHandle["evidence_photo"] = pending.toString()
+            savedStateHandle.remove<String>("pending_capture")
+            mutable.update { it.copy(evidencePhotoUri = pending, pendingCaptureUri = null) }
+        } else {
+            savedStateHandle.remove<String>("pending_capture")
+            mutable.update { it.copy(pendingCaptureUri = null) }
+        }
+    }
+
+    fun setEvidencePhoto(uri: Uri){
+        savedStateHandle["evidence_photo"] = uri.toString()
+        savedStateHandle.remove<String>("pending_capture")
+        mutable.update{it.copy(evidencePhotoUri = uri, pendingCaptureUri = null)}
     }
 
     fun clearEvidencePhoto(){
-        mutable.update{it.copy(evidencePhotoUri =null)}
+        savedStateHandle.remove<String>("pending_capture")
+        savedStateHandle.remove<String>("evidence_photo")
+        mutable.update{it.copy(evidencePhotoUri = null, pendingCaptureUri = null)}
     }
 
-    fun updateDeliveryNote(note:String){
-        mutable.update{it.copy(deliveryNote=note.take(200))}
+    fun updateDeliveryNote(note: String){
+        val trimmed = note.take(200)
+        savedStateHandle["delivery_note"] = trimmed
+        mutable.update{it.copy(deliveryNote = trimmed)}
     }
     fun deliver() = execute(
 

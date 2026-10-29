@@ -1,6 +1,9 @@
-
+<?xml version="1.0" encoding="utf-8"?>
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <cache-path name="cache_root" path="." />
+    <files-path name="files_root" path="." />
     <cache-path name="documents" path="documents/" />
     <cache-path name="captures" path="captures/" />
+    <cache-path name="evidence_photos" path="evidence_photos/" />
     <files-path name="registration_documents" path="registration_documents/" />
 </paths>

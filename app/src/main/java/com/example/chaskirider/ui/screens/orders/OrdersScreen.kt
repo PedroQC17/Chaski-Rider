@@ -1,6 +1,9 @@
 package com.example.chaskirider.ui.screens.orders
 
 import android.net.Uri
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -51,9 +54,24 @@ fun OrdersRoute(viewModel: OrdersViewModel, onMenu: () -> Unit, isDemo: Boolean 
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val chatState by chatViewModel.uiState.collectAsStateWithLifecycle()
 
-    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()){ success->
-        if (success && state.evidencePhotoUri != null){
-            viewModel.setEvidencePhoto(state.evidencePhotoUri!!)
+    val context = LocalContext.current
+
+    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+        viewModel.confirmEvidenceCapture(success)
+    }
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted && state.pendingCaptureUri != null) {
+            try { cameraLauncher.launch(state.pendingCaptureUri!!) } catch (e: Exception) { e.printStackTrace() }
+        }
+    }
+
+    val launchCamera = {
+        val uri = viewModel.prepareEvidenceCapture(context)
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            try { cameraLauncher.launch(uri) } catch (e: Exception) { e.printStackTrace() }
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
         }
     }
 
@@ -89,7 +107,7 @@ fun OrdersRoute(viewModel: OrdersViewModel, onMenu: () -> Unit, isDemo: Boolean 
         onPickup = viewModel::pickup,
         onDeliver = viewModel::deliver,
         onClearEvidencePhoto = viewModel::clearEvidencePhoto,
-        onTakeEvidencePhoto = { uri -> viewModel.setEvidencePhoto(uri); cameraLauncher.launch(uri) },
+        onTakeEvidencePhoto = { launchCamera() },
         onUpdateDeliveryNote = viewModel::updateDeliveryNote,
         onReset = { if (state.snapshot?.batch != null && state.snapshot?.isDelivered != true) viewModel.openProblem() else viewModel.reset() },
         onRefresh = viewModel::refresh,
@@ -115,7 +133,7 @@ private fun OrdersScreen(
     onPickup: () -> Unit,
     onDeliver: () -> Unit,
     onClearEvidencePhoto: () -> Unit,
-    onTakeEvidencePhoto: (Uri) -> Unit,
+    onTakeEvidencePhoto: () -> Unit,
     onUpdateDeliveryNote: (String) -> Unit,
     onReset: () -> Unit,
     onRefresh: () -> Unit,
@@ -241,7 +259,7 @@ private fun ExpandedOrderContent(
     onPickup: () -> Unit,
     onDeliver: () -> Unit,
     onClearEvidencePhoto: () -> Unit,
-    onTakeEvidencePhoto: (Uri) -> Unit,
+    onTakeEvidencePhoto: () -> Unit,
     onUpdateDeliveryNote: (String) -> Unit,
     onReset: () -> Unit,
     onOffer: () -> Unit,
@@ -254,10 +272,10 @@ private fun ExpandedOrderContent(
     LaunchedEffect(offer?.id, snapshot?.batch?.stops?.firstOrNull()?.orderId,
         snapshot?.arrivedAt, snapshot?.pickedUp, snapshot?.isDelivered) { scroll.scrollTo(0) }
 
-    val maxHeight = (LocalConfiguration.current.screenHeightDp.dp * 0.55f).coerceAtMost(480.dp)
+    val maxHeight = (LocalConfiguration.current.screenHeightDp.dp * 0.75f).coerceAtMost(620.dp)
     Column(Modifier.heightIn(max = maxHeight)) {
         Column(
-            Modifier.weight(1f, fill = false).verticalScroll(scroll).padding(20.dp),
+            Modifier.fillMaxWidth().verticalScroll(scroll).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             if (state.busy) LinearProgressIndicator(Modifier.fillMaxWidth())
@@ -340,8 +358,6 @@ private fun ExpandedOrderContent(
                 )
             }
 
-        }
-        Column(Modifier.padding(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (offer != null) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("Ganancia del pedido", fontWeight = FontWeight.Bold)
                 Text(stringResource(R.string.orders_money, offer.quote.totalCents / 100.0), fontWeight = FontWeight.Bold)
@@ -379,7 +395,7 @@ private fun OrderActionControls(
     onPickup: () -> Unit,
     onDeliver: () -> Unit,
     onClearEvidencePhoto: () -> Unit,
-    onTakeEvidencePhoto: (Uri) -> Unit,
+    onTakeEvidencePhoto: () -> Unit,
     onUpdateDeliveryNote: (String) -> Unit,
     onReset: () -> Unit,
     onOffer: () -> Unit,
@@ -479,18 +495,8 @@ private fun OrderActionControls(
                             )
                         }
                     } else {
-                        val context = LocalContext.current
                         Button(
-                            onClick = {
-                                try {
-                                    val dir = File(context.cacheDir, "evidence_photos").apply { mkdirs() }
-                                    val tempFile = File(dir, "evidence_${System.currentTimeMillis()}.jpg")
-                                    val contentUri = FileProvider.getUriForFile(context, "${context.packageName}.files", tempFile)
-                                    onTakeEvidencePhoto(contentUri)
-                                } catch (e: Exception) {
-                                    e.printStackTrace()
-                                }
-                            },
+                            onClick = onTakeEvidencePhoto,
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Icon(Icons.Default.Edit, contentDescription = null)
