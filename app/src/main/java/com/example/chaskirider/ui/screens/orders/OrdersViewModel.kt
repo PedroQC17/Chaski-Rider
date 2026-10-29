@@ -238,12 +238,12 @@ class OrdersViewModel(
                 if (requiresLocation && point != null) updateRiderLocation(point)
                 val started = elapsed()
                 val snapshot = repository.execute(
-                    action=action,
+                    action = action,
                     offerId = offerId,
-                    lat=point?.latitude,
-                    lng=point?.longitude,
-                    evidencePhotoUrl=evidenceUrl,
-                    deliveryNote=deliveryNote,
+                    lat = point?.latitude,
+                    lng = point?.longitude,
+                    evidenceUrl = evidenceUrl,
+                    deliveryNote = deliveryNote
                 )
                 if (requestUid != uid) return@launch
                 applySnapshot(snapshot, started)
