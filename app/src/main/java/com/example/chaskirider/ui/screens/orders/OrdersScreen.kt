@@ -1,5 +1,8 @@
 package com.example.chaskirider.ui.screens.orders
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -7,11 +10,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -23,6 +29,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.example.chaskirider.domain.orders.OrderProblemReason
 import com.example.chaskirider.R
 import com.example.chaskirider.ui.screens.chat.ChatDialog
@@ -40,6 +47,12 @@ fun OrdersRoute(viewModel: OrdersViewModel, onMenu: () -> Unit, isDemo: Boolean 
     }) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val chatState by chatViewModel.uiState.collectAsStateWithLifecycle()
+
+    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()){ success->
+        if (success && state.evidencePhotoUri != null){
+            viewModel.setEvidencePhoto(state.evidencePhotoUri!!)
+        }
+    }
 
     val owner = LocalLifecycleOwner.current
     DisposableEffect(owner) {
@@ -72,6 +85,9 @@ fun OrdersRoute(viewModel: OrdersViewModel, onMenu: () -> Unit, isDemo: Boolean 
         onReportNotReady = viewModel::reportNotReady,
         onPickup = viewModel::pickup,
         onDeliver = viewModel::deliver,
+        onClearEvidencePhoto = viewModel::clearEvidencePhoto,
+        onTakeEvidencePhoto = { uri -> viewModel.setEvidencePhoto(uri); cameraLauncher.launch(uri) },
+        onUpdateDeliveryNote = viewModel::updateDeliveryNote,
         onReset = { if (state.snapshot?.batch != null && state.snapshot?.isDelivered != true) viewModel.openProblem() else viewModel.reset() },
         onRefresh = viewModel::refresh,
         onClearError = viewModel::clearError,
@@ -95,6 +111,9 @@ private fun OrdersScreen(
     onReportNotReady: () -> Unit,
     onPickup: () -> Unit,
     onDeliver: () -> Unit,
+    onClearEvidencePhoto: () -> Unit,
+    onTakeEvidencePhoto: (Uri) -> Unit,
+    onUpdateDeliveryNote: (String) -> Unit,
     onReset: () -> Unit,
     onRefresh: () -> Unit,
     onClearError: () -> Unit,
@@ -136,6 +155,9 @@ private fun OrdersScreen(
                 onReportNotReady = onReportNotReady,
                 onPickup = onPickup,
                 onDeliver = onDeliver,
+                onClearEvidencePhoto = onClearEvidencePhoto,
+                onTakeEvidencePhoto = onTakeEvidencePhoto,
+                onUpdateDeliveryNote = onUpdateDeliveryNote,
                 onReset = onReset,
                 onOffer = onOffer,
                 onSupport = onSupport,
@@ -215,6 +237,9 @@ private fun ExpandedOrderContent(
     onReportNotReady: () -> Unit,
     onPickup: () -> Unit,
     onDeliver: () -> Unit,
+    onClearEvidencePhoto: () -> Unit,
+    onTakeEvidencePhoto: (Uri) -> Unit,
+    onUpdateDeliveryNote: (String) -> Unit,
     onReset: () -> Unit,
     onOffer: () -> Unit,
     onSupport: () -> Unit,
@@ -329,6 +354,9 @@ private fun ExpandedOrderContent(
                 onReportNotReady = onReportNotReady,
                 onPickup = onPickup,
                 onDeliver = onDeliver,
+                onClearEvidencePhoto = onClearEvidencePhoto,
+                onTakeEvidencePhoto = onTakeEvidencePhoto,
+                onUpdateDeliveryNote = onUpdateDeliveryNote,
                 onReset = onReset,
                 onOffer = onOffer,
             )
@@ -347,6 +375,9 @@ private fun OrderActionControls(
     onReportNotReady: () -> Unit,
     onPickup: () -> Unit,
     onDeliver: () -> Unit,
+    onClearEvidencePhoto: () -> Unit,
+    onTakeEvidencePhoto: (Uri) -> Unit,
+    onUpdateDeliveryNote: (String) -> Unit,
     onReset: () -> Unit,
     onOffer: () -> Unit,
 ) {
@@ -411,9 +442,66 @@ private fun OrderActionControls(
             if (!state.isNearCustomer) Text(
                 stringResource(if (distCustomer == null) R.string.orders_checking_location else R.string.orders_near_delivery),
                 style = MaterialTheme.typography.bodySmall)
+
+            // 📷 FOTO DE EVIDENCIA DE ENTREGA
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+            ) {
+                Column(
+                    Modifier.padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Foto de evidencia de entrega",
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+
+                    if (state.evidencePhotoUri != null) {
+                        AsyncImage(
+                            model = state.evidencePhotoUri,
+                            contentDescription = "Evidencia",
+                            modifier = Modifier.fillMaxWidth().height(140.dp).clip(RoundedCornerShape(8.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+
+                        OutlinedButton(
+                            onClick = onClearEvidencePhoto,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(text = "Volver a tomar foto")
+                        }
+                    } else {
+                        Button(
+                            onClick = {
+                                val tempUri = Uri.parse("file:///data/user/0/com.example.chaskirider/cache/temp_evidence.jpg")
+                                onTakeEvidencePhoto(tempUri)
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.Edit, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Tomar foto de entrega")
+                        }
+                    }
+                }
+            }
+
+            // 📝 CAMPO OPCIONAL PARA NOTA DE ENTREGA
+            OutlinedTextField(
+                value = state.deliveryNote ?: "",
+                onValueChange = onUpdateDeliveryNote,
+                label = { Text("Nota de entrega (opcional)") },
+                placeholder = { Text("Ej: Dejado en recepción") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            )
+
             Button(
                 onClick = onDeliver,
-                enabled = actionsEnabled && state.isNearCustomer,
+                enabled = actionsEnabled && (state.isNearCustomer || isDemo) && state.evidencePhotoUri != null,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Confirmar entrega")
