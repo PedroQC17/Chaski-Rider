@@ -1,8 +1,10 @@
 package com.example.chaskirider.data.orders
 
 import android.net.Uri
+import android.util.Log
 import com.example.chaskirider.domain.location.LocationUtils
 import com.example.chaskirider.domain.orders.*
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -82,15 +84,18 @@ class LocalDemoOfferRepository(
                 var remoteUrl = evidenceUrl
                 if (evidenceUrl != null && (evidenceUrl.startsWith("content://") || evidenceUrl.startsWith("file://"))) {
                     try {
+                        val authUid = FirebaseAuth.getInstance().currentUser?.uid ?: uid
                         val uri = Uri.parse(evidenceUrl)
                         val orderId = snapshot.batch.stops.firstOrNull()?.orderId ?: "demo_order"
-                        val path = if (uid != null) "riders/$uid/orders/$orderId/evidence_${System.currentTimeMillis()}.jpg"
+                        val path = if (authUid != null) "riders/$authUid/orders/$orderId/evidence_${System.currentTimeMillis()}.jpg"
                                    else "orders/$orderId/evidence_${System.currentTimeMillis()}.jpg"
                         val ref = FirebaseStorage.getInstance().reference.child(path)
+                        Log.d("LocalDemoOfferRepo", "Uploading photo to Firebase Storage path: $path")
                         ref.putFile(uri).await()
                         remoteUrl = ref.downloadUrl.await().toString()
+                        Log.d("LocalDemoOfferRepo", "Upload SUCCESS: $remoteUrl")
                     } catch (e: Exception) {
-                        e.printStackTrace()
+                        Log.e("LocalDemoOfferRepo", "Upload FAILED: ${e.message}", e)
                     }
                 }
                 snapshot.copy(

@@ -272,10 +272,10 @@ private fun ExpandedOrderContent(
     LaunchedEffect(offer?.id, snapshot?.batch?.stops?.firstOrNull()?.orderId,
         snapshot?.arrivedAt, snapshot?.pickedUp, snapshot?.isDelivered) { scroll.scrollTo(0) }
 
-    val maxHeight = (LocalConfiguration.current.screenHeightDp.dp * 0.75f).coerceAtMost(620.dp)
+    val maxHeight = (LocalConfiguration.current.screenHeightDp.dp * 0.85f).coerceAtMost(720.dp)
     Column(Modifier.heightIn(max = maxHeight)) {
         Column(
-            Modifier.fillMaxWidth().verticalScroll(scroll).padding(20.dp),
+            Modifier.fillMaxWidth().weight(1f, fill = false).verticalScroll(scroll).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             if (state.busy) LinearProgressIndicator(Modifier.fillMaxWidth())
@@ -482,7 +482,7 @@ private fun OrderActionControls(
                         AsyncImage(
                             model = state.evidencePhotoUri,
                             contentDescription = "Evidencia",
-                            modifier = Modifier.fillMaxWidth().height(140.dp).clip(RoundedCornerShape(8.dp)),
+                            modifier = Modifier.fillMaxWidth().height(120.dp).clip(RoundedCornerShape(8.dp)),
                             contentScale = ContentScale.Crop
                         )
 
