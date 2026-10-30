@@ -85,6 +85,7 @@ dependencies {
     implementation(libs.androidx.credentials.play.services)
     implementation(libs.googleid)
 
+    implementation("com.github.tehras:charts:0.2.4-alpha")
 
     implementation(libs.coil.compose)
 

@@ -34,6 +34,8 @@ import com.example.chaskirider.ui.screens.orders.OrdersViewModel
 import com.example.chaskirider.ui.screens.support.SupportViewModel
 import com.example.chaskirider.ui.screens.support.SupportRoute
 import com.example.chaskirider.domain.support.SupportOrderContext
+import com.example.chaskirider.ui.screens.earnings.EarningsRoute
+import com.example.chaskirider.ui.screens.earnings.EarningsViewModel
 import com.example.chaskirider.ui.screens.profile.*
 import com.example.chaskirider.ui.screens.profile.documents.DocumentsViewModel
 import com.example.chaskirider.ui.screens.profile.documents.DocumentPreviewHost
@@ -140,6 +142,9 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
     val supportViewModel: SupportViewModel = viewModel {
         SupportViewModel(AppContainer.supportRepository, AppContainer.supportDraftStore, AppContainer.riderSession,
             AppContainer.locationRepository)
+    }
+    val earningsViewModel: EarningsViewModel = viewModel {
+        EarningsViewModel(AppContainer.earningsRepository)
     }
     fun activeSupportOrder(): SupportOrderContext? {
         val snapshot = ordersState.snapshot ?: return null
@@ -341,6 +346,13 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
             }
             composable(Screen.Support.route) {
                 if (user != null) SupportRoute(supportViewModel, onBack = { navController.popBackStack() })
+            }
+            composable(Screen.Earnings.route) {
+                if (workArea)
+                    EarningsRoute(
+                        viewModel = earningsViewModel,
+                        onMenu = { scope.launch { drawerState.open() } }
+                    )
             }
 
         }

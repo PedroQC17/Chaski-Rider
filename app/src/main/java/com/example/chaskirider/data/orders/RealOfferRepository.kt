@@ -33,36 +33,38 @@ class RealOfferRepository : OfferRepository {
         evidenceUrl: String?,
         deliveryNote: String?,
     ): OfferSnapshot {
-
-        //user es el usuario actual de firebase y token es el token de acceso
         val user = FirebaseAuth.getInstance().currentUser ?: throw OfferRequestException(401)
         val token = user.getIdToken(false).await().token ?: throw OfferRequestException(401)
 
-        var finalEvidenceUrl = evidenceUrl
-        if (action == OfferAction.DELIVER && evidenceUrl != null && (evidenceUrl.startsWith("content://") || evidenceUrl.startsWith("file://"))) {
-            try {
-                val uri = Uri.parse(evidenceUrl)
-                val path = "riders/${user.uid}/orders/${offerId ?: "order_${System.currentTimeMillis()}"}/evidence_${System.currentTimeMillis()}.jpg"
-                val fileRef = FirebaseStorage.getInstance().reference.child(path)
-                fileRef.putFile(uri).await()
-                finalEvidenceUrl = fileRef.downloadUrl.await().toString()
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
+        val finalEvidenceUrl = if (action == OfferAction.DELIVER) {
+            uploadEvidencePhoto(user.uid, offerId, evidenceUrl)
+        } else evidenceUrl
 
         try {
-            // se usa el token para autenticar la peticion y se hace la peticion a la api
             return api.execute("Bearer $token", OfferRequest(
-                action= action.name.lowercase(Locale.ROOT),
-                offerId= offerId,
-                requestId=UUID.randomUUID().toString(),
-                latitude=lat,
-                longitude =lng,
-                //campos para validar la finalizacion de un pedido
+                action = action.name.lowercase(Locale.ROOT),
+                offerId = offerId,
+                requestId = UUID.randomUUID().toString(),
+                latitude = lat,
+                longitude = lng,
                 evidencePhotoUrl = finalEvidenceUrl,
                 deliveryNote = deliveryNote,
             )).toDomain()
         } catch (e: HttpException) { throw OfferRequestException(e.code()) }
+    }
+
+    private suspend fun uploadEvidencePhoto(uid: String, offerId: String?, evidenceUrl: String?): String? {
+        if (evidenceUrl.isNullOrBlank() || (!evidenceUrl.startsWith("content://") && !evidenceUrl.startsWith("file://"))) {
+            return evidenceUrl
+        }
+        return try {
+            val uri = Uri.parse(evidenceUrl)
+            val path = "riders/$uid/orders/${offerId ?: "order_${System.currentTimeMillis()}"}/evidence_${System.currentTimeMillis()}.jpg"
+            val ref = FirebaseStorage.getInstance().reference.child(path)
+            ref.putFile(uri).await()
+            ref.downloadUrl.await().toString()
+        } catch (e: Exception) {
+            evidenceUrl
+        }
     }
 }

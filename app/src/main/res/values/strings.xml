@@ -10,6 +10,7 @@
     <string name="text_el_archivo_esta_vacio">"El archivo está vacío"</string>
     <string name="text_vuelve_a_subir_este_documento_para_consultarlo">"Vuelve a subir este documento para consultarlo de forma privada"</string>
     <string name="text_notificaciones_de_chaski_rider">"Notificaciones de Chaski Rider"</string>
+    <string name="text_mis_ganancias">Mis Ganancias</string>
     <string name="text_no_se_pudo_consultar_tu_perfil_en">"No se pudo consultar tu perfil en Firestore. Comprueba la conexión y que Cloud Firestore esté habilitado en Firebase."</string>
     <string name="text_firebase_no_permite_consultar_tu_perfil_revisa">"Firebase no permite consultar tu perfil. Revisa que la API de Firestore esté habilitada y las reglas publicadas."</string>
     <string name="text_no_se_pudo_cargar_tu_perfil_de">"No se pudo cargar tu perfil de Firestore. Reintenta."</string>

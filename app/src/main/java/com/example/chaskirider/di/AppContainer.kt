@@ -6,11 +6,17 @@ import com.example.chaskirider.data.text.AndroidTextProvider
 import com.example.chaskirider.domain.text.TextProvider
 import com.example.chaskirider.data.notifications.NotificationsInitializer
 import com.example.chaskirider.data.documents.RiderDocumentDataSource
+import com.example.chaskirider.data.earnings.LocalEarningsRepository
+import com.example.chaskirider.data.orders.DemoOrderCatalog
 import com.example.chaskirider.data.orders.LocalDemoOfferRepository
+import com.example.chaskirider.data.orders.OrderSyncWorker
 import com.example.chaskirider.data.orders.RealOfferRepository
+import com.example.chaskirider.data.orders.RoomDemoOrderStore
+import com.example.chaskirider.data.orders.openOrderDatabase
 import com.example.chaskirider.data.remote.RiderProfileRemoteDataSource
 import com.example.chaskirider.data.repository.*
 import com.example.chaskirider.data.session.RiderSessionStore
+import com.example.chaskirider.domain.earnings.EarningsRepository
 import com.example.chaskirider.domain.orders.OfferRepository
 import com.example.chaskirider.domain.repository.*
 
@@ -41,19 +47,37 @@ object AppContainer {
         RealOfferRepository()
     }
 
+    val localEarningsRepository by lazy {
+        LocalEarningsRepository()
+    }
+    val earningsRepository: EarningsRepository by lazy {
+        localEarningsRepository
+    }
+
     // Repositorio de demostración (Datos simulados locales para test)
     val demoOfferRepository: OfferRepository by lazy {
-        val database = com.example.chaskirider.data.orders.openOrderDatabase(applicationContext)
-        LocalDemoOfferRepository(com.example.chaskirider.data.orders.RoomDemoOrderStore(database.orders()) {
-            com.example.chaskirider.data.orders.OrderSyncWorker.schedule(applicationContext, it)
-        },
-            { riderSession.user.value?.id }, {
+        val database = openOrderDatabase(applicationContext)
+        LocalDemoOfferRepository(
+            store = RoomDemoOrderStore(database.orders()) {
+                OrderSyncWorker.schedule(applicationContext, it)
+            },
+            currentUid = { riderSession.user.value?.id },
+            catalog = {
                 kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                     applicationContext.assets.open("demo_orders_lima.json").bufferedReader().use {
-                        com.example.chaskirider.data.orders.DemoOrderCatalog.parse(it.readText())
+                        DemoOrderCatalog.parse(it.readText())
                     }
                 }
-            })
+            },
+            onOrderCompleted = { orderId, merchantName, totalCents ->
+                localEarningsRepository.recordCompletedOrder(
+                    orderId = orderId,
+                    merchantName = merchantName,
+                    baseFareCents = (totalCents * 0.85).toInt(),
+                    tipCents = (totalCents * 0.15).toInt()
+                )
+            }
+        )
     }
 
     val offerRepository: OfferRepository by lazy {

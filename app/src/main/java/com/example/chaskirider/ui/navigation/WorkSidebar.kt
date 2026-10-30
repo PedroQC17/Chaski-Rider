@@ -86,6 +86,7 @@ fun WorkSidebar(route: String?, unread: Int, busy: Boolean, onNavigate: (String)
         listOf(
             Triple(Screen.Home.route, R.string.home_map_menu, Icons.Default.Home),
             Triple(Screen.Orders.route, R.string.orders_real_menu, Icons.Default.ShoppingCart),
+            Triple(Screen.Earnings.route, R.string.text_mis_ganancias, Icons.Default.Star),
             Triple(Screen.Profile.route, R.string.text_perfil, Icons.Default.Person),
             Triple(Screen.Notifications.route, R.string.text_notificaciones, Icons.Default.Notifications),
             Triple(Screen.Support.route, R.string.text_ayuda_y_soporte, Icons.Default.Info)

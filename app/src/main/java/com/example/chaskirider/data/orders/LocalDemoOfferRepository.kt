@@ -19,7 +19,8 @@ class LocalDemoOfferRepository(
     private val currentUid: () -> String?,
     private val catalog: suspend () -> List<DemoOrder>,
     private val clock: () -> Long = System::currentTimeMillis,
-    private val hasOffer: () -> Boolean = { Random.nextInt(100) < 70 }
+    private val hasOffer: () -> Boolean = { Random.nextInt(100) < 70 },
+    private val onOrderCompleted: ((orderId: String, merchantName: String, totalCents: Int) -> Unit)? = null
 ) : OfferRepository {
     private val mutex = Mutex()
     override suspend fun execute(
@@ -81,23 +82,11 @@ class LocalDemoOfferRepository(
             }
             OfferAction.DELIVER -> {
                 if (snapshot.batch == null || !snapshot.pickedUp) throw OfferRequestException(409)
-                var remoteUrl = evidenceUrl
-                if (evidenceUrl != null && (evidenceUrl.startsWith("content://") || evidenceUrl.startsWith("file://"))) {
-                    try {
-                        val authUid = FirebaseAuth.getInstance().currentUser?.uid ?: uid
-                        val uri = Uri.parse(evidenceUrl)
-                        val orderId = snapshot.batch.stops.firstOrNull()?.orderId ?: "demo_order"
-                        val path = if (authUid != null) "riders/$authUid/orders/$orderId/evidence_${System.currentTimeMillis()}.jpg"
-                                   else "orders/$orderId/evidence_${System.currentTimeMillis()}.jpg"
-                        val ref = FirebaseStorage.getInstance().reference.child(path)
-                        Log.d("LocalDemoOfferRepo", "Uploading photo to Firebase Storage path: $path")
-                        ref.putFile(uri).await()
-                        remoteUrl = ref.downloadUrl.await().toString()
-                        Log.d("LocalDemoOfferRepo", "Upload SUCCESS: $remoteUrl")
-                    } catch (e: Exception) {
-                        Log.e("LocalDemoOfferRepo", "Upload FAILED: ${e.message}", e)
-                    }
-                }
+                val orderId = snapshot.batch.stops.firstOrNull()?.orderId ?: "demo_order"
+                val remoteUrl = uploadEvidencePhoto(uid, orderId, evidenceUrl)
+                val merchantName = snapshot.merchantName ?: "Establecimiento"
+                val totalCents = snapshot.batch.totalCents
+                onOrderCompleted?.invoke(orderId, merchantName, totalCents)
                 snapshot.copy(
                     isDelivered = true,
                     deliveredAt = snapshot.deliveredAt ?: now,
@@ -137,6 +126,23 @@ class LocalDemoOfferRepository(
             problems = saved.problems.orEmpty() + problem))
         result
     }
+    private suspend fun uploadEvidencePhoto(uid: String?, orderId: String, evidenceUrl: String?): String? {
+        if (evidenceUrl.isNullOrBlank() || (!evidenceUrl.startsWith("content://") && !evidenceUrl.startsWith("file://"))) {
+            return evidenceUrl
+        }
+        return try {
+            val uri = Uri.parse(evidenceUrl)
+            val authUid = FirebaseAuth.getInstance().currentUser?.uid ?: uid
+            val path = if (authUid != null) "riders/$authUid/orders/$orderId/evidence_${System.currentTimeMillis()}.jpg"
+                       else "orders/$orderId/evidence_${System.currentTimeMillis()}.jpg"
+            val ref = FirebaseStorage.getInstance().reference.child(path)
+            ref.putFile(uri).await()
+            ref.downloadUrl.await().toString()
+        } catch (e: Exception) {
+            evidenceUrl
+        }
+    }
+
     private fun checkActive(snapshot: OfferSnapshot) {
         if (snapshot.batch == null || snapshot.isDelivered) throw OfferRequestException(409)
     }
