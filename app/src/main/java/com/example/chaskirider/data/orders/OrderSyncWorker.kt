@@ -7,6 +7,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.SetOptions
 import com.google.gson.Gson
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
@@ -40,14 +41,24 @@ class OrderSyncWorker(context: Context, params: WorkerParameters) : CoroutineWor
                                 Triple(problem, incidentRef, tx.get(incidentRef).exists())
                             }
                             if ((old.getLong("revision") ?: 0) < entity.revision) {
-                                tx.set(ref, mapOf(
-                                "orderId" to record.orderId, "riderId" to uid, "status" to record.status.name,
-                                "revision" to entity.revision, "merchantName" to record.merchantName,
-                                "pickup" to mapOf("latitude" to record.pickup.latitude, "longitude" to record.pickup.longitude),
-                                "destination" to mapOf("latitude" to record.destination.latitude, "longitude" to record.destination.longitude),
-                                "acceptedAt" to record.acceptedAt, "arrivedAt" to record.arrivedAt,
-                                "pickedUpAt" to record.pickedUpAt, "deliveredAt" to record.deliveredAt,
-                                "cancelledAt" to record.cancelledAt, "updatedAt" to FieldValue.serverTimestamp()))
+                                val dataMap = mutableMapOf<String, Any?>(
+                                    "orderId" to record.orderId,
+                                    "riderId" to uid,
+                                    "status" to record.status.name,
+                                    "revision" to entity.revision,
+                                    "merchantName" to record.merchantName,
+                                    "pickup" to mapOf("latitude" to record.pickup.latitude, "longitude" to record.pickup.longitude),
+                                    "destination" to mapOf("latitude" to record.destination.latitude, "longitude" to record.destination.longitude),
+                                    "acceptedAt" to record.acceptedAt,
+                                    "arrivedAt" to record.arrivedAt,
+                                    "pickedUpAt" to record.pickedUpAt,
+                                    "deliveredAt" to record.deliveredAt,
+                                    "cancelledAt" to record.cancelledAt,
+                                    "updatedAt" to FieldValue.serverTimestamp()
+                                )
+                                if (record.evidencePhotoUrl != null) dataMap["evidencePhotoUrl"] = record.evidencePhotoUrl
+                                if (record.deliveryNote != null) dataMap["deliveryNote"] = record.deliveryNote
+                                tx.set(ref, dataMap, SetOptions.merge())
                                 if (record.status in listOf(com.example.chaskirider.domain.orders.OrderStatus.DELIVERED,
                                         com.example.chaskirider.domain.orders.OrderStatus.CANCELLED))
                                     tx.delete(ref.collection("tracking").document("current"))

@@ -5,6 +5,9 @@ import android.util.Log
 import com.example.chaskirider.domain.location.LocationUtils
 import com.example.chaskirider.domain.orders.*
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -87,10 +90,42 @@ class LocalDemoOfferRepository(
                 val merchantName = snapshot.merchantName ?: "Establecimiento"
                 val totalCents = snapshot.batch.totalCents
                 onOrderCompleted?.invoke(orderId, merchantName, totalCents)
+
+                val finalUrl = remoteUrl ?: "https://firebasestorage.googleapis.com/v0/b/chaski-rider.appspot.com/o/demo_evidence.jpg"
+                val activeUid = FirebaseAuth.getInstance().currentUser?.uid ?: uid
+                if (activeUid != null) {
+                    try {
+                        val firestore = FirebaseFirestore.getInstance()
+                        val dataMap = mutableMapOf<String, Any?>(
+                            "orderId" to orderId,
+                            "riderId" to activeUid,
+                            "merchantName" to merchantName,
+                            "status" to "DELIVERED",
+                            "deliveredAt" to now,
+                            "updatedAt" to FieldValue.serverTimestamp()
+                        )
+                        if (finalUrl != null) dataMap["evidencePhotoUrl"] = finalUrl
+                        if (deliveryNote != null) dataMap["deliveryNote"] = deliveryNote
+
+                        Log.d("FirestoreSync", ">>> USUARIO ACTIVO UID: $activeUid <<<")
+                        Log.d("FirestoreSync", "Iniciando escritura en riders/$activeUid/deliveryRecords/$orderId...")
+                        firestore.collection("riders").document(activeUid).collection("deliveryRecords").document(orderId)
+                            .set(dataMap, SetOptions.merge())
+                            .addOnSuccessListener {
+                                Log.d("FirestoreSync", " EXITO: Guardado en riders/$activeUid/deliveryRecords/$orderId")
+                            }
+                            .addOnFailureListener { error ->
+                                Log.e("FirestoreSync", " ERROR Firestore: ${error.message}", error)
+                            }
+                    } catch (e: Exception) {
+                        Log.e("FirestoreSync", " EXCEPCION Firestore: ${e.message}", e)
+                    }
+                }
+
                 snapshot.copy(
                     isDelivered = true,
                     deliveredAt = snapshot.deliveredAt ?: now,
-                    evidencePhotoUrl = remoteUrl ?: "https://firebasestorage.googleapis.com/v0/b/chaski-rider.appspot.com/o/demo_evidence.jpg",
+                    evidencePhotoUrl = finalUrl,
                     deliveryNote = deliveryNote
                 )
             }
