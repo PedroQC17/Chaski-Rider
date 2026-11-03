@@ -8,6 +8,30 @@ import org.junit.Test
 import java.io.File
 
 class DemoOrdersTest {
+    @Test fun paidOrderRequiresPinButNeverPhotoAndWrongPinKeepsItActive() = runTest {
+        var verified = false
+        val paid = first.copy(paidByCustomer = true)
+        val repo = LocalDemoOfferRepository(store, { uid }, { listOf(paid) }, { now }, { true },
+            verifyPin = { owner, order, code ->
+                assertEquals("alice", owner); assertTrue(order.isNotBlank())
+                if (code != "0123") throw OfferRequestException(428)
+                verified = true
+            })
+        val pending = offer(repo)
+        repo.execute(OfferAction.ACCEPT, pending.offer!!.id)
+        repo.execute(OfferAction.ARRIVE_MERCHANT, lat = paid.pickup.latitude, lng = paid.pickup.longitude)
+        repo.execute(OfferAction.PICKUP, lat = paid.pickup.latitude, lng = paid.pickup.longitude)
+        for (code in listOf(null, "12", "9999")) {
+            try { repo.execute(OfferAction.DELIVER, lat = paid.delivery.latitude, lng = paid.delivery.longitude, deliveryPin = code); fail() }
+            catch (error: OfferRequestException) { assertEquals(428, error.status) }
+            assertFalse(repo.execute(OfferAction.STATE).isDelivered)
+        }
+        try { repo.execute(OfferAction.DELIVER, lat = paid.pickup.latitude, lng = paid.pickup.longitude, deliveryPin = "0123"); fail() }
+        catch (error: OfferRequestException) { assertEquals(412, error.status) }
+        assertFalse(verified)
+        val done = repo.execute(OfferAction.DELIVER, lat = paid.delivery.latitude, lng = paid.delivery.longitude, deliveryPin = "0123")
+        assertTrue(verified); assertTrue(done.isDelivered); assertNull(done.evidencePhotoUrl)
+    }
     @Test fun repeatingCatalogRouteCreatesAnotherOrderIdentity() = runTest {
         val repo = repository()
         val one = offer(repo)
@@ -136,15 +160,18 @@ class DemoOrdersTest {
         uid = null
         try { repo.execute(OfferAction.STATE); fail() } catch (error: OfferRequestException) { assertEquals(401, error.status) }
     }
-    @Test fun paymentAddsUpAndWaitStopsAtPickup() = runTest {
+    @Test fun paymentUsesBothDistancesAndNoUnapprovedWaitingBonus() = runTest {
         val repo = repository(); val pending = offer(repo)
         val quote = pending.offer!!.quote
         assertEquals(quote.totalCents, quote.baseCents + quote.approachCents + quote.deliveryCents + quote.guaranteeCents + quote.tipCents)
+        assertEquals(0, quote.baseCents)
+        assertEquals(0, quote.guaranteeCents)
+        assertEquals(com.example.chaskirider.domain.earnings.EarningsPolicy.routeCents(quote.approachMeters, quote.deliveryMeters) + first.tipCents, quote.totalCents)
         repo.execute(OfferAction.ACCEPT, pending.offer.id); repo.execute(OfferAction.ARRIVE_MERCHANT, lat = first.pickup.latitude, lng = first.pickup.longitude)
         repo.execute(OfferAction.REPORT_NOT_READY, lat = first.pickup.latitude, lng = first.pickup.longitude); now += 360_000
-        val picked = repo.execute(OfferAction.PICKUP, lat = first.pickup.latitude, lng = first.pickup.longitude); assertEquals(20, picked.waitingCompensationCents)
+        val picked = repo.execute(OfferAction.PICKUP, lat = first.pickup.latitude, lng = first.pickup.longitude); assertEquals(0, picked.waitingCompensationCents)
         now += 600_000
-        assertEquals(20, repository().execute(OfferAction.STATE).waitingCompensationCents)
+        assertEquals(0, repository().execute(OfferAction.STATE).waitingCompensationCents)
     }
     @Test fun failedSaveDoesNotConfirmAnAction() = runTest {
         val badStore = object : DemoOrderStore {

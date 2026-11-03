@@ -18,6 +18,7 @@ internal data class OfferRequest(
     //campos para validar la finalizacion de un pedido
     val evidencePhotoUrl: String? =null,
     val deliveryNote: String? = null,
+    val deliveryPin: String? = null,
 )
 internal data class PointDto(val latitude: Double, val longitude: Double) {
     fun toDomain() = RoutePoint(latitude, longitude)

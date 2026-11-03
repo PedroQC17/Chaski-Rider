@@ -19,7 +19,8 @@ data class OfferSnapshot(val serverTime: Long, val pickedUp: Boolean,
     val problem: OrderProblem? = null,
     val acceptedAt: Long? = null,
     val arrivalLocation: RoutePoint? = null,
-    val requiresPhoto: Boolean = true,
+    val paidByCustomer: Boolean = false,
+    val requiresPhoto: Boolean = false,
     val evidencePhotoUrl: String? = null,
     val deliveryNote: String? = null)
 enum class OfferAction { STATE, OFFER, ACCEPT, REJECT, ARRIVE_MERCHANT, REPORT_NOT_READY, PICKUP, DELIVER, RESET }
@@ -36,7 +37,8 @@ interface OfferRepository {
         lat: Double? = null,
         lng: Double? = null,
         evidenceUrl: String? = null,
-        deliveryNote: String? = null
+        deliveryNote: String? = null,
+        deliveryPin: String? = null
     ): OfferSnapshot
 }
 class OfferRequestException(val status: Int) : Exception()

@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.chaskirider.domain.earnings.DeliveryEarningsRecord
+import com.example.chaskirider.domain.earnings.EarningsCalendar
 import com.example.chaskirider.ui.theme.Orange
 import com.github.tehras.charts.bar.BarChart
 import com.github.tehras.charts.bar.BarChartData
@@ -27,18 +28,18 @@ fun EarningsChartCard(records: List<DeliveryEarningsRecord>) {
                 style = MaterialTheme.typography.titleMedium
             )
 
-            if (records.isEmpty()) {
+            if (records.none { (it.totalCents ?: 0) > 0 && !it.cancelled }) {
                 Text(
                     text = "Sin entregas registradas en este periodo",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.secondary
                 )
             } else {
-                val bars = records.take(6).map { record ->
+                val bars = records.filter { it.totalCents != null && !it.cancelled }.groupBy { EarningsCalendar.day(it.completedAt) }.toSortedMap().map { (day, orders) ->
                     BarChartData.Bar(
-                        value = record.totalCents / 100f,
+                        value = orders.sumOf { it.totalCents!!.toLong() } / 100f,
                         color = Orange,
-                        label = record.merchantName.take(6)
+                        label = day.takeLast(5)
                     )
                 }
 

@@ -1,29 +1,31 @@
 package com.example.chaskirider.domain.earnings
 
-enum class EarningsDateFilter {
-    TODAY,
-    THIS_WEEK,
-    THIS_MONTH
-}
-
-enum class SettlementStatus {
-    PENDING,
-    PAID
-}
+enum class EarningsDateFilter { TODAY, THIS_WEEK, THIS_MONTH, CUSTOM }
+enum class SettlementStatus { PENDING, PAID }
 
 data class DeliveryEarningsRecord(
     val orderId: String,
     val merchantName: String,
     val completedAt: Long,
-    val baseFareCents: Int,
-    val tipCents: Int = 0,
-    val totalCents: Int = baseFareCents + tipCents
+    val baseFareCents: Int?,
+    val tipCents: Int?,
+    val totalCents: Int?,
+    val cancelled: Boolean = false,
+    val quote: AcceptedEarningsQuote? = null
 )
 
 data class SettlementRecord(
     val id: String,
     val periodLabel: String,
-    val amountCents: Int,
+    val amountCents: Long,
     val status: SettlementStatus,
-    val paidAt: Long? = null
+    val paidAt: Long? = null,
+    val orderIds: List<String> = emptyList(),
+    val periodStart: Long = 0
+)
+
+data class EarningsSnapshot(
+    val records: List<DeliveryEarningsRecord> = emptyList(),
+    val settlements: List<SettlementRecord> = emptyList(),
+    val warning: String? = null
 )

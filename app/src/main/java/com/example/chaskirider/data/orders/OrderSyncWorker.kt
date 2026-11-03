@@ -56,6 +56,14 @@ class OrderSyncWorker(context: Context, params: WorkerParameters) : CoroutineWor
                                     "cancelledAt" to record.cancelledAt,
                                     "updatedAt" to FieldValue.serverTimestamp()
                                 )
+                                if (record.paidByCustomer) dataMap["paidByCustomer"] = true
+                                record.earningsQuote?.let { quote ->
+                                    dataMap["earningsQuote"] = mapOf(
+                                        "approachMeters" to quote.approachMeters, "deliveryMeters" to quote.deliveryMeters,
+                                        "chaskiCents" to quote.chaskiCents, "tipCents" to quote.tipCents,
+                                        "totalCents" to quote.totalCents, "pricingVersion" to quote.pricingVersion,
+                                        "distanceSource" to quote.distanceSource)
+                                }
                                 if (record.evidencePhotoUrl != null) dataMap["evidencePhotoUrl"] = record.evidencePhotoUrl
                                 if (record.deliveryNote != null) dataMap["deliveryNote"] = record.deliveryNote
                                 tx.set(ref, dataMap, SetOptions.merge())
@@ -77,13 +85,22 @@ class OrderSyncWorker(context: Context, params: WorkerParameters) : CoroutineWor
                         }.await()
                     }
                     if (auth.currentUser?.uid != uid) return Result.success()
+                    if (record.paidByCustomer && record.status != com.example.chaskirider.domain.orders.OrderStatus.DELIVERED)
+                        withTimeout(20_000) { DeliveryPinRemote.prepare(record.orderId) }
                     dao.acknowledge(entity)
                 }
             }
             return Result.success()
         } catch (_: TimeoutCancellationException) { return Result.retry() }
         catch (error: CancellationException) { throw error }
+        catch (error: com.google.firebase.functions.FirebaseFunctionsException) {
+            android.util.Log.w("OrderSync", "No se pudo preparar PIN: ${error.code}")
+            return if (error.code in listOf(com.google.firebase.functions.FirebaseFunctionsException.Code.PERMISSION_DENIED,
+                com.google.firebase.functions.FirebaseFunctionsException.Code.UNAUTHENTICATED,
+                com.google.firebase.functions.FirebaseFunctionsException.Code.INVALID_ARGUMENT)) Result.failure() else Result.retry()
+        }
         catch (error: FirebaseFirestoreException) {
+            android.util.Log.w("OrderSync", "No se pudo sincronizar: ${error.code}")
             return if (error.code in listOf(FirebaseFirestoreException.Code.PERMISSION_DENIED,
                     FirebaseFirestoreException.Code.UNAUTHENTICATED, FirebaseFirestoreException.Code.INVALID_ARGUMENT))
                 Result.failure() else Result.retry()

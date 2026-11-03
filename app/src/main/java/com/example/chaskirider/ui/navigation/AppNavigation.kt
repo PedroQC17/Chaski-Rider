@@ -144,7 +144,7 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
             AppContainer.locationRepository)
     }
     val earningsViewModel: EarningsViewModel = viewModel {
-        EarningsViewModel(AppContainer.earningsRepository)
+        EarningsViewModel(AppContainer.earningsRepository, AppContainer.riderSession)
     }
     fun activeSupportOrder(): SupportOrderContext? {
         val snapshot = ordersState.snapshot ?: return null

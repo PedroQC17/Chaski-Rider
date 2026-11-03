@@ -6,6 +6,7 @@ import com.example.chaskirider.domain.orders.OfferSnapshot
 data class OrdersUiState(
     val snapshot: OfferSnapshot? = null,
     val busy: Boolean = false,
+    val deliveryPin: String = "",
     val problemDialogOpen: Boolean = false,
     val problemReason: com.example.chaskirider.domain.orders.OrderProblemReason? = null,
     val problemDetail: String = "",

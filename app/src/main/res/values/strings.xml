@@ -327,4 +327,7 @@
     <string name="orders_near_pickup">Acércate a menos de 100 m del local para continuar.</string>
     <string name="orders_near_delivery">Acércate a menos de 100 m del destino para confirmar la entrega.</string>
     <string name="orders_checking_location">Esperando una ubicación reciente. Mantén el GPS y el permiso de ubicación activos.</string>
+    <string name="orders_pin_invalid">El PIN debe tener 4 dígitos y coincidir con el del cliente.</string>
+    <string name="orders_pin_wait">Demasiados intentos. Espera unos minutos o contacta a soporte.</string>
+    <string name="orders_pin_connection">Se necesita conexión y que el pedido esté sincronizado para validar el PIN. El pedido sigue activo.</string>
 </resources>

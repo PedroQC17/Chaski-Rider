@@ -1,9 +1,7 @@
 package com.example.chaskirider.domain.earnings
 
-/**
- * Interfaz sencilla para consultar ganancias y liquidaciones.
- */
+import kotlinx.coroutines.flow.Flow
+
 interface EarningsRepository {
-    suspend fun getEarnings(filter: EarningsDateFilter): List<DeliveryEarningsRecord>
-    suspend fun getSettlements(): List<SettlementRecord>
+    fun observe(uid: String): Flow<EarningsSnapshot>
 }

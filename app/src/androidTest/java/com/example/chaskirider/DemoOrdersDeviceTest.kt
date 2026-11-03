@@ -125,7 +125,9 @@ class DemoOrdersDeviceTest {
 
     @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
     private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
-    private fun catalog() = context.assets.open("demo_orders_lima.json").bufferedReader().use { DemoOrderCatalog.parse(it.readText()) }
+    private fun catalog() = context.assets.open("demo_orders_lima.json").bufferedReader().use {
+        DemoOrderCatalog.parse(it.readText()).map { it.copy(paidByCustomer = false) }
+    }
     private fun screenshot(name: String) {
         val bitmap = compose.onRoot().captureToImage().asAndroidBitmap()
         File(context.getExternalFilesDir(null), name).outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
@@ -165,7 +167,7 @@ class DemoOrdersDeviceTest {
             override suspend fun currentLocation(): Result<GeoPoint?> = Result.success(gps)
         }
         val repo = LocalDemoOfferRepository(RoomDemoOrderStore(database.orders()), { session.user.value?.id }, { catalog() }, hasOffer = { true })
-        val vm = OrdersViewModel(repo, session, locations)
+        val vm = OrdersViewModel(repo, session, locations = locations, automaticSearch = false)
         try {
             val chat = ChatViewModel(object : OrderChatRepository {
                 override fun observe(uid: String, orderId: String, channel: ChatChannel) = kotlinx.coroutines.flow.flowOf(ChatConversation(emptyList()))
@@ -182,9 +184,13 @@ class DemoOrdersDeviceTest {
             val orderId = vm.uiState.value.snapshot!!.offer!!.quote.stops.single().orderId
             compose.onNodeWithText("RECOJO").assertExists()
             compose.onNodeWithText("ENTREGA").assertExists()
-            screenshot("orders-offer.png")
-            compose.onNodeWithText(context.getString(R.string.orders_accept)).performClick()
-            compose.waitUntil(10_000) { vm.uiState.value.snapshot?.batch != null && !vm.uiState.value.busy }
+            compose.onNodeWithText(context.getString(R.string.orders_accept)).assertIsEnabled()
+            compose.onNodeWithText(context.getString(R.string.orders_accept)).performScrollTo().performClick()
+            try {
+                compose.waitUntil(10_000) { vm.uiState.value.snapshot?.batch != null && !vm.uiState.value.busy }
+            } catch (error: Throwable) {
+                throw AssertionError("Aceptación: busy=${vm.uiState.value.busy}, error=${vm.uiState.value.error}, segundos=${vm.uiState.value.secondsLeft}", error)
+            }
             screenshot("orders-accepted.png")
             compose.onNodeWithText("Navegar al local").assertExists()
             assertEquals("google.navigation:q=${vm.uiState.value.snapshot!!.merchant.latitude},${vm.uiState.value.snapshot!!.merchant.longitude}",
@@ -194,7 +200,7 @@ class DemoOrdersDeviceTest {
             gps = GeoPoint(pickup.latitude, pickup.longitude)
             compose.runOnUiThread { vm.fetchCurrentLocation() }
             compose.waitUntil(10_000) { vm.uiState.value.isWithinGeofence }
-            compose.onNodeWithText("Llegué al local").performClick()
+            compose.onNodeWithText("Llegué al local").performScrollTo().performClick()
             compose.waitUntil(10_000) { vm.uiState.value.snapshot?.arrivedAt != null && !vm.uiState.value.busy }
             val destination = vm.uiState.value.snapshot!!.batch!!.stops.single().point
             gps = GeoPoint(destination.latitude, destination.longitude)
@@ -204,7 +210,7 @@ class DemoOrdersDeviceTest {
             gps = GeoPoint(pickup.latitude, pickup.longitude)
             compose.runOnUiThread { vm.fetchCurrentLocation() }
             compose.waitUntil(10_000) { vm.uiState.value.isWithinGeofence }
-            compose.onNodeWithText("Confirmar recojo").performClick()
+            compose.onNodeWithText("Confirmar recojo").performScrollTo().performClick()
             compose.waitUntil(10_000) { vm.uiState.value.snapshot?.pickedUp == true && !vm.uiState.value.busy }
             compose.onNodeWithText("Navegar al cliente").assertExists()
             compose.onNodeWithText("Navegar al local").assertDoesNotExist()
@@ -213,7 +219,7 @@ class DemoOrdersDeviceTest {
             gps = GeoPoint(delivery.latitude, delivery.longitude)
             compose.runOnUiThread { vm.fetchCurrentLocation() }
             compose.waitUntil(10_000) { vm.uiState.value.isNearCustomer }
-            compose.onNodeWithText("Confirmar entrega").performClick()
+            compose.onNodeWithText("Confirmar entrega").performScrollTo().performClick()
             compose.waitUntil(10_000) { vm.uiState.value.snapshot?.isDelivered == true && !vm.uiState.value.busy }
             assertEquals(orderId, vm.uiState.value.snapshot!!.batch!!.stops.single().orderId)
             compose.onNodeWithText("Siguiente Pedido").assertExists()

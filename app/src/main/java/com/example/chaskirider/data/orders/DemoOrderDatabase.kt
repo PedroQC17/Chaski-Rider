@@ -39,6 +39,8 @@ interface DemoOrderDao {
     suspend fun record(uid: String, orderId: String): OrderRecordEntity?
     @Query("SELECT * FROM order_records WHERE uid = :uid AND orderId = :orderId")
     fun observeRecord(uid: String, orderId: String): kotlinx.coroutines.flow.Flow<OrderRecordEntity?>
+    @Query("SELECT * FROM order_records WHERE uid = :uid")
+    fun observeRecords(uid: String): kotlinx.coroutines.flow.Flow<List<OrderRecordEntity>>
     @Query("SELECT * FROM order_records WHERE uid = :uid AND pending = 1 ORDER BY revision LIMIT 50")
     suspend fun pending(uid: String): List<OrderRecordEntity>
     @Query("UPDATE order_records SET pending = 0 WHERE uid = :uid AND orderId = :orderId AND revision = :revision")
@@ -82,8 +84,14 @@ interface DemoOrderDao {
         save(entity)
         if (orderId != null && content != null) {
             val old = record(entity.uid, orderId)
-            if (old?.content != content) {
-                saveRecord(OrderRecordEntity(entity.uid, orderId, content, (old?.revision ?: 0) + 1, true))
+            val normalized = if (old == null) content else {
+                val gson = Gson()
+                val previous = gson.fromJson(old.content, OrderRecord::class.java)
+                val next = gson.fromJson(content, OrderRecord::class.java)
+                gson.toJson(next.copy(earningsQuote = previous.earningsQuote))
+            }
+            if (old?.content != normalized) {
+                saveRecord(OrderRecordEntity(entity.uid, orderId, normalized, (old?.revision ?: 0) + 1, true))
                 return true
             }
         }

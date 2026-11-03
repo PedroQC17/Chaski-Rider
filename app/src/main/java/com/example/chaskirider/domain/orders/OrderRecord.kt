@@ -17,7 +17,9 @@ data class OrderRecord(
     val problems: List<OrderProblem>? = emptyList(),
     val waitStartedAt: Long? = null,
     val evidencePhotoUrl: String? = null,
-    val deliveryNote: String? = null
+    val deliveryNote: String? = null,
+    val paidByCustomer: Boolean = false,
+    val earningsQuote: com.example.chaskirider.domain.earnings.AcceptedEarningsQuote? = null
 ) {
     companion object {
         fun from(uid: String, snapshot: OfferSnapshot): OrderRecord? {
@@ -31,7 +33,8 @@ data class OrderRecord(
             return OrderRecord(stop.orderId, uid, status, snapshot.merchantName.orEmpty(),
                 snapshot.merchant, stop.point, snapshot.acceptedAt, snapshot.arrivedAt,
                 snapshot.pickedUpAt, snapshot.deliveredAt, waitStartedAt = snapshot.waitStartedAt,
-                evidencePhotoUrl = snapshot.evidencePhotoUrl, deliveryNote = snapshot.deliveryNote)
+                evidencePhotoUrl = snapshot.evidencePhotoUrl, deliveryNote = snapshot.deliveryNote, paidByCustomer = snapshot.paidByCustomer,
+                earningsQuote = snapshot.batch?.let { com.example.chaskirider.domain.earnings.AcceptedEarningsQuote.from(it) })
         }
     }
 }

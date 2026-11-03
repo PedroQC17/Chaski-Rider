@@ -7,7 +7,7 @@ import com.google.gson.Gson
 data class DemoOrder(
     val id: String, val merchantName: String, val pickupZone: String, val pickupAddress: String,
     val pickup: RoutePoint, val deliveryZone: String, val deliveryAddress: String,
-    val delivery: RoutePoint, val tipCents: Int
+    val delivery: RoutePoint, val tipCents: Int, val paidByCustomer: Boolean = false
 )
 
 object DemoOrderCatalog {

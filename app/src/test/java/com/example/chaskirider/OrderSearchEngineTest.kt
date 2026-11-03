@@ -23,7 +23,7 @@ class OrderSearchEngineTest {
         override suspend fun currentLocation(): Result<GeoPoint?> { gate?.await(); return Result.success(point) }
     }
     private val repository = object : OfferRepository {
-        override suspend fun execute(action: OfferAction, offerId: String?, lat: Double?, lng: Double?): OfferSnapshot {
+        override suspend fun execute(action: OfferAction, offerId: String?, lat: Double?, lng: Double?, evidenceUrl: String?, deliveryNote: String?, deliveryPin: String?): OfferSnapshot {
             calls += action
             if (action == OfferAction.OFFER) { assertEquals(point!!.latitude, lat!!, 0.0); assertEquals(point!!.longitude, lng!!, 0.0) }
             return snapshot

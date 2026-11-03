@@ -1,349 +1,153 @@
 package com.example.chaskirider.ui.screens.earnings
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.chaskirider.domain.earnings.*
 import com.example.chaskirider.ui.screens.earnings.components.EarningsChartCard
-import com.example.chaskirider.ui.theme.Orange
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
-@Composable
-fun EarningsRoute(
-    viewModel: EarningsViewModel,
-    onMenu: () -> Unit
-) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-
-    LaunchedEffect(Unit) {
-        viewModel.refresh()
-    }
-
-    EarningsScreen(
-        state = state,
-        onMenu = onMenu,
-        onSelectTab = viewModel::selectTab,
-        onSelectFilter = viewModel::selectFilter,
-        onSelectOrder = viewModel::selectOrder
-    )
-
-    state.selectedOrder?.let { order ->
-        OrderEarningsDetailDialog(
-            order = order,
-            onDismiss = { viewModel.selectOrder(null) }
-        )
-    }
-}
+private fun money(cents: Number?) = cents?.let { String.format(Locale.forLanguageTag("es-PE"), "S/ %.2f", it.toDouble() / 100) } ?: "No disponible"
+private fun date(time: Long) = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.forLanguageTag("es-PE")).apply {
+    timeZone = EarningsCalendar.zone
+}.format(Date(time))
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun EarningsScreen(
-    state: EarningsUiState,
-    onMenu: () -> Unit,
-    onSelectTab: (Int) -> Unit,
-    onSelectFilter: (EarningsDateFilter) -> Unit,
-    onSelectOrder: (DeliveryEarningsRecord) -> Unit
-) {
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Mis Ganancias", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onMenu) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menú")
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
+fun EarningsRoute(viewModel: EarningsViewModel, onMenu: () -> Unit) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    var showRange by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { viewModel.refresh() }
+    Scaffold(topBar = {
+        CenterAlignedTopAppBar(title = { Text("Mis ganancias", fontWeight = FontWeight.Bold) }, navigationIcon = {
+            IconButton(onClick = onMenu) { Icon(Icons.Default.Menu, contentDescription = "Menú") }
+        })
+    }) { padding ->
+        Column(Modifier.fillMaxSize().padding(padding)) {
             TabRow(selectedTabIndex = state.selectedTab) {
-                Tab(
-                    selected = state.selectedTab == 0,
-                    onClick = { onSelectTab(0) },
-                    text = { Text("Resumen de Ingresos", fontWeight = FontWeight.Bold) }
-                )
-                Tab(
-                    selected = state.selectedTab == 1,
-                    onClick = { onSelectTab(1) },
-                    text = { Text("Liquidaciones", fontWeight = FontWeight.Bold) }
-                )
+                listOf("Ingresos", "Liquidaciones").forEachIndexed { index, label ->
+                    Tab(selected = state.selectedTab == index, onClick = { viewModel.selectTab(index) }, text = { Text(label) })
+                }
             }
-
+            if (state.isLoading) LinearProgressIndicator(Modifier.fillMaxWidth())
+            state.warning?.let { message ->
+                Text(message, Modifier.padding(horizontal = 16.dp, vertical = 8.dp), style = MaterialTheme.typography.bodySmall)
+            }
+            TextButton(onClick = viewModel::refresh, modifier = Modifier.padding(horizontal = 8.dp)) { Text("Actualizar") }
             if (state.selectedTab == 0) {
-                EarningsTabContent(
-                    state = state,
-                    onSelectFilter = onSelectFilter,
-                    onSelectOrder = onSelectOrder
-                )
+                LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    item {
+                        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            listOf(EarningsDateFilter.TODAY to "Hoy", EarningsDateFilter.THIS_WEEK to "Esta semana", EarningsDateFilter.THIS_MONTH to "Este mes").forEach { (filter, label) ->
+                                FilterChip(selected = state.selectedFilter == filter, onClick = { viewModel.selectFilter(filter) }, label = { Text(label) })
+                            }
+                            FilterChip(selected = state.selectedFilter == EarningsDateFilter.CUSTOM, onClick = { showRange = true }, label = { Text("Elegir fechas") })
+                        }
+                        if (state.selectedFilter == EarningsDateFilter.CUSTOM) state.range?.let { (from, until) ->
+                            Text("${EarningsCalendar.day(from)} — ${EarningsCalendar.day(until)}", style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                    item {
+                        Card(Modifier.fillMaxWidth()) {
+                            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("Total generado", style = MaterialTheme.typography.labelLarge)
+                                Text(money(state.grandTotalCents), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+                                HorizontalDivider()
+                                AmountLine("Pago Chaski", money(state.chaskiTotalCents))
+                                AmountLine("Propinas completas", money(state.tipsTotalCents))
+                                if (state.unknownCount > 0) Text("${state.unknownCount} pedidos antiguos sin importe verificable; no se incluyen en el total.", style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                    }
+                    item { EarningsChartCard(state.records) }
+                    item { Text("Historial de pedidos (${state.records.size})", fontWeight = FontWeight.Bold) }
+                    if (state.records.isEmpty() && !state.isLoading) item { Text("Aún no hay pedidos finalizados en estas fechas.") }
+                    items(state.records, key = { it.orderId }) { record ->
+                        Card(Modifier.fillMaxWidth().clickable { viewModel.selectOrder(record) }) {
+                            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text(record.merchantName, fontWeight = FontWeight.Bold)
+                                Text("${if (record.cancelled) "Cancelado" else "Entregado"} · ${date(record.completedAt)}", style = MaterialTheme.typography.bodySmall)
+                                Text(money(record.totalCents), style = MaterialTheme.typography.titleMedium)
+                                if ((record.tipCents ?: 0) > 0) Text("Incluye ${money(record.tipCents)} de propina", style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                    }
+                    item { Spacer(Modifier.height(12.dp)) }
+                }
             } else {
-                SettlementsTabContent(settlements = state.settlements)
-            }
-        }
-    }
-}
-
-@Composable
-private fun EarningsTabContent(
-    state: EarningsUiState,
-    onSelectFilter: (EarningsDateFilter) -> Unit,
-    onSelectOrder: (DeliveryEarningsRecord) -> Unit
-) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                FilterChip(
-                    selected = state.selectedFilter == EarningsDateFilter.TODAY,
-                    onClick = { onSelectFilter(EarningsDateFilter.TODAY) },
-                    label = { Text("Hoy") }
-                )
-                FilterChip(
-                    selected = state.selectedFilter == EarningsDateFilter.THIS_WEEK,
-                    onClick = { onSelectFilter(EarningsDateFilter.THIS_WEEK) },
-                    label = { Text("Esta Semana") }
-                )
-                FilterChip(
-                    selected = state.selectedFilter == EarningsDateFilter.THIS_MONTH,
-                    onClick = { onSelectFilter(EarningsDateFilter.THIS_MONTH) },
-                    label = { Text("Este Mes") }
-                )
-            }
-        }
-
-        item {
-            Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        text = "Total Generado",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = String.format(Locale.getDefault(), "S/ %.2f", state.grandTotalCents / 100.0),
-                        style = MaterialTheme.typography.headlineLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column {
-                            Text("Pago Base Chaski", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary)
-                            Text(
-                                text = String.format(Locale.getDefault(), "S/ %.2f", state.chaskiTotalCents / 100.0),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text("Propinas", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary)
-                            Text(
-                                text = String.format(Locale.getDefault(), "S/ %.2f", state.tipsTotalCents / 100.0),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
+                LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    item { Text("Periodos de lunes a domingo · hora de Lima", style = MaterialTheme.typography.bodySmall) }
+                    item { Text("Un periodo pendiente no confirma una transferencia. El pago se confirma cuando el administrador lo registra.", style = MaterialTheme.typography.bodySmall) }
+                    if (state.settlements.isEmpty() && !state.isLoading) item { Text("Aún no hay liquidaciones registradas.") }
+                    items(state.settlements, key = { it.id }) { settlement ->
+                        Card(Modifier.fillMaxWidth()) {
+                            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(settlement.periodLabel, fontWeight = FontWeight.Bold)
+                                Text(money(settlement.amountCents), style = MaterialTheme.typography.titleLarge)
+                                Text(if (settlement.status == SettlementStatus.PAID) "Pagado" else "Pendiente de confirmación", fontWeight = FontWeight.Bold)
+                                settlement.paidAt?.let { Text("Confirmado: ${date(it)}", style = MaterialTheme.typography.bodySmall) }
+                                Text("${settlement.orderIds.size} pedidos", style = MaterialTheme.typography.bodySmall)
+                            }
                         }
                     }
-                }
-            }
-        }
-
-        item {
-            EarningsChartCard(records = state.records)
-        }
-
-        item {
-            Text(
-                text = "Pedidos Entregados (${state.records.size})",
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-        }
-
-        items(state.records) { record ->
-            DeliveryRecordCard(record = record, onClick = { onSelectOrder(record) })
-        }
-    }
-}
-
-@Composable
-private fun DeliveryRecordCard(
-    record: DeliveryEarningsRecord,
-    onClick: () -> Unit
-) {
-    val dateFormat = remember { SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault()) }
-    val shortOrderId = if (record.orderId.length > 12) record.orderId.take(8).uppercase() else record.orderId
-
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
-    ) {
-        Row(
-            modifier = Modifier.padding(14.dp).fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = record.merchantName,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = "$shortOrderId • ${dateFormat.format(Date(record.completedAt))}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.secondary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-            Spacer(Modifier.width(8.dp))
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = String.format(Locale.getDefault(), "S/ %.2f", record.totalCents / 100.0),
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                if (record.tipCents > 0) {
-                    Text(
-                        text = String.format(Locale.getDefault(), "+ S/ %.2f propina", record.tipCents / 100.0),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.secondary
-                    )
+                    item { Spacer(Modifier.height(12.dp)) }
                 }
             }
         }
     }
-}
-
-@Composable
-private fun SettlementsTabContent(settlements: List<SettlementRecord>) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        item {
-            Text(
-                text = "Historial de Liquidaciones Semanales",
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.titleMedium
-            )
-        }
-
-        items(settlements) { settlement ->
-            Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(settlement.periodLabel, fontWeight = FontWeight.Bold)
-                        Text(
-                            text = if (settlement.status == SettlementStatus.PAID) "Pagado a cuenta final 4321" else "Pendiente de transferencia",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.secondary
-                        )
-                    }
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(
-                            text = String.format(Locale.getDefault(), "S/ %.2f", settlement.amountCents / 100.0),
-                            fontWeight = FontWeight.Bold
-                        )
-                        AssistChip(
-                            onClick = {},
-                            label = {
-                                Text(
-                                    text = if (settlement.status == SettlementStatus.PAID) "PAGADO" else "PENDIENTE",
-                                    style = MaterialTheme.typography.labelSmall
-                                )
-                            },
-                            colors = AssistChipDefaults.assistChipColors(
-                                containerColor = MaterialTheme.colorScheme.surface
-                            )
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun OrderEarningsDetailDialog(
-    order: DeliveryEarningsRecord,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Desglose de Pedido") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    state.selectedOrder?.let { order ->
+        AlertDialog(onDismissRequest = { viewModel.selectOrder(null) }, title = { Text("Detalle de ganancias") }, text = {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(order.merchantName, fontWeight = FontWeight.Bold)
-                Text("Código de pedido: ${order.orderId}", style = MaterialTheme.typography.bodySmall)
+                Text(date(order.completedAt))
+                if (order.cancelled) Text("Pedido cancelado: no genera pago ni propina.")
+                else order.quote?.let { quote ->
+                    Text("Distancias estimadas", fontWeight = FontWeight.Bold)
+                    Text(String.format(Locale.forLanguageTag("es-PE"), "Hasta el local: %.2f km", quote.approachMeters / 1000.0))
+                    Text(String.format(Locale.forLanguageTag("es-PE"), "Local al cliente: %.2f km", quote.deliveryMeters / 1000.0))
+                    Text(if (quote.pricingVersion == "PEN_1_KM_V1") "S/1 por km entre ambos trayectos. Sin bonos adicionales." else "Cotización histórica conservada.")
+                }
+                if (order.totalCents == null) Text("Este pedido antiguo no tiene una cotización guardada. Su importe requiere revisión; no se ha estimado nuevamente.")
                 HorizontalDivider()
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Tarifa Base Chaski:")
-                    Text(String.format(Locale.getDefault(), "S/ %.2f", order.baseFareCents / 100.0))
-                }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Propina del Cliente:", color = MaterialTheme.colorScheme.primary)
-                    Text(String.format(Locale.getDefault(), "S/ %.2f", order.tipCents / 100.0), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                }
-                HorizontalDivider()
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Total Generado:", fontWeight = FontWeight.Bold)
-                    Text(String.format(Locale.getDefault(), "S/ %.2f", order.totalCents / 100.0), fontWeight = FontWeight.Bold, color = Orange)
-                }
+                AmountLine("Pago Chaski", money(order.baseFareCents))
+                AmountLine("Propina del cliente", money(order.tipCents))
+                AmountLine("Total", money(order.totalCents))
             }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Cerrar") }
+        }, confirmButton = { TextButton(onClick = { viewModel.selectOrder(null) }) { Text("Cerrar") } })
+    }
+    if (showRange) {
+        val picker = rememberDateRangePickerState()
+        DatePickerDialog(onDismissRequest = { showRange = false }, confirmButton = {
+            TextButton(enabled = picker.selectedStartDateMillis != null && picker.selectedEndDateMillis != null, onClick = {
+                val utcDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") }
+                viewModel.selectRange(utcDate.format(Date(picker.selectedStartDateMillis!!)), utcDate.format(Date(picker.selectedEndDateMillis!!)))
+                showRange = false
+            }) { Text("Aplicar") }
+        }, dismissButton = { TextButton(onClick = { showRange = false }) { Text("Cancelar") } }) {
+            DateRangePicker(state = picker, modifier = Modifier.height(480.dp), title = { Text("Selecciona el periodo", Modifier.padding(16.dp)) })
         }
-    )
+    }
+}
+
+@Composable
+private fun AmountLine(label: String, amount: String) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(label, Modifier.weight(1f))
+        Text(amount, fontWeight = FontWeight.Bold)
+    }
 }

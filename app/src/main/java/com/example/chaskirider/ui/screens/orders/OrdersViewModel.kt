@@ -141,13 +141,14 @@ class OrdersViewModel(
         savedStateHandle["delivery_note"] = trimmed
         mutable.update{it.copy(deliveryNote = trimmed)}
     }
+    fun updateDeliveryPin(value: String) { mutable.update { it.copy(deliveryPin = value.filter { c -> c in '0'..'9' }.take(4)) } }
     fun deliver() = execute(
 
         action=OfferAction.DELIVER,
-        evidenceUrl= mutable.value.evidencePhotoUri.toString(),
+        deliveryPin = mutable.value.deliveryPin,
         deliveryNote= mutable.value.deliveryNote?.ifBlank { null },
     )
-    fun reset() = execute(OfferAction.RESET)
+    fun reset(): Job? { clearEvidencePhoto(); updateDeliveryPin(""); updateDeliveryNote(""); return execute(OfferAction.RESET) }
 
     fun openProblem() { mutable.update { it.copy(problemDialogOpen = true, problemReason = null, problemDetail = "") } }
     fun closeProblem() { if (!mutable.value.busy) mutable.update { it.copy(problemDialogOpen = false) } }
@@ -253,6 +254,7 @@ class OrdersViewModel(
     private fun execute(
         action: OfferAction,
         evidenceUrl: String? = null,
+        deliveryPin: String? = null,
         deliveryNote: String? = null,
     ): Job? {
         if (!canWork() || mutable.value.busy) return null
@@ -284,14 +286,19 @@ class OrdersViewModel(
                     lat = point?.latitude,
                     lng = point?.longitude,
                     evidenceUrl = evidenceUrl,
-                    deliveryNote = deliveryNote
+                    deliveryNote = deliveryNote,
+                    deliveryPin = deliveryPin
                 )
                 if (requestUid != uid) return@launch
+                if (action in listOf(OfferAction.ACCEPT, OfferAction.DELIVER)) { clearEvidencePhoto(); updateDeliveryPin(""); updateDeliveryNote("") }
                 applySnapshot(snapshot, started)
                 if (action == OfferAction.OFFER) mutable.update { it.copy(searched = true) }
             } catch (error: CancellationException) { throw error }
             catch (error: Exception) {
                 if (requestUid == uid) mutable.update { it.copy(error = when ((error as? OfferRequestException)?.status) {
+                    428 -> R.string.orders_pin_invalid
+                    503 -> R.string.orders_pin_connection
+                    429 -> R.string.orders_pin_wait
                     401, 403 -> R.string.orders_access_error
                     409 -> R.string.orders_conflict
                     412 -> if (action == OfferAction.DELIVER) R.string.orders_near_delivery else R.string.orders_near_pickup

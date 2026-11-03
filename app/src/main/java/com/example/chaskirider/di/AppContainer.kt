@@ -8,6 +8,7 @@ import com.example.chaskirider.data.notifications.NotificationsInitializer
 import com.example.chaskirider.data.documents.RiderDocumentDataSource
 import com.example.chaskirider.data.earnings.LocalEarningsRepository
 import com.example.chaskirider.data.orders.DemoOrderCatalog
+import com.example.chaskirider.data.orders.DeliveryPinRemote
 import com.example.chaskirider.data.orders.LocalDemoOfferRepository
 import com.example.chaskirider.data.orders.OrderSyncWorker
 import com.example.chaskirider.data.orders.RealOfferRepository
@@ -47,8 +48,9 @@ object AppContainer {
         RealOfferRepository()
     }
 
+    private val orderDatabase by lazy { openOrderDatabase(applicationContext) }
     val localEarningsRepository by lazy {
-        LocalEarningsRepository()
+        LocalEarningsRepository(orderDatabase.orders())
     }
     val earningsRepository: EarningsRepository by lazy {
         localEarningsRepository
@@ -56,7 +58,7 @@ object AppContainer {
 
     // Repositorio de demostración (Datos simulados locales para test)
     val demoOfferRepository: OfferRepository by lazy {
-        val database = openOrderDatabase(applicationContext)
+        val database = orderDatabase
         LocalDemoOfferRepository(
             store = RoomDemoOrderStore(database.orders()) {
                 OrderSyncWorker.schedule(applicationContext, it)
@@ -69,14 +71,7 @@ object AppContainer {
                     }
                 }
             },
-            onOrderCompleted = { orderId, merchantName, totalCents ->
-                localEarningsRepository.recordCompletedOrder(
-                    orderId = orderId,
-                    merchantName = merchantName,
-                    baseFareCents = (totalCents * 0.85).toInt(),
-                    tipCents = (totalCents * 0.15).toInt()
-                )
-            }
+            verifyPin = DeliveryPinRemote::verify
         )
     }
 

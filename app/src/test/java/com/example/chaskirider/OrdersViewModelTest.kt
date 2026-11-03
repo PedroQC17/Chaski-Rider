@@ -33,7 +33,7 @@ class OrdersViewModelTest {
             cancellationRequested = cancel
             return result
         }
-        override suspend fun execute(action: OfferAction, offerId: String?, lat: Double?, lng: Double?): OfferSnapshot {
+        override suspend fun execute(action: OfferAction, offerId: String?, lat: Double?, lng: Double?, evidenceUrl: String?, deliveryNote: String?, deliveryPin: String?): OfferSnapshot {
             calls += action
             requestedPoint = if (lat != null && lng != null) GeoPoint(lat, lng) else null
             failure?.let { throw it }
@@ -43,7 +43,7 @@ class OrdersViewModelTest {
     private val locations = object : LocationRepository {
         override suspend fun currentLocation(): Result<GeoPoint?> { locationGate?.await(); return Result.success(point) }
     }
-    private fun model() = OrdersViewModel(repository, session, locations) { dispatcher.scheduler.currentTime }
+    private fun model() = OrdersViewModel(repository, session, locations = locations, elapsed = { dispatcher.scheduler.currentTime })
     @Before fun setup() { Dispatchers.setMain(dispatcher) }
     @After fun cleanup() { Dispatchers.resetMain() }
 

@@ -1,63 +1,59 @@
 package com.example.chaskirider.data.earnings
 
+import com.example.chaskirider.data.orders.DemoOrderDao
 import com.example.chaskirider.domain.earnings.*
-import kotlinx.coroutines.flow.MutableStateFlow
+import com.example.chaskirider.domain.orders.OrderRecord
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.gson.Gson
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.*
 
-/**
- * Repositorio de ganancias dinámico.
- * Contiene entregas base de la semana y suma dinámicamente cada nuevo pedido completado en la app.
- */
 class LocalEarningsRepository(
-    private val clock: () -> Long = System::currentTimeMillis
+    private val dao: DemoOrderDao,
+    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) : EarningsRepository {
+    private data class Payments(val records: List<SettlementRecord> = emptyList(), val warning: String? = null)
 
-    private val dynamicRecords = MutableStateFlow<List<DeliveryEarningsRecord>>(emptyList())
-
-    init {
-        val now = clock()
-        val hour = 3_600_000L
-        val day = 86_400_000L
-        dynamicRecords.value = listOf(
-            DeliveryEarningsRecord("PV-102-21", "Plaza Vea Magnolias", now - 2 * hour, 1200, 300),
-            DeliveryEarningsRecord("BM-204-10", "Bembos San Isidro", now - 5 * hour, 1500, 500),
-            DeliveryEarningsRecord("KFC-501", "KFC La Molina", now - 1 * day, 1800, 400),
-            DeliveryEarningsRecord("SS-302", "Siete Sopas Surco", now - 2 * day, 2200, 800),
-            DeliveryEarningsRecord("STB-101", "Starbucks Jockey", now - 3 * day, 1100, 200)
-        )
-    }
-
-    override suspend fun getEarnings(filter: EarningsDateFilter): List<DeliveryEarningsRecord> {
-        val now = clock()
-        val day = 86_400_000L
-        val all = dynamicRecords.value
-
-        return when (filter) {
-            EarningsDateFilter.TODAY -> all.filter { (now - it.completedAt) <= day }
-            EarningsDateFilter.THIS_WEEK -> all.filter { (now - it.completedAt) <= 7 * day }
-            EarningsDateFilter.THIS_MONTH -> all
+    override fun observe(uid: String): Flow<EarningsSnapshot> = combine(dao.observeRecords(uid), payments(uid)) { rows, feed ->
+        var invalid = false
+        val records = rows.mapNotNull { row ->
+            try {
+                val order = Gson().fromJson(row.content, OrderRecord::class.java)
+                if (order.riderId != uid || order.orderId != row.orderId) { invalid = true; null }
+                else EarningsPolicy.record(order)
+            } catch (_: RuntimeException) { invalid = true; null }
+        }.sortedByDescending { it.completedAt }
+        val paid = feed.records.filter { payment ->
+            val known = records.filter { it.orderId in payment.orderIds }
+            val matches = known.all { !it.cancelled && EarningsCalendar.weekStart(it.completedAt) == payment.periodStart } &&
+                (known.size != payment.orderIds.size || known.any { it.totalCents == null } || known.sumOf { it.totalCents!!.toLong() } == payment.amountCents)
+            if (!matches) invalid = true
+            matches
         }
+        EarningsSnapshot(records, EarningsCalendar.weekly(records, paid), feed.warning ?: if (invalid)
+            "Hay registros inconsistentes. Contacta con soporte para revisarlos." else null)
     }
 
-    override suspend fun getSettlements(): List<SettlementRecord> {
-        val now = clock()
-        val day = 86_400_000L
-        return listOf(
-            SettlementRecord("S-101", "21 Oct - 27 Oct 2026", 18500, SettlementStatus.PENDING),
-            SettlementRecord("S-100", "14 Oct - 20 Oct 2026", 24200, SettlementStatus.PAID, paidAt = now - 7 * day)
-        )
-    }
-
-    /**
-     * Agrega dinámicamente un nuevo pedido entregado en la app al historial de ganancias.
-     */
-    fun recordCompletedOrder(orderId: String, merchantName: String, baseFareCents: Int, tipCents: Int) {
-        val record = DeliveryEarningsRecord(
-            orderId = orderId,
-            merchantName = merchantName,
-            completedAt = clock(),
-            baseFareCents = baseFareCents,
-            tipCents = tipCents
-        )
-        dynamicRecords.value = listOf(record) + dynamicRecords.value
-    }
+    private fun payments(uid: String): Flow<Payments> = callbackFlow {
+        val listener = firestore.collection("riders").document(uid).collection("settlements")
+            .addSnapshotListener(com.google.firebase.firestore.MetadataChanges.INCLUDE) { snapshot, error ->
+                if (error != null) {
+                    trySend(Payments(warning = "No se pudieron consultar las liquidaciones. Reintenta para confirmar sus estados."))
+                    return@addSnapshotListener
+                }
+                var invalid = false
+                val seen = mutableSetOf<String>()
+                val records = snapshot?.documents.orEmpty().mapNotNull { doc ->
+                    val payment = SettlementParser.parse(doc.id, doc.data.orEmpty(), System.currentTimeMillis())
+                    if (payment == null || payment.orderIds.any { it in seen }) { invalid = true; null }
+                    else { seen.addAll(payment.orderIds); payment }
+                }
+                trySend(Payments(records, when {
+                    invalid -> "Hay liquidaciones incompletas o inconsistentes. Solicita su revisión a soporte."
+                    snapshot?.metadata?.isFromCache == true -> "Liquidaciones guardadas: pendiente de actualizar con Firebase."
+                    else -> null
+                }))
+            }
+        awaitClose { listener.remove() }
+    }.onStart { emit(Payments(warning = "Consultando confirmaciones de pago…")) }
 }

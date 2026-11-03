@@ -32,6 +32,7 @@ class RealOfferRepository : OfferRepository {
         lng: Double?,
         evidenceUrl: String?,
         deliveryNote: String?,
+        deliveryPin: String?,
     ): OfferSnapshot {
         val user = FirebaseAuth.getInstance().currentUser ?: throw OfferRequestException(401)
         val token = user.getIdToken(false).await().token ?: throw OfferRequestException(401)
@@ -49,6 +50,7 @@ class RealOfferRepository : OfferRepository {
                 longitude = lng,
                 evidencePhotoUrl = finalEvidenceUrl,
                 deliveryNote = deliveryNote,
+                deliveryPin = deliveryPin,
             )).toDomain()
         } catch (e: HttpException) { throw OfferRequestException(e.code()) }
     }

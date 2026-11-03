@@ -1,19 +1,10 @@
 package com.example.chaskirider.data.orders
 
-import android.net.Uri
-import android.util.Log
 import com.example.chaskirider.domain.location.LocationUtils
 import com.example.chaskirider.domain.orders.*
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FieldValue
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.SetOptions
-import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.tasks.await
 import java.util.UUID
-import kotlin.math.max
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
@@ -23,7 +14,7 @@ class LocalDemoOfferRepository(
     private val catalog: suspend () -> List<DemoOrder>,
     private val clock: () -> Long = System::currentTimeMillis,
     private val hasOffer: () -> Boolean = { Random.nextInt(100) < 70 },
-    private val onOrderCompleted: ((orderId: String, merchantName: String, totalCents: Int) -> Unit)? = null
+    private val verifyPin: suspend (String, String, String) -> Unit = { _, _, _ -> throw OfferRequestException(503) },
 ) : OfferRepository {
     private val mutex = Mutex()
     override suspend fun execute(
@@ -33,6 +24,7 @@ class LocalDemoOfferRepository(
         lng: Double?,
         evidenceUrl: String?,
         deliveryNote: String?,
+        deliveryPin: String?,
     ): OfferSnapshot = mutex.withLock {
         val uid = currentUid() ?: throw OfferRequestException(401)
         val now = clock()
@@ -84,59 +76,24 @@ class LocalDemoOfferRepository(
                 snapshot.copy(pickedUp = true, pickedUpAt = snapshot.pickedUpAt ?: now)
             }
             OfferAction.DELIVER -> {
-                if (snapshot.batch == null || !snapshot.pickedUp) throw OfferRequestException(409)
-                val orderId = snapshot.batch.stops.firstOrNull()?.orderId ?: "demo_order"
-                val remoteUrl = uploadEvidencePhoto(uid, orderId, evidenceUrl)
-                val merchantName = snapshot.merchantName ?: "Establecimiento"
-                val totalCents = snapshot.batch.totalCents
-                onOrderCompleted?.invoke(orderId, merchantName, totalCents)
-
-                val finalUrl = remoteUrl ?: "https://firebasestorage.googleapis.com/v0/b/chaski-rider.appspot.com/o/demo_evidence.jpg"
-                val activeUid = FirebaseAuth.getInstance().currentUser?.uid ?: uid
-                if (activeUid != null) {
-                    try {
-                        val firestore = FirebaseFirestore.getInstance()
-                        val dataMap = mutableMapOf<String, Any?>(
-                            "orderId" to orderId,
-                            "riderId" to activeUid,
-                            "merchantName" to merchantName,
-                            "status" to "DELIVERED",
-                            "deliveredAt" to now,
-                            "updatedAt" to FieldValue.serverTimestamp()
-                        )
-                        if (finalUrl != null) dataMap["evidencePhotoUrl"] = finalUrl
-                        if (deliveryNote != null) dataMap["deliveryNote"] = deliveryNote
-
-                        Log.d("FirestoreSync", ">>> USUARIO ACTIVO UID: $activeUid <<<")
-                        Log.d("FirestoreSync", "Iniciando escritura en riders/$activeUid/deliveryRecords/$orderId...")
-                        firestore.collection("riders").document(activeUid).collection("deliveryRecords").document(orderId)
-                            .set(dataMap, SetOptions.merge())
-                            .addOnSuccessListener {
-                                Log.d("FirestoreSync", " EXITO: Guardado en riders/$activeUid/deliveryRecords/$orderId")
-                            }
-                            .addOnFailureListener { error ->
-                                Log.e("FirestoreSync", " ERROR Firestore: ${error.message}", error)
-                            }
-                    } catch (e: Exception) {
-                        Log.e("FirestoreSync", " EXCEPCION Firestore: ${e.message}", e)
-                    }
+                if (snapshot.isDelivered) return@withLock snapshot
+                checkActive(snapshot)
+                if (!snapshot.pickedUp) throw OfferRequestException(409)
+                val orderId = snapshot.batch!!.stops.single().orderId
+                OrderLocationRules.requireNear(lat, lng, snapshot.batch.stops.single().point)
+                if (snapshot.paidByCustomer) {
+                    if (deliveryPin == null || !deliveryPin.matches(Regex("[0-9]{4}"))) throw OfferRequestException(428)
+                    verifyPin(uid, orderId, deliveryPin)
+                    if (currentUid() != uid) throw OfferRequestException(401)
                 }
-
-                snapshot.copy(
-                    isDelivered = true,
-                    deliveredAt = snapshot.deliveredAt ?: now,
-                    evidencePhotoUrl = finalUrl,
-                    deliveryNote = deliveryNote
-                )
+                snapshot.copy(isDelivered = true, deliveredAt = now, evidencePhotoUrl = null, deliveryNote = deliveryNote)
             }
             OfferAction.RESET -> {
                 if (snapshot.batch != null && !snapshot.isDelivered) throw OfferRequestException(409)
                 empty(now)
             }
         }
-        val waitEnd = snapshot.pickedUpAt ?: now
-        val extraMillis = snapshot.waitStartedAt?.let { (waitEnd - it - 300_000).coerceAtLeast(0) } ?: 0
-        snapshot = snapshot.copy(waitingCompensationCents = ((extraMillis + 59_999) / 60_000).toInt() * 20)
+        snapshot = snapshot.copy(waitingCompensationCents = 0)
         store.save(uid, DemoOrderState(snapshot, recent, saved.problems.orEmpty(), routeId))
         snapshot
     }
@@ -161,23 +118,6 @@ class LocalDemoOfferRepository(
             problems = saved.problems.orEmpty() + problem))
         result
     }
-    private suspend fun uploadEvidencePhoto(uid: String?, orderId: String, evidenceUrl: String?): String? {
-        if (evidenceUrl.isNullOrBlank() || (!evidenceUrl.startsWith("content://") && !evidenceUrl.startsWith("file://"))) {
-            return evidenceUrl
-        }
-        return try {
-            val uri = Uri.parse(evidenceUrl)
-            val authUid = FirebaseAuth.getInstance().currentUser?.uid ?: uid
-            val path = if (authUid != null) "riders/$authUid/orders/$orderId/evidence_${System.currentTimeMillis()}.jpg"
-                       else "orders/$orderId/evidence_${System.currentTimeMillis()}.jpg"
-            val ref = FirebaseStorage.getInstance().reference.child(path)
-            ref.putFile(uri).await()
-            ref.downloadUrl.await().toString()
-        } catch (e: Exception) {
-            evidenceUrl
-        }
-    }
-
     private fun checkActive(snapshot: OfferSnapshot) {
         if (snapshot.batch == null || snapshot.isDelivered) throw OfferRequestException(409)
     }
@@ -185,16 +125,15 @@ class LocalDemoOfferRepository(
     private fun offer(order: DemoOrder, lat: Double, lng: Double, now: Long): OfferSnapshot {
         val approach = LocationUtils.distanceMeters(lat, lng, order.pickup.latitude, order.pickup.longitude)
         val delivery = LocationUtils.distanceMeters(order.pickup.latitude, order.pickup.longitude, order.delivery.latitude, order.delivery.longitude)
-        val approachCents = (approach / 1000.0 * 80).roundToInt()
-        val deliveryCents = (delivery / 1000.0 * 120).roundToInt()
-        val guarantee = max(0, 600 - 300 - approachCents - deliveryCents)
+        val routeCents = com.example.chaskirider.domain.earnings.EarningsPolicy.routeCents(approach, delivery)
+        val approachCents = com.example.chaskirider.domain.earnings.EarningsPolicy.routeCents(approach, 0)
         val quote = DeliveryQuote(
             listOf(DeliveryStop("1", UUID.randomUUID().toString(), order.deliveryZone, order.delivery, order.deliveryAddress)),
             approach, delivery, ((approach + delivery) / 4.0).roundToInt() + 300,
-            300, approachCents, deliveryCents, order.tipCents, guarantee,
-            300 + approachCents + deliveryCents + order.tipCents + guarantee, 0, emptyList()
+            0, approachCents, routeCents - approachCents, order.tipCents, 0,
+            routeCents + order.tipCents, 0, emptyList(), "PEN_1_KM_V1"
         )
         return OfferSnapshot(now, false, null, DeliveryOffer(UUID.randomUUID().toString(), now + 45_000, quote, "PROXIMITY", approach),
-            order.pickup, order.merchantName, order.pickupZone, merchantAddress = order.pickupAddress)
+            order.pickup, order.merchantName, order.pickupZone, merchantAddress = order.pickupAddress, paidByCustomer = order.paidByCustomer)
     }
 }

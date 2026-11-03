@@ -14,7 +14,8 @@
       "latitude": -12.1079638,
       "longitude": -77.02621349999998
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-1-23",
@@ -31,7 +32,8 @@
       "latitude": -12.107508,
       "longitude": -77.039263
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-1-53",
@@ -48,7 +50,8 @@
       "latitude": -12.105701,
       "longitude": -77.048846
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-3-4",
@@ -65,7 +68,8 @@
       "latitude": -12.255292,
       "longitude": -76.912457
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-3-10",
@@ -82,7 +86,8 @@
       "latitude": -12.232157,
       "longitude": -76.910718
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-3-104",
@@ -99,7 +104,8 @@
       "latitude": -12.2312355,
       "longitude": -76.9113292
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   },
   {
     "id": "PV-4-10",
@@ -116,7 +122,8 @@
       "latitude": -12.232157,
       "longitude": -76.910718
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-4-104",
@@ -133,7 +140,8 @@
       "latitude": -12.2312355,
       "longitude": -76.9113292
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-4-3",
@@ -150,7 +158,8 @@
       "latitude": -12.2772133,
       "longitude": -76.88832430000002
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-5-46",
@@ -167,7 +176,8 @@
       "latitude": -12.1872,
       "longitude": -77.007452
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-5-26",
@@ -184,7 +194,8 @@
       "latitude": -12.197005,
       "longitude": -77.010979
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-5-47",
@@ -201,7 +212,8 @@
       "latitude": -12.16736,
       "longitude": -77.024862
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   },
   {
     "id": "PV-6-25",
@@ -218,7 +230,8 @@
       "latitude": -12.142645,
       "longitude": -77.002884
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-6-22",
@@ -235,7 +248,8 @@
       "latitude": -12.129822,
       "longitude": -76.98383
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-6-19",
@@ -252,7 +266,8 @@
       "latitude": -12.1271,
       "longitude": -76.975225
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-7-11",
@@ -269,7 +284,8 @@
       "latitude": -12.048103,
       "longitude": -77.03256
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-7-57",
@@ -286,7 +302,8 @@
       "latitude": -12.02863,
       "longitude": -77.031206
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-7-8",
@@ -303,7 +320,8 @@
       "latitude": -12.030087,
       "longitude": -77.035661
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   },
   {
     "id": "PV-8-57",
@@ -320,7 +338,8 @@
       "latitude": -12.02863,
       "longitude": -77.031206
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-8-7",
@@ -337,7 +356,8 @@
       "latitude": -12.041535,
       "longitude": -77.022048
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-8-11",
@@ -354,7 +374,8 @@
       "latitude": -12.048103,
       "longitude": -77.03256
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-9-18",
@@ -371,7 +392,8 @@
       "latitude": -11.988934,
       "longitude": -77.063271
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-9-31",
@@ -388,7 +410,8 @@
       "latitude": -11.99462,
       "longitude": -77.072453
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-9-33",
@@ -405,7 +428,8 @@
       "latitude": -11.939746,
       "longitude": -77.069677
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   },
   {
     "id": "PV-10-104",
@@ -422,7 +446,8 @@
       "latitude": -12.2312355,
       "longitude": -76.9113292
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-10-4",
@@ -439,7 +464,8 @@
       "latitude": -12.255292,
       "longitude": -76.912457
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-10-3",
@@ -456,7 +482,8 @@
       "latitude": -12.2772133,
       "longitude": -76.88832430000002
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-11-16",
@@ -473,7 +500,8 @@
       "latitude": -12.056227,
       "longitude": -77.037866
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-11-94",
@@ -490,7 +518,8 @@
       "latitude": -12.0545098,
       "longitude": -77.04217640000002
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-11-7",
@@ -507,7 +536,8 @@
       "latitude": -12.041535,
       "longitude": -77.022048
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   },
   {
     "id": "PV-13-101",
@@ -524,7 +554,8 @@
       "latitude": -11.976281,
       "longitude": -76.771599
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-13-27",
@@ -541,7 +572,8 @@
       "latitude": -12.015375,
       "longitude": -76.885672
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-13-14",
@@ -558,7 +590,8 @@
       "latitude": -12.042962,
       "longitude": -76.937138
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-14-43",
@@ -575,7 +608,8 @@
       "latitude": -12.054325,
       "longitude": -76.962855
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-14-29",
@@ -592,7 +626,8 @@
       "latitude": -12.068547,
       "longitude": -76.9583
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-14-32",
@@ -609,7 +644,8 @@
       "latitude": -12.091651,
       "longitude": -76.950262
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   },
   {
     "id": "PV-15-90",
@@ -626,7 +662,8 @@
       "latitude": -11.874223,
       "longitude": -77.126935
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-15-34",
@@ -643,7 +680,8 @@
       "latitude": -11.933616,
       "longitude": -77.04511
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-15-33",
@@ -660,7 +698,8 @@
       "latitude": -11.939746,
       "longitude": -77.069677
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-16-94",
@@ -677,7 +716,8 @@
       "latitude": -12.0545098,
       "longitude": -77.04217640000002
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-16-11",
@@ -694,7 +734,8 @@
       "latitude": -12.048103,
       "longitude": -77.03256
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-16-50",
@@ -711,7 +752,8 @@
       "latitude": -12.064649,
       "longitude": -77.029733
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   },
   {
     "id": "PV-18-31",
@@ -728,7 +770,8 @@
       "latitude": -11.99462,
       "longitude": -77.072453
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-18-9",
@@ -745,7 +788,8 @@
       "latitude": -11.970054,
       "longitude": -77.07371490000003
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-18-28",
@@ -762,7 +806,8 @@
       "latitude": -11.991668,
       "longitude": -77.015501
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-19-22",
@@ -779,7 +824,8 @@
       "latitude": -12.129822,
       "longitude": -76.98383
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-19-36",
@@ -796,7 +842,8 @@
       "latitude": -12.114313,
       "longitude": -76.99104
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-19-6",
@@ -813,7 +860,8 @@
       "latitude": -12.1467983,
       "longitude": -76.98745610000003
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   },
   {
     "id": "PV-21-102",
@@ -830,7 +878,8 @@
       "latitude": -12.05058,
       "longitude": -76.994355
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-21-28",
@@ -847,7 +896,8 @@
       "latitude": -11.991668,
       "longitude": -77.015501
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-21-7",
@@ -864,7 +914,8 @@
       "latitude": -12.041535,
       "longitude": -77.022048
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-22-19",
@@ -881,7 +932,8 @@
       "latitude": -12.1271,
       "longitude": -76.975225
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-22-36",
@@ -898,7 +950,8 @@
       "latitude": -12.114313,
       "longitude": -76.99104
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-22-40",
@@ -915,7 +968,8 @@
       "latitude": -12.1272,
       "longitude": -77.001058
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   },
   {
     "id": "PV-23-1",
@@ -932,7 +986,8 @@
       "latitude": -12.1110701,
       "longitude": -77.03035410000001
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-23-53",
@@ -949,7 +1004,8 @@
       "latitude": -12.105701,
       "longitude": -77.048846
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-23-95",
@@ -966,7 +1022,8 @@
       "latitude": -12.1079638,
       "longitude": -77.02621349999998
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-24-45",
@@ -983,7 +1040,8 @@
       "latitude": -12.089503,
       "longitude": -77.004923
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-24-41",
@@ -1000,7 +1058,8 @@
       "latitude": -12.111538,
       "longitude": -77.006682
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-24-95",
@@ -1017,7 +1076,8 @@
       "latitude": -12.1079638,
       "longitude": -77.02621349999998
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   },
   {
     "id": "PV-25-40",
@@ -1034,7 +1094,8 @@
       "latitude": -12.1272,
       "longitude": -77.001058
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-25-6",
@@ -1051,7 +1112,8 @@
       "latitude": -12.1467983,
       "longitude": -76.98745610000003
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-25-38",
@@ -1068,7 +1130,8 @@
       "latitude": -12.134484,
       "longitude": -77.018275
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-26-46",
@@ -1085,7 +1148,8 @@
       "latitude": -12.1872,
       "longitude": -77.007452
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-26-5",
@@ -1102,7 +1166,8 @@
       "latitude": -12.1771766,
       "longitude": -76.9955291
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-26-47",
@@ -1119,7 +1184,8 @@
       "latitude": -12.16736,
       "longitude": -77.024862
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   },
   {
     "id": "PV-27-14",
@@ -1136,7 +1202,8 @@
       "latitude": -12.042962,
       "longitude": -76.937138
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-27-43",
@@ -1153,7 +1220,8 @@
       "latitude": -12.054325,
       "longitude": -76.962855
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-27-29",
@@ -1170,7 +1238,8 @@
       "latitude": -12.068547,
       "longitude": -76.9583
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-28-92",
@@ -1187,7 +1256,8 @@
       "latitude": -11.9767969,
       "longitude": -77.00278220000001
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-28-21",
@@ -1204,7 +1274,8 @@
       "latitude": -12.016429,
       "longitude": -76.992869
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-28-57",
@@ -1221,7 +1292,8 @@
       "latitude": -12.02863,
       "longitude": -77.031206
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   },
   {
     "id": "PV-29-43",
@@ -1238,7 +1310,8 @@
       "latitude": -12.054325,
       "longitude": -76.962855
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-29-39",
@@ -1255,7 +1328,8 @@
       "latitude": -12.084824,
       "longitude": -76.975665
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-29-32",
@@ -1272,7 +1346,8 @@
       "latitude": -12.091651,
       "longitude": -76.950262
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-30-39",
@@ -1289,7 +1364,8 @@
       "latitude": -12.084824,
       "longitude": -76.975665
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-30-45",
@@ -1306,7 +1382,8 @@
       "latitude": -12.089503,
       "longitude": -77.004923
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-30-97",
@@ -1323,7 +1400,8 @@
       "latitude": -12.0654513,
       "longitude": -77.0035549
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   },
   {
     "id": "PV-31-18",
@@ -1340,7 +1418,8 @@
       "latitude": -11.988934,
       "longitude": -77.063271
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-31-9",
@@ -1357,7 +1436,8 @@
       "latitude": -11.970054,
       "longitude": -77.07371490000003
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-31-8",
@@ -1374,7 +1454,8 @@
       "latitude": -12.030087,
       "longitude": -77.035661
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-32-29",
@@ -1391,7 +1472,8 @@
       "latitude": -12.068547,
       "longitude": -76.9583
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-32-39",
@@ -1408,7 +1490,8 @@
       "latitude": -12.084824,
       "longitude": -76.975665
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-32-30",
@@ -1425,7 +1508,8 @@
       "latitude": -12.08047,
       "longitude": -76.986104
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   },
   {
     "id": "PV-33-34",
@@ -1442,7 +1526,8 @@
       "latitude": -11.933616,
       "longitude": -77.04511
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-33-9",
@@ -1459,7 +1544,8 @@
       "latitude": -11.970054,
       "longitude": -77.07371490000003
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-33-18",
@@ -1476,7 +1562,8 @@
       "latitude": -11.988934,
       "longitude": -77.063271
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-34-33",
@@ -1493,7 +1580,8 @@
       "latitude": -11.939746,
       "longitude": -77.069677
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-34-9",
@@ -1510,7 +1598,8 @@
       "latitude": -11.970054,
       "longitude": -77.07371490000003
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-34-18",
@@ -1527,7 +1616,8 @@
       "latitude": -11.988934,
       "longitude": -77.063271
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   },
   {
     "id": "PV-35-59",
@@ -1544,7 +1634,8 @@
       "latitude": -12.068451,
       "longitude": -77.12082
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-35-54",
@@ -1561,7 +1652,8 @@
       "latitude": -12.079573,
       "longitude": -77.106691
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-35-58",
@@ -1578,7 +1670,8 @@
       "latitude": -12.089393,
       "longitude": -77.075306
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-36-41",
@@ -1595,7 +1688,8 @@
       "latitude": -12.111538,
       "longitude": -77.006682
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-36-40",
@@ -1612,7 +1706,8 @@
       "latitude": -12.1272,
       "longitude": -77.001058
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-36-22",
@@ -1629,7 +1724,8 @@
       "latitude": -12.129822,
       "longitude": -76.98383
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   },
   {
     "id": "PV-38-25",
@@ -1646,7 +1742,8 @@
       "latitude": -12.142645,
       "longitude": -77.002884
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-38-40",
@@ -1663,7 +1760,8 @@
       "latitude": -12.1272,
       "longitude": -77.001058
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-38-41",
@@ -1680,7 +1778,8 @@
       "latitude": -12.111538,
       "longitude": -77.006682
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-39-30",
@@ -1697,7 +1796,8 @@
       "latitude": -12.08047,
       "longitude": -76.986104
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-39-29",
@@ -1714,7 +1814,8 @@
       "latitude": -12.068547,
       "longitude": -76.9583
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-39-32",
@@ -1731,7 +1832,8 @@
       "latitude": -12.091651,
       "longitude": -76.950262
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   },
   {
     "id": "PV-40-25",
@@ -1748,7 +1850,8 @@
       "latitude": -12.142645,
       "longitude": -77.002884
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-40-36",
@@ -1765,7 +1868,8 @@
       "latitude": -12.114313,
       "longitude": -76.99104
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-40-41",
@@ -1782,7 +1886,8 @@
       "latitude": -12.111538,
       "longitude": -77.006682
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-41-24",
@@ -1799,7 +1904,8 @@
       "latitude": -12.098499,
       "longitude": -77.011569
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-41-36",
@@ -1816,7 +1922,8 @@
       "latitude": -12.114313,
       "longitude": -76.99104
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-41-40",
@@ -1833,7 +1940,8 @@
       "latitude": -12.1272,
       "longitude": -77.001058
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   },
   {
     "id": "PV-42-59",
@@ -1850,7 +1958,8 @@
       "latitude": -12.068451,
       "longitude": -77.12082
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-42-54",
@@ -1867,7 +1976,8 @@
       "latitude": -12.079573,
       "longitude": -77.106691
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-42-58",
@@ -1884,7 +1994,8 @@
       "latitude": -12.089393,
       "longitude": -77.075306
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-43-29",
@@ -1901,7 +2012,8 @@
       "latitude": -12.068547,
       "longitude": -76.9583
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-43-14",
@@ -1918,7 +2030,8 @@
       "latitude": -12.042962,
       "longitude": -76.937138
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-43-39",
@@ -1935,7 +2048,8 @@
       "latitude": -12.084824,
       "longitude": -76.975665
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   },
   {
     "id": "PV-44-88",
@@ -1952,7 +2066,8 @@
       "latitude": -12.089803,
       "longitude": -77.052616
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-44-49",
@@ -1969,7 +2084,8 @@
       "latitude": -12.075151,
       "longitude": -77.05331
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-44-23",
@@ -1986,7 +2102,8 @@
       "latitude": -12.107508,
       "longitude": -77.039263
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-45-24",
@@ -2003,7 +2120,8 @@
       "latitude": -12.098499,
       "longitude": -77.011569
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-45-30",
@@ -2020,7 +2138,8 @@
       "latitude": -12.08047,
       "longitude": -76.986104
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-45-41",
@@ -2037,7 +2156,8 @@
       "latitude": -12.111538,
       "longitude": -77.006682
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   },
   {
     "id": "PV-46-26",
@@ -2054,7 +2174,8 @@
       "latitude": -12.197005,
       "longitude": -77.010979
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-46-5",
@@ -2071,7 +2192,8 @@
       "latitude": -12.1771766,
       "longitude": -76.9955291
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-46-47",
@@ -2088,7 +2210,8 @@
       "latitude": -12.16736,
       "longitude": -77.024862
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-47-46",
@@ -2105,7 +2228,8 @@
       "latitude": -12.1872,
       "longitude": -77.007452
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-47-5",
@@ -2122,7 +2246,8 @@
       "latitude": -12.1771766,
       "longitude": -76.9955291
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-47-26",
@@ -2139,7 +2264,8 @@
       "latitude": -12.197005,
       "longitude": -77.010979
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   },
   {
     "id": "PV-49-105",
@@ -2156,7 +2282,8 @@
       "latitude": -12.0755644,
       "longitude": -77.0636614
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-49-56",
@@ -2173,7 +2300,8 @@
       "latitude": -12.06579,
       "longitude": -77.048456
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-49-88",
@@ -2190,7 +2318,8 @@
       "latitude": -12.089803,
       "longitude": -77.052616
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-50-16",
@@ -2207,7 +2336,8 @@
       "latitude": -12.056227,
       "longitude": -77.037866
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-50-94",
@@ -2224,7 +2354,8 @@
       "latitude": -12.0545098,
       "longitude": -77.04217640000002
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-50-11",
@@ -2241,7 +2372,8 @@
       "latitude": -12.048103,
       "longitude": -77.03256
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   },
   {
     "id": "PV-51-58",
@@ -2258,7 +2390,8 @@
       "latitude": -12.089393,
       "longitude": -77.075306
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-51-105",
@@ -2275,7 +2408,8 @@
       "latitude": -12.0755644,
       "longitude": -77.0636614
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-51-88",
@@ -2292,7 +2426,8 @@
       "latitude": -12.089803,
       "longitude": -77.052616
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-53-23",
@@ -2309,7 +2444,8 @@
       "latitude": -12.107508,
       "longitude": -77.039263
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-53-88",
@@ -2326,7 +2462,8 @@
       "latitude": -12.089803,
       "longitude": -77.052616
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-53-1",
@@ -2343,7 +2480,8 @@
       "latitude": -12.1110701,
       "longitude": -77.03035410000001
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   },
   {
     "id": "PV-54-59",
@@ -2360,7 +2498,8 @@
       "latitude": -12.068451,
       "longitude": -77.12082
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-54-35",
@@ -2377,7 +2516,8 @@
       "latitude": -12.059985,
       "longitude": -77.131641
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-54-42",
@@ -2394,7 +2534,8 @@
       "latitude": -12.059985,
       "longitude": -77.131641
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-56-49",
@@ -2411,7 +2552,8 @@
       "latitude": -12.075151,
       "longitude": -77.05331
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-56-94",
@@ -2428,7 +2570,8 @@
       "latitude": -12.0545098,
       "longitude": -77.04217640000002
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-56-16",
@@ -2445,7 +2588,8 @@
       "latitude": -12.056227,
       "longitude": -77.037866
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   },
   {
     "id": "PV-57-8",
@@ -2462,7 +2606,8 @@
       "latitude": -12.030087,
       "longitude": -77.035661
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-57-7",
@@ -2479,7 +2624,8 @@
       "latitude": -12.041535,
       "longitude": -77.022048
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-57-11",
@@ -2496,7 +2642,8 @@
       "latitude": -12.048103,
       "longitude": -77.03256
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-58-51",
@@ -2513,7 +2660,8 @@
       "latitude": -12.091785,
       "longitude": -77.072353
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-58-105",
@@ -2530,7 +2678,8 @@
       "latitude": -12.0755644,
       "longitude": -77.0636614
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-58-88",
@@ -2547,7 +2696,8 @@
       "latitude": -12.089803,
       "longitude": -77.052616
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   },
   {
     "id": "PV-59-35",
@@ -2564,7 +2714,8 @@
       "latitude": -12.059985,
       "longitude": -77.131641
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-59-42",
@@ -2581,7 +2732,8 @@
       "latitude": -12.059985,
       "longitude": -77.131641
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-59-54",
@@ -2598,7 +2750,8 @@
       "latitude": -12.079573,
       "longitude": -77.106691
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-88-49",
@@ -2615,7 +2768,8 @@
       "latitude": -12.075151,
       "longitude": -77.05331
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-88-53",
@@ -2632,7 +2786,8 @@
       "latitude": -12.105701,
       "longitude": -77.048846
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-88-44",
@@ -2649,7 +2804,8 @@
       "latitude": -12.08656,
       "longitude": -77.035012
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   },
   {
     "id": "PV-90-15",
@@ -2666,7 +2822,8 @@
       "latitude": -11.864023,
       "longitude": -77.073051
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-90-33",
@@ -2683,7 +2840,8 @@
       "latitude": -11.939746,
       "longitude": -77.069677
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-90-34",
@@ -2700,7 +2858,8 @@
       "latitude": -11.933616,
       "longitude": -77.04511
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-92-28",
@@ -2717,7 +2876,8 @@
       "latitude": -11.991668,
       "longitude": -77.015501
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-92-21",
@@ -2734,7 +2894,8 @@
       "latitude": -12.016429,
       "longitude": -76.992869
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-92-102",
@@ -2751,7 +2912,8 @@
       "latitude": -12.05058,
       "longitude": -76.994355
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   },
   {
     "id": "PV-94-16",
@@ -2768,7 +2930,8 @@
       "latitude": -12.056227,
       "longitude": -77.037866
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-94-11",
@@ -2785,7 +2948,8 @@
       "latitude": -12.048103,
       "longitude": -77.03256
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-94-56",
@@ -2802,7 +2966,8 @@
       "latitude": -12.06579,
       "longitude": -77.048456
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-95-1",
@@ -2819,7 +2984,8 @@
       "latitude": -12.1110701,
       "longitude": -77.03035410000001
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-95-23",
@@ -2836,7 +3002,8 @@
       "latitude": -12.107508,
       "longitude": -77.039263
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-95-24",
@@ -2853,7 +3020,8 @@
       "latitude": -12.098499,
       "longitude": -77.011569
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   },
   {
     "id": "PV-97-30",
@@ -2870,7 +3038,8 @@
       "latitude": -12.08047,
       "longitude": -76.986104
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-97-45",
@@ -2887,7 +3056,8 @@
       "latitude": -12.089503,
       "longitude": -77.004923
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-97-50",
@@ -2904,7 +3074,8 @@
       "latitude": -12.064649,
       "longitude": -77.029733
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-101-13",
@@ -2921,7 +3092,8 @@
       "latitude": -11.940339,
       "longitude": -76.699682
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-101-27",
@@ -2938,7 +3110,8 @@
       "latitude": -12.015375,
       "longitude": -76.885672
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-101-14",
@@ -2955,7 +3128,8 @@
       "latitude": -12.042962,
       "longitude": -76.937138
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   },
   {
     "id": "PV-102-21",
@@ -2972,7 +3146,8 @@
       "latitude": -12.016429,
       "longitude": -76.992869
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-102-7",
@@ -2989,7 +3164,8 @@
       "latitude": -12.041535,
       "longitude": -77.022048
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-102-97",
@@ -3006,7 +3182,8 @@
       "latitude": -12.0654513,
       "longitude": -77.0035549
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-103-5",
@@ -3023,7 +3200,8 @@
       "latitude": -12.1771766,
       "longitude": -76.9955291
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-103-6",
@@ -3040,7 +3218,8 @@
       "latitude": -12.1467983,
       "longitude": -76.98745610000003
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-103-104",
@@ -3057,7 +3236,8 @@
       "latitude": -12.2312355,
       "longitude": -76.9113292
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   },
   {
     "id": "PV-104-10",
@@ -3074,7 +3254,8 @@
       "latitude": -12.232157,
       "longitude": -76.910718
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": true
   },
   {
     "id": "PV-104-4",
@@ -3091,7 +3272,8 @@
       "latitude": -12.255292,
       "longitude": -76.912457
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": false
   },
   {
     "id": "PV-104-3",
@@ -3108,7 +3290,8 @@
       "latitude": -12.2772133,
       "longitude": -76.88832430000002
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": true
   },
   {
     "id": "PV-105-49",
@@ -3125,7 +3308,8 @@
       "latitude": -12.075151,
       "longitude": -77.05331
     },
-    "tipCents": 0
+    "tipCents": 0,
+    "paidByCustomer": false
   },
   {
     "id": "PV-105-56",
@@ -3142,7 +3326,8 @@
       "latitude": -12.06579,
       "longitude": -77.048456
     },
-    "tipCents": 100
+    "tipCents": 100,
+    "paidByCustomer": true
   },
   {
     "id": "PV-105-88",
@@ -3159,6 +3344,7 @@
       "latitude": -12.089803,
       "longitude": -77.052616
     },
-    "tipCents": 200
+    "tipCents": 200,
+    "paidByCustomer": false
   }
 ]

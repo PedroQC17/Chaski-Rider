@@ -109,6 +109,7 @@ fun OrdersRoute(viewModel: OrdersViewModel, onMenu: () -> Unit, isDemo: Boolean 
         onClearEvidencePhoto = viewModel::clearEvidencePhoto,
         onTakeEvidencePhoto = { launchCamera() },
         onUpdateDeliveryNote = viewModel::updateDeliveryNote,
+        onUpdatePin = viewModel::updateDeliveryPin,
         onReset = { if (state.snapshot?.batch != null && state.snapshot?.isDelivered != true) viewModel.openProblem() else viewModel.reset() },
         onRefresh = viewModel::refresh,
         onClearError = viewModel::clearError,
@@ -135,6 +136,7 @@ private fun OrdersScreen(
     onClearEvidencePhoto: () -> Unit,
     onTakeEvidencePhoto: () -> Unit,
     onUpdateDeliveryNote: (String) -> Unit,
+    onUpdatePin: (String) -> Unit,
     onReset: () -> Unit,
     onRefresh: () -> Unit,
     onClearError: () -> Unit,
@@ -179,6 +181,7 @@ private fun OrdersScreen(
                 onClearEvidencePhoto = onClearEvidencePhoto,
                 onTakeEvidencePhoto = onTakeEvidencePhoto,
                 onUpdateDeliveryNote = onUpdateDeliveryNote,
+                onUpdatePin = onUpdatePin,
                 onReset = onReset,
                 onOffer = onOffer,
                 onSupport = onSupport,
@@ -261,6 +264,7 @@ private fun ExpandedOrderContent(
     onClearEvidencePhoto: () -> Unit,
     onTakeEvidencePhoto: () -> Unit,
     onUpdateDeliveryNote: (String) -> Unit,
+    onUpdatePin: (String) -> Unit,
     onReset: () -> Unit,
     onOffer: () -> Unit,
     onSupport: () -> Unit,
@@ -376,6 +380,7 @@ private fun ExpandedOrderContent(
                 onClearEvidencePhoto = onClearEvidencePhoto,
                 onTakeEvidencePhoto = onTakeEvidencePhoto,
                 onUpdateDeliveryNote = onUpdateDeliveryNote,
+                onUpdatePin = onUpdatePin,
                 onReset = onReset,
                 onOffer = onOffer,
             )
@@ -397,6 +402,7 @@ private fun OrderActionControls(
     onClearEvidencePhoto: () -> Unit,
     onTakeEvidencePhoto: () -> Unit,
     onUpdateDeliveryNote: (String) -> Unit,
+    onUpdatePin: (String) -> Unit,
     onReset: () -> Unit,
     onOffer: () -> Unit,
 ) {
@@ -462,50 +468,14 @@ private fun OrderActionControls(
                 stringResource(if (distCustomer == null) R.string.orders_checking_location else R.string.orders_near_delivery),
                 style = MaterialTheme.typography.bodySmall)
 
-            // validacion de la entrega finzalizada
-            Surface(
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-            ) {
-                Column(
-                    Modifier.padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = "Foto de evidencia de entrega",
-                        fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-
-                    if (state.evidencePhotoUri != null) {
-                        AsyncImage(
-                            model = state.evidencePhotoUri,
-                            contentDescription = "Evidencia",
-                            modifier = Modifier.fillMaxWidth().height(120.dp).clip(RoundedCornerShape(8.dp)),
-                            contentScale = ContentScale.Crop
-                        )
-
-                        OutlinedButton(
-                            onClick = onClearEvidencePhoto,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text(
-                                text = "Volver a tomar foto"
-                            )
-                        }
-                    } else {
-                        Button(
-                            onClick = onTakeEvidencePhoto,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(Icons.Default.Edit, contentDescription = null)
-                            Spacer(Modifier.width(8.dp))
-                            Text(text = "Tomar foto de entrega")
-                        }
-                    }
-                }
-            }
+            if (snapshot?.paidByCustomer == true) {
+                Text("Pedido pagado · Solicita al cliente su PIN de 4 dígitos")
+                OutlinedTextField(value = state.deliveryPin, onValueChange = onUpdatePin,
+                    label = { Text("PIN del cliente") }, singleLine = true, enabled = actionsEnabled,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.NumberPassword),
+                    visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth())
+            } else Text("Este pedido no requiere PIN. No se exige foto para finalizar.")
 
             // nota opcional para verificacion de entrega
             OutlinedTextField(
@@ -519,7 +489,7 @@ private fun OrderActionControls(
 
             Button(
                 onClick = onDeliver,
-                enabled = actionsEnabled && (state.isNearCustomer || isDemo) && state.evidencePhotoUri != null,
+                enabled = actionsEnabled && state.isNearCustomer && (snapshot?.paidByCustomer != true || state.deliveryPin.length == 4),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Confirmar entrega")

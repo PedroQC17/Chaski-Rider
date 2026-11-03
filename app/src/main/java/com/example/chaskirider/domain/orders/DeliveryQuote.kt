@@ -9,5 +9,6 @@ data class DeliveryQuote(
     val stops: List<DeliveryStop>, val approachMeters: Int, val deliveryMeters: Int,
     val durationSeconds: Int, val baseCents: Int, val approachCents: Int, val deliveryCents: Int,
     val tipCents: Int, val guaranteeCents: Int, val totalCents: Int, val additionalCents: Int,
-    val path: List<RoutePoint>
+    val path: List<RoutePoint>,
+    val pricingVersion: String? = null
 )
