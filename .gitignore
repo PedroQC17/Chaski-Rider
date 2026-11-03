@@ -15,11 +15,8 @@
 .cxx
 local.properties
 
-/functions/node_modules/
-/functions/.pnpm-store/
-/backend/node_modules/
-/backend/.pnpm-store/
-/.firebase/
+/tmp/
+/output/
 *-debug.log
 *.zip
 Chaski-Rider.zip
