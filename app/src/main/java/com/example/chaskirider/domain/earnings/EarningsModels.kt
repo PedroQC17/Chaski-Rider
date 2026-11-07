@@ -11,8 +11,12 @@ data class DeliveryEarningsRecord(
     val tipCents: Int?,
     val totalCents: Int?,
     val cancelled: Boolean = false,
-    val quote: AcceptedEarningsQuote? = null
-)
+    val quote: AcceptedEarningsQuote? = null,
+    val acceptedAt: Long? = null
+) {
+    val hasKnownAmount: Boolean get() = baseFareCents != null && tipCents != null && totalCents != null &&
+        baseFareCents >= 0 && tipCents >= 0 && totalCents.toLong() == baseFareCents.toLong() + tipCents
+}
 
 data class SettlementRecord(
     val id: String,

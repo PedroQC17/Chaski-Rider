@@ -41,6 +41,9 @@ class AuthRepositoryImpl(
             user.linkWithCredential(EmailAuthProvider.getCredential(
                 user.email ?: error(texts.get(TextKey.TEXT_LA_CUENTA_NO_TIENE_CORREO)), password)).await()
         }
+        check(auth.currentUser?.uid == user.uid && session.user.value?.id == user.uid) {
+            texts.get(TextKey.TEXT_LA_SESION_CAMBIO_VUELVE_A_INGRESAR)
+        }
         session.update(session.user.value?.copy(hasPassword = true))
         Unit
     }

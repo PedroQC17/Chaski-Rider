@@ -84,7 +84,7 @@ class RiderDocumentDataSource(
             val path = "riders/$uid/documents/$docType/${UUID.randomUUID()}"
             val metadata = StorageMetadata.Builder().setContentType(mime).build()
             storage.reference.child(path).putFile(Uri.fromFile(temp), metadata).await()
-            profiles.mutate("document", mapOf("docType" to docType, "path" to path))
+            profiles.mutate("document", mapOf("docType" to docType, "path" to path), expectedUid = uid)
         } finally { temp.delete() }
     }
 
@@ -98,6 +98,7 @@ class RiderDocumentDataSource(
         val directory = File(context.cacheDir, "documents").apply { mkdirs() }
         val file = File.createTempFile("document-", extension, directory)
         ref.getFile(file).await()
+        check(auth.currentUser?.uid == user.id) { texts.get(TextKey.TEXT_LA_SESION_CAMBIO_VUELVE_A_INGRESAR) }
         FileProvider.getUriForFile(context, "${context.packageName}.files", file)
     }
 }

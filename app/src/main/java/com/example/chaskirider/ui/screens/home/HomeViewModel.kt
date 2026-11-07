@@ -1,6 +1,5 @@
 package com.example.chaskirider.ui.screens.home
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.chaskirider.domain.model.RegistrationValidation
@@ -24,21 +23,21 @@ class HomeViewModel(
     private val locations: LocationRepository,
     private val texts: TextProvider,
     private val offers: OfferRepository,
-    session: RiderSession
+    private val session: RiderSession
 ) : ViewModel() {
     private val state = MutableStateFlow(HomeUiState())
     val uiState = state.asStateFlow()
     private var updateJob: Job? = null
     private var locationJob: Job? = null
+    private var zonesJob: Job? = null
     private var zonesRequestedFor: String? = null
     init {
         viewModelScope.launch {
             session.user.collect { user ->
                 if (state.value.user?.id != user?.id) {
-                    updateJob?.cancel(); locationJob?.cancel()
-                    state.value = HomeUiState(user = user,
-                        zonesLoaded = state.value.zonesLoaded, demandZones = state.value.demandZones,
-                        zonesUpdatedAt = state.value.zonesUpdatedAt)
+                    updateJob?.cancel(); locationJob?.cancel(); zonesJob?.cancel()
+                    zonesRequestedFor = null
+                    state.value = HomeUiState(user = user, hasLocationPermission = state.value.hasLocationPermission)
                 } else state.update { it.copy(user = user) }
                 // HU05: primera carga de zonas de demanda al iniciar sesión.
                 if (user != null && zonesRequestedFor != user.id) {
@@ -51,39 +50,42 @@ class HomeViewModel(
     fun clearError() { state.update { it.copy(errorMessage = null, locationUnavailable = false) } }
     fun reportError(message: String) { state.update { it.copy(errorMessage = message) } }
     fun setLocationPermission(granted: Boolean) {
-        Log.d("HomeViewModel", "setLocationPermission: granted=$granted")
         if (!granted) locationJob?.cancel()
         state.update { it.copy(hasLocationPermission = granted,
             location = if (granted) it.location else null,
             isLocating = if (granted) it.isLocating else false) }
     }
     fun locate() {
-        Log.d("HomeViewModel", "locate() called. userAvailable=${state.value.user?.isAvailable}, hasPermission=${state.value.hasLocationPermission}, isLocating=${state.value.isLocating}")
         if (state.value.user?.isAvailable != true) return
         if (!state.value.hasLocationPermission || state.value.isLocating) return
         state.update { it.copy(isLocating = true, locationUnavailable = false) }
+        val owner = state.value.user?.id
         locationJob = viewModelScope.launch {
             val point = locations.currentLocation().getOrNull()
-            Log.d("HomeViewModel", "locate() result: $point")
-            state.update { it.copy(isLocating = false, location = point,
-                locationUnavailable = point == null, cameraRequest = it.cameraRequest + 1) }
+            if (session.user.value?.id == owner && state.value.hasLocationPermission) state.update {
+                it.copy(isLocating = false, location = point, locationUnavailable = point == null, cameraRequest = it.cameraRequest + 1)
+            }
         }
     }
     // HU05: carga o recarga las zonas de demanda; el servidor marca la actualización.
     fun refreshZones() {
         if (state.value.isRefreshingZones) return
+        val owner = session.user.value?.id ?: return
         state.update { it.copy(isRefreshingZones = true) }
-        viewModelScope.launch {
-            val snapshot = runCatching { offers.execute(OfferAction.STATE) }.getOrNull()
-            state.update { s ->
-                if (snapshot == null) s.copy(isRefreshingZones = false)
-                else s.copy(isRefreshingZones = false, zonesLoaded = true,
-                    demandZones = snapshot.demandZones,
-                    zonesUpdatedAt = snapshot.demandZones.maxOfOrNull { z -> z.updatedAt } ?: snapshot.serverTime,
-                    selectedZone = snapshot.demandZones.find { z -> z.id == s.selectedZone?.id })
-            }
+        zonesJob = viewModelScope.launch {
+            try {
+                val snapshot = offers.execute(OfferAction.STATE)
+                if (session.user.value?.id == owner) state.update { s ->
+                    s.copy(zonesLoaded = true, demandZones = snapshot.demandZones,
+                        zonesUpdatedAt = snapshot.demandZones.maxOfOrNull { it.updatedAt } ?: snapshot.serverTime,
+                        selectedZone = snapshot.demandZones.find { it.id == s.selectedZone?.id })
+                }
+            } catch (error: kotlinx.coroutines.CancellationException) { throw error }
+            catch (_: Exception) { }
+            finally { if (session.user.value?.id == owner) state.update { it.copy(isRefreshingZones = false) } }
         }
     }
+
     fun selectZone(zone: DemandZone) {
         state.update { it.copy(selectedZone = if (it.selectedZone?.id == zone.id) null else zone) }
     }
@@ -97,10 +99,12 @@ class HomeViewModel(
         }
         state.update { it.copy(isUpdatingAvailability = true, errorMessage = null) }
         updateJob = viewModelScope.launch {
-            profiles.setAvailability(available).onSuccess { user ->
-                state.update { it.copy(user = user, isUpdatingAvailability = false) }
+            profiles.setAvailability(available).onSuccess { updated ->
+                if (session.user.value?.id != user.id) return@onSuccess
+                state.update { it.copy(user = updated, isUpdatingAvailability = false) }
                 if (available) locate()
             }.onFailure { error ->
+                if (session.user.value?.id != user.id) return@onFailure
                 state.update { it.copy(isUpdatingAvailability = false,
                     errorMessage = texts.resolveError(error.message, TextKey.TEXT_NO_SE_PUDO_COMPLETAR_LA_OPERACION)) }
             }

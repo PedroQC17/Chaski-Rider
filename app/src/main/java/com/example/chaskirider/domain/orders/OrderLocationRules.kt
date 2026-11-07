@@ -4,7 +4,9 @@ import com.example.chaskirider.domain.location.LocationUtils
 
 object OrderLocationRules {
     const val RADIUS_METERS = 100
-    //const val RADIUS_METERS = 100
+    fun usableFix(lat: Double, lng: Double, accuracyMeters: Float, ageMillis: Long): Boolean =
+        lat.isFinite() && lng.isFinite() && lat in -90.0..90.0 && lng in -180.0..180.0 &&
+            accuracyMeters.isFinite() && accuracyMeters in 0f..100f && ageMillis in 0..30_000
 
     fun isNear(lat: Double?, lng: Double?, target: RoutePoint): Boolean =
         lat != null && lng != null && lat.isFinite() && lng.isFinite() &&

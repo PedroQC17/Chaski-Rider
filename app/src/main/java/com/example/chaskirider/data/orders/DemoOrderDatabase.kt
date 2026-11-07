@@ -50,6 +50,12 @@ interface DemoOrderDao {
     suspend fun insertAction(entity: OrderActionEntity)
     @Query("SELECT * FROM order_actions WHERE uid = :uid AND pending = 1 ORDER BY orderId, revision LIMIT 50")
     suspend fun pendingActions(uid: String): List<OrderActionEntity>
+    @Query("SELECT COUNT(*) FROM order_actions WHERE uid = :uid AND pending = 1")
+    fun observePendingCount(uid: String): kotlinx.coroutines.flow.Flow<Int>
+    @Query("SELECT DISTINCT orderId FROM order_actions WHERE uid = :uid AND pending = 1 ORDER BY orderId")
+    suspend fun pendingOrderIds(uid: String): List<String>
+    @Query("SELECT * FROM order_actions WHERE uid = :uid AND orderId = :orderId AND pending = 1 ORDER BY revision LIMIT 50")
+    suspend fun pendingOrderActions(uid: String, orderId: String): List<OrderActionEntity>
     @Query("SELECT * FROM order_actions WHERE uid = :uid AND orderId = :orderId ORDER BY revision")
     suspend fun actions(uid: String, orderId: String): List<OrderActionEntity>
     @Query("UPDATE order_actions SET pending = 0 WHERE uid = :uid AND actionId = :actionId")
@@ -135,6 +141,7 @@ class RoomDemoOrderStore(private val dao: DemoOrderDao, private val scheduleSync
     }
 }
 
-fun openOrderDatabase(context: android.content.Context): DemoOrderDatabase = androidx.room.Room
-    .databaseBuilder(context.applicationContext, DemoOrderDatabase::class.java, "demo_orders.db")
+fun openOrderDatabase(context: android.content.Context, name: String = "demo_orders.db"): DemoOrderDatabase = androidx.room.Room
+    .databaseBuilder(context.applicationContext, DemoOrderDatabase::class.java, name)
+    .enableMultiInstanceInvalidation()
     .addMigrations(DemoOrderDatabase.MIGRATION_1_2, DemoOrderDatabase.MIGRATION_2_3).build()

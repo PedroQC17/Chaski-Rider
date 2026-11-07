@@ -109,4 +109,45 @@ class OrderSyncDeviceTest {
             database.close()
         }
     }
+    @Test fun invalidOrderStaysPendingWithoutBlockingAnotherOrder() = runBlocking {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val user = FirebaseAuth.getInstance().currentUser
+        assumeNotNull(user)
+        val uid = user!!.uid
+        val badId = "0000_bad_${UUID.randomUUID()}"
+        val goodId = "zz_valid_${UUID.randomUUID()}"
+        val database = openOrderDatabase(context)
+        val dao = database.orders()
+        val manager = WorkManager.getInstance(context)
+        val name = "verify-blocked-$goodId"
+        val now = System.currentTimeMillis()
+        val good = OrderRecord(goodId, uid, OrderStatus.CANCELLED, "Prueba técnica HU16 cancelada", RoutePoint(-12.0, -77.0),
+            RoutePoint(-12.01, -77.01), now, null, null, null, cancelledAt = now, paidByCustomer = true,
+            earningsQuote = com.example.chaskirider.domain.earnings.AcceptedEarningsQuote(1000, 2000, 300, 150, 450, "PEN_1_KM_V1", "SIMULATED_GEODESIC"))
+        try {
+            dao.saveRecord(OrderRecordEntity(uid, badId, "{}", 1, true))
+            dao.saveRecord(OrderRecordEntity(uid, goodId, Gson().toJson(good), 1, true))
+            val request = OneTimeWorkRequestBuilder<OrderSyncWorker>().setInputData(workDataOf("uid" to uid)).build()
+            manager.enqueueUniqueWork(name, ExistingWorkPolicy.REPLACE, request).result.get(10, TimeUnit.SECONDS)
+            withTimeout(90_000) {
+                while (manager.getWorkInfoById(request.id).get(10, TimeUnit.SECONDS)?.state?.isFinished != true) delay(250)
+            }
+            assertEquals(WorkInfo.State.FAILED, manager.getWorkInfoById(request.id).get(10, TimeUnit.SECONDS)!!.state)
+            assertTrue(dao.record(uid, badId)!!.pending)
+            assertFalse(dao.record(uid, goodId)!!.pending)
+            val remote = FirebaseFirestore.getInstance().document("riders/$uid/deliveryRecords/$goodId").get(Source.SERVER).await()
+            assertEquals("CANCELLED", remote.getString("status"))
+            assertEquals(450L, (remote.get("earningsQuote") as Map<*, *>)["totalCents"])
+            assertEquals(1, dao.actions(uid, goodId).size)
+            assertEquals(0, com.example.chaskirider.domain.earnings.EarningsPolicy.record(good)!!.totalCents)
+        } finally {
+            manager.cancelUniqueWork(name).result.get(10, TimeUnit.SECONDS)
+            for (id in listOf(badId, goodId)) {
+                database.openHelper.writableDatabase.execSQL("DELETE FROM order_actions WHERE uid = ? AND orderId = ?", arrayOf(uid, id))
+                database.openHelper.writableDatabase.execSQL("DELETE FROM order_records WHERE uid = ? AND orderId = ?", arrayOf(uid, id))
+            }
+            database.close()
+        }
+    }
+
 }

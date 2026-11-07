@@ -12,13 +12,14 @@ class LocalEarningsRepository(
     private val dao: DemoOrderDao,
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) : EarningsRepository {
+    private val gson = Gson()
     private data class Payments(val records: List<SettlementRecord> = emptyList(), val warning: String? = null)
 
     override fun observe(uid: String): Flow<EarningsSnapshot> = combine(dao.observeRecords(uid), payments(uid)) { rows, feed ->
         var invalid = false
         val records = rows.mapNotNull { row ->
             try {
-                val order = Gson().fromJson(row.content, OrderRecord::class.java)
+                val order = gson.fromJson(row.content, OrderRecord::class.java)
                 if (order.riderId != uid || order.orderId != row.orderId) { invalid = true; null }
                 else EarningsPolicy.record(order)
             } catch (_: RuntimeException) { invalid = true; null }
@@ -32,7 +33,7 @@ class LocalEarningsRepository(
         }
         EarningsSnapshot(records, EarningsCalendar.weekly(records, paid), feed.warning ?: if (invalid)
             "Hay registros inconsistentes. Contacta con soporte para revisarlos." else null)
-    }
+    }.flowOn(kotlinx.coroutines.Dispatchers.Default)
 
     private fun payments(uid: String): Flow<Payments> = callbackFlow {
         val listener = firestore.collection("riders").document(uid).collection("settlements")

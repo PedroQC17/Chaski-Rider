@@ -25,9 +25,19 @@ class OrdersViewModel(
     private val savedStateHandle: SavedStateHandle = SavedStateHandle(),
     private val locations: LocationRepository = AppContainer.locationRepository,
     private val automaticSearch: Boolean = true,
-    private val elapsed: () -> Long = SystemClock::elapsedRealtime
+    private val elapsed: () -> Long = SystemClock::elapsedRealtime,
+    private val synchronization: OrderSyncRepository? = null
 ) : ViewModel() {
     private fun savedUri(key: String) = savedStateHandle.get<String>(key)?.let(Uri::parse)
+    private fun clearStoredDeliveryDraft() {
+        for (key in listOf("pending_capture", "evidence_photo", "delivery_note", "delivery_draft_uid", "delivery_draft_order"))
+            savedStateHandle.remove<String>(key)
+    }
+
+    init {
+        val owner = session.user.value?.id
+        if (owner == null || savedStateHandle.get<String>("delivery_draft_uid") != owner) clearStoredDeliveryDraft()
+    }
 
     private val mutable = MutableStateFlow(
         OrdersUiState(
@@ -49,8 +59,17 @@ class OrdersViewModel(
 
     init {
         viewModelScope.launch {
+            session.user.map { it?.id }.distinctUntilChanged().collectLatest { owner ->
+                mutable.update { it.copy(sync = OrderSyncState()) }
+                if (owner != null) synchronization?.observe(owner)?.collect { state ->
+                    if (session.user.value?.id == owner) mutable.update { it.copy(sync = state) }
+                }
+            }
+        }
+        viewModelScope.launch {
             session.user.collect { user ->
                 if (user?.id != uid || user == null || user.status != RegistrationStatus.APPROVED || !user.isEnabled) {
+                    clearStoredDeliveryDraft()
                     uid = user?.id
                     request?.cancel(); ticker?.cancel(); search?.cancel(); tracking?.cancel(); locationJob?.cancel()
                     mutable.value = OrdersUiState()
@@ -97,6 +116,12 @@ class OrdersViewModel(
     fun accept() { if (mutable.value.secondsLeft > 0) execute(OfferAction.ACCEPT) }
     fun reject() = execute(OfferAction.REJECT)
     fun clearError() { mutable.update { it.copy(error = null) } }
+    fun retrySync() {
+        val owner = uid ?: return
+        if (session.user.value?.id != owner || !mutable.value.sync.online || mutable.value.sync.syncing) return
+        try { synchronization?.retry(owner) }
+        catch (_: RuntimeException) { mutable.update { it.copy(error = R.string.orders_sync_retry_error) } }
+    }
     fun arriveAtMerchant() = execute(OfferAction.ARRIVE_MERCHANT)
     fun reportNotReady() = execute(OfferAction.REPORT_NOT_READY)
     fun pickup() = execute(OfferAction.PICKUP)
@@ -137,7 +162,11 @@ class OrdersViewModel(
     }
 
     fun updateDeliveryNote(note: String){
+        val owner = uid ?: return
+        val order = mutable.value.snapshot?.batch?.stops?.singleOrNull()?.orderId ?: return
         val trimmed = note.take(200)
+        savedStateHandle["delivery_draft_uid"] = owner
+        savedStateHandle["delivery_draft_order"] = order
         savedStateHandle["delivery_note"] = trimmed
         mutable.update{it.copy(deliveryNote = trimmed)}
     }
@@ -231,6 +260,15 @@ class OrdersViewModel(
     }
 
     private fun applySnapshot(snapshot: OfferSnapshot, started: Long) {
+        val order = snapshot.batch?.stops?.singleOrNull()?.orderId
+        if (savedStateHandle.get<String>("delivery_draft_order") != order) {
+            clearStoredDeliveryDraft()
+            mutable.update { it.copy(deliveryNote = null, evidencePhotoUri = null, pendingCaptureUri = null, deliveryPin = "") }
+        }
+        if (order != null) {
+            savedStateHandle["delivery_draft_uid"] = uid
+            savedStateHandle["delivery_draft_order"] = order
+        }
         val remaining = ((snapshot.offer?.expiresAt ?: snapshot.serverTime) - snapshot.serverTime - (elapsed() - started)).coerceAtLeast(0)
         deadline = elapsed() + remaining
         mutable.update { it.copy(snapshot = snapshot, secondsLeft = ((remaining + 999) / 1000).toInt()) }
@@ -258,6 +296,10 @@ class OrdersViewModel(
         deliveryNote: String? = null,
     ): Job? {
         if (!canWork() || mutable.value.busy) return null
+        if (action == OfferAction.DELIVER && mutable.value.snapshot?.paidByCustomer == true && !mutable.value.sync.online) {
+            mutable.update { it.copy(error = R.string.orders_pin_connection) }
+            return null
+        }
         val requestUid = uid
         val offerId = mutable.value.snapshot?.offer?.id
         if (action in listOf(OfferAction.ACCEPT, OfferAction.REJECT) && offerId == null) return null
@@ -297,6 +339,7 @@ class OrdersViewModel(
             catch (error: Exception) {
                 if (requestUid == uid) mutable.update { it.copy(error = when ((error as? OfferRequestException)?.status) {
                     428 -> R.string.orders_pin_invalid
+                    425 -> R.string.orders_pin_sync_required
                     503 -> R.string.orders_pin_connection
                     429 -> R.string.orders_pin_wait
                     401, 403 -> R.string.orders_access_error

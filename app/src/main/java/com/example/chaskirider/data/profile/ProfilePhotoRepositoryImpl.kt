@@ -37,7 +37,7 @@ class ProfilePhotoRepositoryImpl(private val context: Context, private val texts
         val path = "riders/$uid/profilePhoto/${UUID.randomUUID()}"
         storage.reference.child(path).putBytes(bytes, StorageMetadata.Builder().setContentType("image/jpeg").build()).await()
         check(auth.currentUser?.uid == uid)
-        profiles.mutate("profilePhoto", mapOf("path" to path))
+        profiles.mutate("profilePhoto", mapOf("path" to path), expectedUid = uid)
     }
     override suspend fun load(user: RiderUser) = firebaseResult(texts) {
         require(auth.currentUser?.uid == user.id)

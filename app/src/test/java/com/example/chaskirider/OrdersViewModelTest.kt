@@ -149,4 +149,64 @@ class OrdersViewModelTest {
         assertTrue(vm.uiState.value.snapshot!!.pickedUp)
     }
 
+    @Test fun syncStateIsPerAccountAndRetryRequiresConnection() = runTest(dispatcher) {
+        val alice = MutableStateFlow(OrderSyncState(online = false, pendingActions = 2))
+        val bob = MutableStateFlow(OrderSyncState())
+        val retries = mutableListOf<String>()
+        val sync = object : OrderSyncRepository {
+            override fun observe(uid: String) = if (uid == "alice") alice else bob
+            override fun retry(uid: String) { retries += uid }
+        }
+        val vm = OrdersViewModel(repository, session, locations = locations, automaticSearch = false,
+            elapsed = { dispatcher.scheduler.currentTime }, synchronization = sync)
+        runCurrent()
+        assertFalse(vm.uiState.value.sync.online); assertEquals(2, vm.uiState.value.sync.pendingActions)
+        vm.retrySync(); assertTrue(retries.isEmpty())
+        alice.value = OrderSyncState(pendingActions = 2, needsAttention = true)
+        runCurrent(); vm.retrySync(); assertEquals(listOf("alice"), retries)
+        session.user.value = RiderUser(id = "bob", status = RegistrationStatus.APPROVED, profilePhotoPath = "photo")
+        runCurrent(); assertEquals(0, vm.uiState.value.sync.pendingActions)
+        assertFalse(vm.uiState.value.sync.needsAttention)
+    }
+
+    @Test fun paidDeliveryIsNotConfirmedOfflineAndPickupSyncHasSpecificMessage() = runTest(dispatcher) {
+        val syncState = MutableStateFlow(OrderSyncState(online = false))
+        val sync = object : OrderSyncRepository {
+            override fun observe(uid: String) = syncState
+            override fun retry(uid: String) = Unit
+        }
+        result = empty.copy(batch = DeliveryQuote(listOf(DeliveryStop("1", "order", "Lima", RoutePoint(-12.0, -77.0))),
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, emptyList()), pickedUp = true, paidByCustomer = true)
+        val vm = OrdersViewModel(repository, session, locations = locations, automaticSearch = false,
+            elapsed = { dispatcher.scheduler.currentTime }, synchronization = sync)
+        runCurrent(); vm.refresh(); runCurrent(); vm.updateDeliveryPin("0123")
+        vm.deliver(); runCurrent()
+        assertEquals(R.string.orders_pin_connection, vm.uiState.value.error)
+        assertFalse(calls.contains(OfferAction.DELIVER)); assertFalse(vm.uiState.value.snapshot!!.isDelivered)
+        syncState.value = OrderSyncState()
+        failure = OfferRequestException(425)
+        runCurrent(); vm.deliver(); runCurrent()
+        assertEquals(R.string.orders_pin_sync_required, vm.uiState.value.error)
+        assertFalse(vm.uiState.value.snapshot!!.isDelivered)
+    }
+
+    @Test fun deliveryDraftSurvivesSameOrderButNeverAnotherAccountOrOrder() = runTest(dispatcher) {
+        val quote = DeliveryQuote(listOf(DeliveryStop("1", "order-one", "Lima", RoutePoint(-12.0, -77.0))),
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, emptyList())
+        result = empty.copy(batch = quote)
+        val saved = androidx.lifecycle.SavedStateHandle(mapOf("delivery_draft_uid" to "alice",
+            "delivery_draft_order" to "order-one", "delivery_note" to "Dejar en recepción"))
+        val vm = OrdersViewModel(repository, session, savedStateHandle = saved, locations = locations,
+            automaticSearch = false, elapsed = { dispatcher.scheduler.currentTime })
+        runCurrent(); vm.refresh(); runCurrent()
+        assertEquals("Dejar en recepción", vm.uiState.value.deliveryNote)
+        result = result.copy(batch = quote.copy(stops = listOf(quote.stops.single().copy(orderId = "order-two"))))
+        vm.refresh(); runCurrent(); assertNull(vm.uiState.value.deliveryNote)
+        vm.updateDeliveryNote("Nota del segundo pedido")
+        session.user.value = RiderUser(id = "bob", status = RegistrationStatus.APPROVED, profilePhotoPath = "photo")
+        runCurrent(); assertNull(vm.uiState.value.deliveryNote)
+        assertNull(saved.get<String>("delivery_note"))
+        assertNull(saved.get<String>("delivery_draft_uid"))
+    }
+
 }

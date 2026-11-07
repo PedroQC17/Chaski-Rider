@@ -243,7 +243,8 @@
     <string name="sidebar_tagline">Tu espacio de trabajo</string>
     <string name="profile_request_change">Solicitar modificación</string>
     <string name="profile_change_title">¿Necesitas actualizar tus datos?</string>
-    <string name="profile_change_body">Los cambios se gestionarán mediante una solicitud. Esta opción estará disponible próximamente.</string>
+    <string name="profile_change_body">Para solicitar una corrección de tus datos, abre Ayuda y describe qué necesitas actualizar. Soporte revisará tu solicitud.</string>
+    <string name="profile_change_help">Abrir Ayuda</string>
     <string name="profile_change_close">Entendido</string>
     <string name="password_change">Cambiar contraseña</string>
     <string name="profile_photo">Foto de perfil</string>
@@ -265,7 +266,7 @@
     <string name="orders_real_menu">Pedidos</string>
     <string name="orders_demo_menu">Demo de pedidos (Test)</string>
     <string name="orders_demo_note">SIMULACIÓN · Pedidos ficticios, GPS real</string>
-    <string name="orders_location_required">No se pudo obtener tu ubicación. Activa el GPS y permite el acceso a la ubicación para continuar.</string>
+    <string name="orders_location_required">Necesitamos una ubicación reciente y precisa. Activa el GPS y habilita la ubicación precisa en los permisos de Chaski Rider.</string>
     <string name="orders_simulation_error">No se pudo guardar el cambio del pedido. Inténtalo nuevamente; el pedido conserva su último estado guardado.</string>
     <string name="orders_searching_nearby">Buscando pedidos cerca de ti.</string>
     <string name="orders_wait_nearby">Sin nuevas ofertas cercanas por ahora. Seguiremos buscando mientras estés conectado.</string>
@@ -326,8 +327,10 @@
     <string name="document_review_observed">Documento observado</string>
     <string name="orders_near_pickup">Acércate a menos de 100 m del local para continuar.</string>
     <string name="orders_near_delivery">Acércate a menos de 100 m del destino para confirmar la entrega.</string>
-    <string name="orders_checking_location">Esperando una ubicación reciente. Mantén el GPS y el permiso de ubicación activos.</string>
+    <string name="orders_checking_location">Esperando una ubicación reciente y precisa. Mantén el GPS activo y revisa el permiso de ubicación precisa.</string>
     <string name="orders_pin_invalid">El PIN debe tener 4 dígitos y coincidir con el del cliente.</string>
     <string name="orders_pin_wait">Demasiados intentos. Espera unos minutos o contacta a soporte.</string>
     <string name="orders_pin_connection">Se necesita conexión y que el pedido esté sincronizado para validar el PIN. El pedido sigue activo.</string>
+    <string name="orders_pin_sync_required">Espera a que se sincronice el recojo y vuelve a confirmar. El pedido sigue activo.</string>
+    <string name="orders_sync_retry_error">No se pudo iniciar la sincronización. Tus cambios siguen guardados.</string>
 </resources>

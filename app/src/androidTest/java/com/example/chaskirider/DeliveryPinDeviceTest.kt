@@ -58,6 +58,12 @@ class DeliveryPinDeviceTest {
             assertEquals("DELIVERED",remote.get(Source.SERVER).await().getString("status"))
             assertFalse(remote.get(Source.SERVER).await().contains("evidencePhotoUrl"))
             report.writeText("""{"uid":"$uid","orderId":"$id","result":"PASSED"}""")
-        } finally { input.delete(); manager.cancelUniqueWork(name).result.get(10,TimeUnit.SECONDS); database.close() }
+        } finally {
+            input.delete()
+            manager.cancelUniqueWork(name).result.get(10, TimeUnit.SECONDS)
+            database.openHelper.writableDatabase.execSQL("DELETE FROM order_actions WHERE uid = ? AND orderId = ?", arrayOf(uid, id))
+            database.openHelper.writableDatabase.execSQL("DELETE FROM order_records WHERE uid = ? AND orderId = ?", arrayOf(uid, id))
+            database.close()
+        }
     }
 }

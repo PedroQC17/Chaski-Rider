@@ -12,11 +12,14 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.example.chaskirider.domain.earnings.*
 import com.example.chaskirider.ui.screens.earnings.components.EarningsChartCard
+import com.example.chaskirider.ui.screens.earnings.components.ActivitySummaryCard
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -32,7 +35,10 @@ private fun date(time: Long) = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.forLa
 fun EarningsRoute(viewModel: EarningsViewModel, onMenu: () -> Unit) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var showRange by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { viewModel.refresh() }
+    LifecycleResumeEffect(Unit) {
+        viewModel.refresh()
+        onPauseOrDispose { }
+    }
     Scaffold(topBar = {
         CenterAlignedTopAppBar(title = { Text("Mis ganancias", fontWeight = FontWeight.Bold) }, navigationIcon = {
             IconButton(onClick = onMenu) { Icon(Icons.Default.Menu, contentDescription = "Menú") }
@@ -50,7 +56,7 @@ fun EarningsRoute(viewModel: EarningsViewModel, onMenu: () -> Unit) {
             }
             TextButton(onClick = viewModel::refresh, modifier = Modifier.padding(horizontal = 8.dp)) { Text("Actualizar") }
             if (state.selectedTab == 0) {
-                LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp).testTag("earnings-list"), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     item {
                         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             listOf(EarningsDateFilter.TODAY to "Hoy", EarningsDateFilter.THIS_WEEK to "Esta semana", EarningsDateFilter.THIS_MONTH to "Este mes").forEach { (filter, label) ->
@@ -74,7 +80,8 @@ fun EarningsRoute(viewModel: EarningsViewModel, onMenu: () -> Unit) {
                             }
                         }
                     }
-                    item { EarningsChartCard(state.records) }
+                    item { ActivitySummaryCard(state.activity) }
+                    item { EarningsChartCard(state.chartPoints) }
                     item { Text("Historial de pedidos (${state.records.size})", fontWeight = FontWeight.Bold) }
                     if (state.records.isEmpty() && !state.isLoading) item { Text("Aún no hay pedidos finalizados en estas fechas.") }
                     items(state.records, key = { it.orderId }) { record ->

@@ -49,6 +49,10 @@ object AppContainer {
     }
 
     private val orderDatabase by lazy { openOrderDatabase(applicationContext) }
+    private val connectivity by lazy { com.example.chaskirider.data.orders.DeviceConnectivity(applicationContext) }
+    val orderSyncRepository: com.example.chaskirider.domain.orders.OrderSyncRepository by lazy {
+        com.example.chaskirider.data.orders.RoomOrderSyncRepository(applicationContext, orderDatabase.orders(), connectivity)
+    }
     val localEarningsRepository by lazy {
         LocalEarningsRepository(orderDatabase.orders())
     }
@@ -95,7 +99,7 @@ object AppContainer {
         com.example.chaskirider.data.support.RoomSupportDraftStore(database.drafts())
     }
     val textProvider: TextProvider by lazy { AndroidTextProvider(applicationContext) }
-    private val profiles by lazy { RiderProfileRemoteDataSource(textProvider, sessionStore) }
+    private val profiles by lazy { RiderProfileRemoteDataSource(textProvider, sessionStore, online = connectivity::isOnline) }
     private val documents by lazy { RiderDocumentDataSource(textProvider, applicationContext, profiles) }
     val authRepository: AuthRepository by lazy { AuthRepositoryImpl(textProvider, profiles, sessionStore) }
     val riderProfileRepository: RiderProfileRepository by lazy { RiderProfileRepositoryImpl(textProvider, profiles) }

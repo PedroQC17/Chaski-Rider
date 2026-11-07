@@ -111,7 +111,8 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
             navController.navigate(destination(user)) { popUpTo(navController.graph.id) { inclusive = true }; launchSingleTop = true }
         } else if (user != null && (user.status != RegistrationStatus.APPROVED || !user.isEnabled) && route in listOf(
                 Screen.Home.route, Screen.Orders.route, Screen.DemoOrders.route, Screen.Profile.route,
-                Screen.ProfilePersonalData.route, Screen.ProfileVehicle.route, Screen.ProfileDocuments.route, Screen.Notifications.route)) {
+                Screen.ProfilePersonalData.route, Screen.ProfileVehicle.route, Screen.ProfileDocuments.route,
+                Screen.Notifications.route, Screen.Earnings.route)) {
             navController.navigate(Screen.RegistrationStatus.route) { popUpTo(navController.graph.id) { inclusive = true }; launchSingleTop = true }
         } else if (route == Screen.Startup.route) {
             navController.navigate(user?.let(::destination) ?: Screen.Access.route) {
@@ -128,7 +129,8 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
     // HU04: las ofertas (notificación de tiempo y navegación) solo existen conectado.
     val offersActive = workArea && user?.isAvailable == true
     val demoOrdersViewModel: OrdersViewModel = viewModel(key = "demo_orders") {
-        OrdersViewModel(AppContainer.demoOfferRepository, AppContainer.riderSession, automaticSearch = false)
+        OrdersViewModel(AppContainer.demoOfferRepository, AppContainer.riderSession, automaticSearch = false,
+            synchronization = AppContainer.orderSyncRepository)
     }
     val ordersState by demoOrdersViewModel.uiState.collectAsStateWithLifecycle()
     val trackingOrderId = ordersState.snapshot?.batch?.stops?.singleOrNull()?.orderId
@@ -382,7 +384,10 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
     if (profileState.changeNoticeVisible) ChaskiDialog(
         title = stringResource(R.string.profile_change_title), onDismiss = profileViewModel::dismissChangeNotice,
         content = { Text(stringResource(R.string.profile_change_body)) },
-        confirm = { Button(onClick = profileViewModel::dismissChangeNotice) { Text(stringResource(R.string.profile_change_close)) } })
+        confirm = { Button(onClick = {
+            profileViewModel.dismissChangeNotice()
+            navController.navigate(Screen.Support.route) { launchSingleTop = true }
+        }) { Text(stringResource(R.string.profile_change_help)) } })
     if (recovery) AlertDialog(onDismissRequest = { if (!state.isLoading) recovery = false },
         title = { Text(stringResource(R.string.text_recuperar_contrasena)) },
         text = { Column {

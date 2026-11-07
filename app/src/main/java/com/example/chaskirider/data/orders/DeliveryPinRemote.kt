@@ -14,12 +14,17 @@ object DeliveryPinRemote {
     suspend fun verify(uid: String, orderId: String, pin: String) {
         if (FirebaseAuth.getInstance().currentUser?.uid != uid) throw OfferRequestException(401)
         try {
-            val response = FirebaseFunctions.getInstance("us-central1").getHttpsCallable("deliveryPin")
-                .call(mapOf("action" to "verify", "orderId" to orderId, "pin" to pin)).await().data as Map<*, *>
+            val response = kotlinx.coroutines.withTimeout(15_000) {
+                FirebaseFunctions.getInstance("us-central1").getHttpsCallable("deliveryPin")
+                    .call(mapOf("action" to "verify", "orderId" to orderId, "pin" to pin)).await().data as Map<*, *>
+            }
             if (response["verified"] != true) throw OfferRequestException(428)
-        } catch (e: FirebaseFunctionsException) {
+        } catch (_: kotlinx.coroutines.TimeoutCancellationException) { throw OfferRequestException(503) }
+        catch (e: FirebaseFunctionsException) {
             throw OfferRequestException(when (e.code) {
                 FirebaseFunctionsException.Code.RESOURCE_EXHAUSTED -> 429
+                FirebaseFunctionsException.Code.FAILED_PRECONDITION -> 425
+                FirebaseFunctionsException.Code.UNAUTHENTICATED -> 401
                 FirebaseFunctionsException.Code.PERMISSION_DENIED, FirebaseFunctionsException.Code.INVALID_ARGUMENT -> 428
                 else -> 503
             })

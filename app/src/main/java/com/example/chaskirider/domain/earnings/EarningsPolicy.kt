@@ -47,7 +47,7 @@ object EarningsPolicy {
         return DeliveryEarningsRecord(order.orderId, order.merchantName, time,
             if (cancelled) 0 else quote?.chaskiCents,
             if (cancelled) 0 else quote?.tipCents,
-            if (cancelled) 0 else quote?.totalCents, cancelled, quote)
+            if (cancelled) 0 else quote?.totalCents, cancelled, quote, order.acceptedAt)
     }
 }
 

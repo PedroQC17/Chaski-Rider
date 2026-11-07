@@ -10,10 +10,12 @@ data class EarningsUiState(
     val settlements: List<SettlementRecord> = emptyList(),
     val selectedOrder: DeliveryEarningsRecord? = null,
     val isLoading: Boolean = false,
-    val warning: String? = null
+    val warning: String? = null,
+    val chartPoints: List<ActivityChartPoint> = emptyList()
 ) {
-    val chaskiTotalCents: Long get() = records.sumOf { it.baseFareCents?.toLong() ?: 0 }
-    val tipsTotalCents: Long get() = records.sumOf { it.tipCents?.toLong() ?: 0 }
-    val grandTotalCents: Long get() = records.sumOf { it.totalCents?.toLong() ?: 0 }
-    val unknownCount: Int get() = records.count { it.totalCents == null }
+    val activity = ActivitySummary.from(records)
+    val chaskiTotalCents: Long get() = activity.chaskiCents
+    val tipsTotalCents: Long get() = activity.tipCents
+    val grandTotalCents: Long get() = activity.totalCents
+    val unknownCount: Int get() = activity.unknownAmounts
 }

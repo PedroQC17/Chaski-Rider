@@ -52,9 +52,11 @@ class EarningsViewModel(
     fun refresh() { refreshes.update { it + 1 }; render() }
     private fun render() {
         mutableState.update { state ->
-            val (from, until) = EarningsCalendar.bounds(state.selectedFilter, clock(), state.range)
-            val records = snapshot.records.filter { it.completedAt >= from && it.completedAt < until && it.completedAt <= clock() }
+            val now = clock()
+            val (from, until) = EarningsCalendar.bounds(state.selectedFilter, now, state.range)
+            val records = snapshot.records.filter { it.completedAt >= from && it.completedAt < until && it.completedAt <= now }
             state.copy(records = records, settlements = snapshot.settlements, warning = snapshot.warning,
+                chartPoints = ActivityChart.points(records, from, until),
                 selectedOrder = state.selectedOrder?.let { selected -> records.find { it.orderId == selected.orderId } }, isLoading = false)
         }
     }

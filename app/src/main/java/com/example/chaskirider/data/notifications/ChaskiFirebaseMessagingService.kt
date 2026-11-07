@@ -8,8 +8,9 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
-import androidx.annotation.RequiresPermission
+import androidx.core.content.ContextCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.example.chaskirider.MainActivity
@@ -24,7 +25,6 @@ class ChaskiFirebaseMessagingService : FirebaseMessagingService() {
         FirebaseMessaging.getInstance().subscribeToTopic(TOPIC_RIDERS)
     }
 
-    @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         val title = remoteMessage.notification?.title
             ?: remoteMessage.data["title"]
@@ -37,8 +37,9 @@ class ChaskiFirebaseMessagingService : FirebaseMessagingService() {
         showNotification(title, body)
     }
 
-    @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     private fun showNotification(title: String, body: String) {
+        if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(this,
+                Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return
         ensureChannel(this)
         val intent = Intent(this, MainActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)

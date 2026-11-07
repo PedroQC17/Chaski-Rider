@@ -2,7 +2,6 @@ package com.example.chaskirider.data.location
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.util.Log
 import android.os.SystemClock
 import com.example.chaskirider.domain.model.GeoPoint
 import com.example.chaskirider.domain.repository.LocationRepository
@@ -21,25 +20,18 @@ class DeviceLocationRepository(context: Context) : LocationRepository {
     override suspend fun currentLocation(): Result<GeoPoint?> {
         if (!androidx.core.location.LocationManagerCompat.isLocationEnabled(manager)) return Result.success(null)
         val cancellation = CancellationTokenSource()
-        Log.d("DeviceLocationRepo", "Requesting current location...")
         return try {
             val location = withTimeoutOrNull(15_000.milliseconds) {
                 client.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cancellation.token).await()
             } ?: run {
-                Log.w("DeviceLocationRepo", "getCurrentLocation returned null or timed out. Trying lastLocation fallback...")
                 client.lastLocation.await()
             }
-            if (location != null) {
-                Log.d("DeviceLocationRepo", "Location obtained: lat=${location.latitude}, lng=${location.longitude}")
-            } else {
-                Log.w("DeviceLocationRepo", "Location is still null after lastLocation fallback.")
-            }
             Result.success(location?.takeIf {
-                SystemClock.elapsedRealtime() - it.elapsedRealtimeNanos / 1_000_000 in 0..30_000
+                it.hasAccuracy() && com.example.chaskirider.domain.orders.OrderLocationRules.usableFix(
+                    it.latitude, it.longitude, it.accuracy, SystemClock.elapsedRealtime() - it.elapsedRealtimeNanos / 1_000_000)
             }?.let { GeoPoint(it.latitude, it.longitude) })
         } catch (error: CancellationException) { throw error
         } catch (error: Exception) {
-            Log.e("DeviceLocationRepo", "Error obtaining location", error)
             Result.failure(error)
         } finally { cancellation.cancel() }
     }

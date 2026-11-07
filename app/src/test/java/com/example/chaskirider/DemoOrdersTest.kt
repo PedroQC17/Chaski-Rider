@@ -8,6 +8,17 @@ import org.junit.Test
 import java.io.File
 
 class DemoOrdersTest {
+    @Test fun locationFixMustBeFreshAccurateAndFiniteBeforeGeofenceChecks() {
+        assertTrue(OrderLocationRules.usableFix(-12.0, -77.0, 20f, 1000))
+        assertTrue(OrderLocationRules.usableFix(-12.0, -77.0, 100f, 30_000))
+        assertFalse(OrderLocationRules.usableFix(-12.0, -77.0, 101f, 1000))
+        assertFalse(OrderLocationRules.usableFix(-12.0, -77.0, Float.NaN, 1000))
+        assertFalse(OrderLocationRules.usableFix(-12.0, -77.0, -1f, 1000))
+        assertFalse(OrderLocationRules.usableFix(Double.NaN, -77.0, 20f, 1000))
+        assertFalse(OrderLocationRules.usableFix(-12.0, 181.0, 20f, 1000))
+        assertFalse(OrderLocationRules.usableFix(-12.0, -77.0, 20f, -1))
+        assertFalse(OrderLocationRules.usableFix(-12.0, -77.0, 20f, 30_001))
+    }
     @Test fun paidOrderRequiresPinButNeverPhotoAndWrongPinKeepsItActive() = runTest {
         var verified = false
         val paid = first.copy(paidByCustomer = true)

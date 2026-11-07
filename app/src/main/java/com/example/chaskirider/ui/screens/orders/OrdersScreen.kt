@@ -112,6 +112,7 @@ fun OrdersRoute(viewModel: OrdersViewModel, onMenu: () -> Unit, isDemo: Boolean 
         onUpdatePin = viewModel::updateDeliveryPin,
         onReset = { if (state.snapshot?.batch != null && state.snapshot?.isDelivered != true) viewModel.openProblem() else viewModel.reset() },
         onRefresh = viewModel::refresh,
+        onRetrySync = viewModel::retrySync,
         onClearError = viewModel::clearError,
         onSupport = onSupport,
     )
@@ -139,6 +140,7 @@ private fun OrdersScreen(
     onUpdatePin: (String) -> Unit,
     onReset: () -> Unit,
     onRefresh: () -> Unit,
+    onRetrySync: () -> Unit,
     onClearError: () -> Unit,
     onSupport: () -> Unit,
 ) {
@@ -171,6 +173,7 @@ private fun OrdersScreen(
                 isDemo = isDemo,
                 actionsEnabled = actionsEnabled,
                 onRefresh = onRefresh,
+                onRetrySync = onRetrySync,
                 onClearError = onClearError,
                 onReject = onReject,
                 onAccept = onAccept,
@@ -254,6 +257,7 @@ private fun ExpandedOrderContent(
     isDemo: Boolean,
     actionsEnabled: Boolean,
     onRefresh: () -> Unit,
+    onRetrySync: () -> Unit,
     onClearError: () -> Unit,
     onReject: () -> Unit,
     onAccept: () -> Unit,
@@ -283,6 +287,8 @@ private fun ExpandedOrderContent(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             if (state.busy) LinearProgressIndicator(Modifier.fillMaxWidth())
+            OrderSyncNotice(state.sync, onRetrySync)
+
 
             state.error?.let { errorRes ->
                 Surface(
@@ -470,6 +476,7 @@ private fun OrderActionControls(
 
             if (snapshot?.paidByCustomer == true) {
                 Text("Pedido pagado · Solicita al cliente su PIN de 4 dígitos")
+                if (!state.sync.online) Text(stringResource(R.string.orders_pin_connection), style = MaterialTheme.typography.bodySmall)
                 OutlinedTextField(value = state.deliveryPin, onValueChange = onUpdatePin,
                     label = { Text("PIN del cliente") }, singleLine = true, enabled = actionsEnabled,
                     keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.NumberPassword),
@@ -489,7 +496,7 @@ private fun OrderActionControls(
 
             Button(
                 onClick = onDeliver,
-                enabled = actionsEnabled && state.isNearCustomer && (snapshot?.paidByCustomer != true || state.deliveryPin.length == 4),
+                enabled = actionsEnabled && state.isNearCustomer && (snapshot?.paidByCustomer != true || (state.deliveryPin.length == 4 && state.sync.online)),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Confirmar entrega")
