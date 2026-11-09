@@ -46,11 +46,11 @@ data class SupportLocation(val latitude: Double, val longitude: Double, val capt
 enum class SupportTicketStatus { OPEN, CLOSED }
 enum class SupportSender { RIDER, SUPPORT }
 data class SupportMessage(val id: String, val sender: SupportSender, val body: String,
-    val createdAt: Long, val pending: Boolean = false)
+    val createdAt: Long, val pending: Boolean = false, val mode: String? = null)
 data class SupportTicket(val id: String, val topic: SupportTopic, val createdAt: Long,
     val status: SupportTicketStatus = SupportTicketStatus.OPEN, val order: SupportOrderContext? = null,
     val messages: List<SupportMessage> = emptyList(), val pending: Boolean = false,
-    val location: SupportLocation? = null)
+    val location: SupportLocation? = null, val needsHuman: Boolean = false)
 
 interface SupportDraftStore {
     suspend fun load(uid: String): SupportDraft?

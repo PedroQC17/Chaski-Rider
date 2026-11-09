@@ -97,6 +97,29 @@ class EarningsDeviceTest {
         compose.onNodeWithText("Aún no hay pedidos finalizados en estas fechas.").assertIsDisplayed()
     }
 
+    @Test fun unsuccessfulCompletionShowsItsResultAndPreservedEarnings() {
+        val now = System.currentTimeMillis()
+        val record = DeliveryEarningsRecord("absence", "Cliente ausente de prueba", now, 300, 0, 300,
+            quote = AcceptedEarningsQuote.from(quote), unsuccessful = true)
+        val session = object : RiderSession { override val user = MutableStateFlow<RiderUser?>(RiderUser(id = "alice")) }
+        val repo = object : EarningsRepository { override fun observe(uid: String) = flowOf(EarningsSnapshot(records = listOf(record))) }
+        val model = EarningsViewModel(repo, session)
+        val models = androidx.lifecycle.ViewModelStore().apply { put("absence", model) }
+        try {
+            compose.setContent { ChaskiRiderTheme { EarningsRoute(model, {}) } }
+            compose.onNodeWithTag("earnings-list").performScrollToNode(hasContentDescription("Entregas exitosas: 0"))
+            compose.onNodeWithContentDescription("Entregas exitosas: 0").assertIsDisplayed()
+            compose.onNodeWithTag("earnings-list").performScrollToNode(hasContentDescription("Entregas no exitosas: 1"))
+            compose.onNodeWithContentDescription("Entregas no exitosas: 1").assertIsDisplayed()
+            compose.onNodeWithContentDescription("Pedidos completados: 1").assertIsDisplayed()
+            assertEquals(300L, model.uiState.value.grandTotalCents)
+            compose.onNodeWithTag("earnings-list").performScrollToNode(hasText("Cliente ausente de prueba"))
+            compose.onNodeWithText("Cliente ausente de prueba").performClick()
+            compose.onNodeWithText("Completado con entrega no exitosa · Cliente ausente. Recibes el pago de la ruta sin propina.").assertExists()
+            compose.onNodeWithText("Hasta el local: 1.00 km").assertExists()
+        } finally { compose.runOnIdle { models.clear() } }
+    }
+
     @Test fun dashboardObservesRealRoomChangesAndSwitchesDailyAndWeeklyMetrics() {
         val user = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
         org.junit.Assume.assumeNotNull(user)
@@ -111,7 +134,8 @@ class EarningsDeviceTest {
         val models = androidx.lifecycle.ViewModelStore().apply { put("dashboard", model) }
         try {
             compose.setContent { ChaskiRiderTheme { EarningsRoute(model, {}) } }
-            compose.onNodeWithContentDescription("Entregas completadas: 0").performScrollTo().assertIsDisplayed()
+            compose.onNodeWithTag("earnings-list").performScrollToNode(hasContentDescription("Entregas exitosas: 0"))
+            compose.onNodeWithContentDescription("Entregas exitosas: 0").assertIsDisplayed()
             val point = RoutePoint(-12.0, -77.0)
             val first = OrderRecord("dashboard-test-one", uid, OrderStatus.DELIVERED, "Local de prueba", point, point,
                 monday + 3_600_000, monday + 3_600_001, monday + 3_600_002, monday + 4_200_000,
@@ -125,22 +149,61 @@ class EarningsDeviceTest {
                     OrderRecordEntity(uid, record.orderId, Gson().toJson(record), 1, false))
             }
             compose.waitUntil(10_000) { model.uiState.value.activity.delivered == 2 }
-            compose.onNodeWithContentDescription("Entregas completadas: 2").performScrollTo().assertIsDisplayed()
+            compose.onNodeWithTag("earnings-list").performScrollToNode(hasContentDescription("Entregas exitosas: 2"))
+            compose.onNodeWithContentDescription("Entregas exitosas: 2").assertIsDisplayed()
             compose.onNodeWithContentDescription("Pedidos cancelados: 1").assertIsDisplayed()
-            compose.onNodeWithContentDescription("Tiempo promedio: 15.0 min").performScrollTo().assertIsDisplayed()
+            compose.onNodeWithTag("earnings-list").performScrollToNode(hasContentDescription("Promedio diario de conexión: Sin conexiones"))
+            compose.onNodeWithContentDescription("Promedio diario de conexión: Sin conexiones").assertIsDisplayed()
             assertEquals(1100L, model.uiState.value.grandTotalCents)
             assertEquals(7, model.uiState.value.chartPoints.size)
-            compose.onNodeWithText("Hoy").performScrollTo().performClick()
-            compose.onNodeWithContentDescription("Entregas completadas: 1").performScrollTo().assertIsDisplayed()
+            compose.onNodeWithTag("earnings-list").performScrollToNode(hasText("Hoy"))
+            compose.onNodeWithText("Hoy").performClick()
+            compose.onNodeWithTag("earnings-list").performScrollToNode(hasContentDescription("Entregas exitosas: 1"))
+            compose.onNodeWithContentDescription("Entregas exitosas: 1").assertIsDisplayed()
             compose.onNodeWithContentDescription("Pedidos cancelados: 0").assertIsDisplayed()
-            compose.onNodeWithContentDescription("Tiempo promedio: 20.0 min").performScrollTo().assertIsDisplayed()
+            compose.onNodeWithTag("earnings-list").performScrollToNode(hasContentDescription("Promedio diario de conexión: Sin conexiones"))
+            compose.onNodeWithContentDescription("Promedio diario de conexión: Sin conexiones").assertIsDisplayed()
             assertEquals(550L, model.uiState.value.grandTotalCents)
             assertEquals(1, model.uiState.value.chartPoints.size)
-            compose.onNodeWithText("Esta semana").performScrollTo().performClick()
-            compose.onNodeWithContentDescription("Entregas completadas: 2").performScrollTo().assertIsDisplayed()
+            compose.onNodeWithTag("earnings-list").performScrollToNode(hasText("Esta semana"))
+            compose.onNodeWithText("Esta semana").performClick()
+            compose.onNodeWithTag("earnings-list").performScrollToNode(hasContentDescription("Entregas exitosas: 2"))
+            compose.onNodeWithContentDescription("Entregas exitosas: 2").assertIsDisplayed()
         } finally {
             compose.runOnIdle { models.clear() }
             db.close()
         }
+    }
+
+    @Test fun dateFilterFitsAndAppliesTheSelectedRange() {
+        val now = System.currentTimeMillis()
+        val session = object : RiderSession { override val user = MutableStateFlow<RiderUser?>(RiderUser(id = "alice")) }
+        val repo = object : EarningsRepository {
+            override fun observe(uid: String) = flowOf(EarningsSnapshot(connections = listOf(
+                ConnectionSession(EarningsCalendar.bounds(EarningsDateFilter.TODAY, now).first, now))))
+        }
+        val model = EarningsViewModel(repo, session)
+        val models = androidx.lifecycle.ViewModelStore().apply { put("filter", model) }
+        try {
+            compose.setContent { ChaskiRiderTheme { EarningsRoute(model, {}) } }
+            compose.onNodeWithText("Filtrar por fechas").performClick()
+            compose.onNodeWithText("Aplicar").assertIsDisplayed()
+            compose.onNodeWithText("Cancelar").assertIsDisplayed()
+            val instrumentation = InstrumentationRegistry.getInstrumentation()
+            instrumentation.uiAutomation.takeScreenshot().let { bitmap ->
+                java.io.File(context.filesDir, "earnings-date-filter.png").outputStream().use {
+                    bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
+                }
+                bitmap.recycle()
+            }
+            compose.onNodeWithText("Aplicar").performClick()
+            compose.runOnIdle { assertEquals(EarningsDateFilter.CUSTOM, model.uiState.value.selectedFilter) }
+            instrumentation.uiAutomation.takeScreenshot().let { bitmap ->
+                java.io.File(context.filesDir, "earnings-overview.png").outputStream().use {
+                    bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
+                }
+                bitmap.recycle()
+            }
+        } finally { compose.runOnIdle { models.clear() } }
     }
 }

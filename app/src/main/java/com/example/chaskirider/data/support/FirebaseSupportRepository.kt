@@ -34,7 +34,7 @@ class FirebaseSupportRepository(private val auth: FirebaseAuth = FirebaseAuth.ge
                 else if (snapshot != null && auth.currentUser?.uid == uid) {
                     try { trySend(snapshot.documents.map { doc -> SupportMessage(doc.id,
                         SupportSender.valueOf(requireNotNull(doc.getString("sender"))), requireNotNull(doc.getString("body")),
-                        doc.getTimestamp("createdAt")?.toDate()?.time ?: 0, doc.metadata.hasPendingWrites()) }) }
+                        doc.getTimestamp("createdAt")?.toDate()?.time ?: 0, doc.metadata.hasPendingWrites(), doc.getString("mode")) }) }
                     catch (e: Exception) { close(e) }
                 }
             }
@@ -45,7 +45,14 @@ class FirebaseSupportRepository(private val auth: FirebaseAuth = FirebaseAuth.ge
         requireUser(uid)
         val topic = requireNotNull(draft.topic)
         require(SupportValidation.validBody(draft.body))
-        val ref = tickets(uid).document(draft.id)
+        val collection = tickets(uid)
+        val previous = if (topic == SupportTopic.EMERGENCY) emptyList() else collection.whereEqualTo("topic", topic.name).get(Source.SERVER).await().documents
+            .filter { it.getString("order.orderId") == draft.order?.orderId }
+        val open = previous.firstOrNull { it.getString("status") == "OPEN" }
+        val latest = previous.maxByOrNull { it.getTimestamp("createdAt") ?: com.google.firebase.Timestamp(0, 0) }
+        val identity = listOf(topic.name, draft.order?.orderId.orEmpty(), latest?.id.orEmpty()).joinToString(":")
+        val ref = open?.reference ?: collection.document(if (topic == SupportTopic.EMERGENCY) draft.id
+            else java.util.UUID.nameUUIDFromBytes(identity.toByteArray(Charsets.UTF_8)).toString())
         val order = draft.order?.let { mapOf("orderId" to it.orderId, "merchantName" to it.merchantName,
             "pickupAddress" to it.pickupAddress, "deliveryAddress" to it.deliveryAddress,
             "pickedUp" to it.pickedUp, "problemId" to it.problemId,
@@ -55,13 +62,17 @@ class FirebaseSupportRepository(private val auth: FirebaseAuth = FirebaseAuth.ge
         db.runTransaction { transaction ->
             val existing = transaction.get(ref)
             if (existing.exists()) {
-                check(existing.getString("topic") == topic.name && existing.getString("body") == draft.body.trim()
-                    && existing.get("order") == order && existing.get("location") == location) { "Este ticket ya fue registrado con otro contenido" }
+                check(existing.getString("status") == "OPEN") { "El caso acaba de cerrarse. Vuelve a intentarlo." }
+                if (existing.getString("body") != draft.body.trim()) {
+                    val message = ref.collection("messages").document(draft.id)
+                    if (!transaction.get(message).exists()) transaction.set(message, mapOf(
+                        "sender" to "RIDER", "body" to draft.body.trim(), "createdAt" to FieldValue.serverTimestamp()))
+                }
             } else transaction.set(ref, mapOf("topic" to topic.name, "category" to topic.category.name,
                 "body" to draft.body.trim(), "order" to order, "location" to location,
                 "priority" to if (topic == SupportTopic.EMERGENCY) "URGENT" else "NORMAL",
                 "status" to "OPEN", "createdAt" to FieldValue.serverTimestamp()))
-            draft.id
+            ref.id
         }.await()
     }
 
@@ -96,6 +107,6 @@ class FirebaseSupportRepository(private val auth: FirebaseAuth = FirebaseAuth.ge
             (it["latitude"] as Number).toDouble(), (it["longitude"] as Number).toDouble(), (it["capturedAt"] as Number).toLong()) }
         return SupportTicket(doc.id, SupportTopic.valueOf(requireNotNull(doc.getString("topic"))), time,
             SupportTicketStatus.valueOf(requireNotNull(doc.getString("status"))), order,
-            listOf(SupportMessage("initial", SupportSender.RIDER, requireNotNull(doc.getString("body")), time, pending)), pending, location)
+            listOf(SupportMessage("initial", SupportSender.RIDER, requireNotNull(doc.getString("body")), time, pending)), pending, location, doc.getBoolean("needsHuman") == true)
     }
 }

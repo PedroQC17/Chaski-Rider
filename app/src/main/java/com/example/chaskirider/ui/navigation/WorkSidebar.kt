@@ -40,7 +40,7 @@ fun WorkSidebar(route: String?, unread: Int, busy: Boolean, onNavigate: (String)
                 .padding(horizontal = 20.dp, vertical = 24.dp)
         ) {
             Image(
-                painter = painterResource(R.drawable.ic_launcher_foreground),
+                painter = painterResource(R.drawable.chaski_rider_icon),
                 contentDescription = "Logo",
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.size(44.dp)

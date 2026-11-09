@@ -12,7 +12,8 @@ data class DeliveryEarningsRecord(
     val totalCents: Int?,
     val cancelled: Boolean = false,
     val quote: AcceptedEarningsQuote? = null,
-    val acceptedAt: Long? = null
+    val acceptedAt: Long? = null,
+    val unsuccessful: Boolean = false
 ) {
     val hasKnownAmount: Boolean get() = baseFareCents != null && tipCents != null && totalCents != null &&
         baseFareCents >= 0 && tipCents >= 0 && totalCents.toLong() == baseFareCents.toLong() + tipCents
@@ -31,5 +32,7 @@ data class SettlementRecord(
 data class EarningsSnapshot(
     val records: List<DeliveryEarningsRecord> = emptyList(),
     val settlements: List<SettlementRecord> = emptyList(),
-    val warning: String? = null
+    val warning: String? = null,
+    val connections: List<ConnectionSession> = emptyList(),
+    val connectionWarning: String? = null
 )

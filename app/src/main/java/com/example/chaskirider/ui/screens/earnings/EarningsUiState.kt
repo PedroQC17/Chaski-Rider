@@ -11,7 +11,9 @@ data class EarningsUiState(
     val selectedOrder: DeliveryEarningsRecord? = null,
     val isLoading: Boolean = false,
     val warning: String? = null,
-    val chartPoints: List<ActivityChartPoint> = emptyList()
+    val chartPoints: List<ActivityChartPoint> = emptyList(),
+    val connection: ConnectionSummary = ConnectionSummary(),
+    val connectionWarning: String? = null
 ) {
     val activity = ActivitySummary.from(records)
     val chaskiTotalCents: Long get() = activity.chaskiCents

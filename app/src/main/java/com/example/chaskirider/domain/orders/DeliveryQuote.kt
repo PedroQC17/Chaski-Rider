@@ -4,7 +4,7 @@ data class RoutePoint(val latitude: Double, val longitude: Double)
 
 //paradero de entrega donde se debe entregar el pedido
 data class DeliveryStop(val id: String, val orderId: String, val zone: String?, val point: RoutePoint,
-    val address: String? = null)
+    val address: String? = null, val customerPhone: String? = null)
 data class DeliveryQuote(
     val stops: List<DeliveryStop>, val approachMeters: Int, val deliveryMeters: Int,
     val durationSeconds: Int, val baseCents: Int, val approachCents: Int, val deliveryCents: Int,

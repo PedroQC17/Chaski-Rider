@@ -15,6 +15,7 @@ class LocalDemoOfferRepository(
     private val clock: () -> Long = System::currentTimeMillis,
     private val hasOffer: () -> Boolean = { Random.nextInt(100) < 70 },
     private val verifyPin: suspend (String, String, String) -> Unit = { _, _, _ -> throw OfferRequestException(503) },
+    private val resolveAbsence: suspend (String, String) -> Long = { _, _ -> throw OfferRequestException(503) },
 ) : OfferRepository {
     private val mutex = Mutex()
     override suspend fun execute(
@@ -89,7 +90,7 @@ class LocalDemoOfferRepository(
                 snapshot.copy(isDelivered = true, deliveredAt = now, evidencePhotoUrl = null, deliveryNote = deliveryNote)
             }
             OfferAction.RESET -> {
-                if (snapshot.batch != null && !snapshot.isDelivered) throw OfferRequestException(409)
+                if (snapshot.batch != null && !snapshot.isCompleted) throw OfferRequestException(409)
                 empty(now)
             }
         }
@@ -118,8 +119,24 @@ class LocalDemoOfferRepository(
             problems = saved.problems.orEmpty() + problem))
         result
     }
+    override suspend fun resolveCustomerAbsence(orderId: String): OfferSnapshot = mutex.withLock {
+        val uid = currentUid() ?: throw OfferRequestException(401)
+        val saved = store.load(uid) ?: throw OfferRequestException(409)
+        val snapshot = saved.snapshot
+        if (snapshot.batch?.stops?.singleOrNull()?.orderId != orderId) throw OfferRequestException(409)
+        if (snapshot.completedUnsuccessfullyAt != null) return@withLock snapshot
+        checkActive(snapshot)
+        if (!snapshot.pickedUp) throw OfferRequestException(409)
+        val completedAt = resolveAbsence(uid, orderId)
+        if (currentUid() != uid) throw OfferRequestException(401)
+        require(completedAt > 0)
+        val result = snapshot.copy(completedUnsuccessfullyAt = completedAt, serverTime = clock())
+        store.save(uid, saved.copy(snapshot = result))
+        result
+    }
+
     private fun checkActive(snapshot: OfferSnapshot) {
-        if (snapshot.batch == null || snapshot.isDelivered) throw OfferRequestException(409)
+        if (snapshot.batch == null || snapshot.isCompleted) throw OfferRequestException(409)
     }
     private fun empty(now: Long) = OfferSnapshot(now, false, null, null, RoutePoint(0.0, 0.0))
     private fun offer(order: DemoOrder, lat: Double, lng: Double, now: Long): OfferSnapshot {

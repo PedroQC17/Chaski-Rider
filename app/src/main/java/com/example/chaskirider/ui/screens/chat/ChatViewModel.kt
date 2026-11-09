@@ -45,8 +45,8 @@ class ChatViewModel(private val repository: OrderChatRepository, private val dra
             reader?.cancel(); sender?.cancel(); loadedKey = null
             orderId = id; draft = ChatDraft(newId()); mutable.value = ChatUiState()
         }
-        mutable.update { it.copy(isMerchantChannelEnabled = id != null && snapshot?.pickedUp == false && !snapshot.isDelivered,
-            isCustomerChannelEnabled = id != null && snapshot?.isDelivered == false) }
+        mutable.update { it.copy(isMerchantChannelEnabled = id != null && snapshot?.pickedUp == false && !snapshot.isCompleted,
+            isCustomerChannelEnabled = id != null && snapshot?.isCompleted == false) }
         if (!canSend()) { sender?.cancel(); mutable.update { it.copy(busy = false) } }
     }
 

@@ -49,6 +49,11 @@ object AppContainer {
     }
 
     private val orderDatabase by lazy { openOrderDatabase(applicationContext) }
+    val customerAbsenceService by lazy {
+        com.example.chaskirider.data.support.FirebaseCustomerAbsence(orderDatabase.orders()) {
+            OrderSyncWorker.schedule(applicationContext, it)
+        }
+    }
     private val connectivity by lazy { com.example.chaskirider.data.orders.DeviceConnectivity(applicationContext) }
     val orderSyncRepository: com.example.chaskirider.domain.orders.OrderSyncRepository by lazy {
         com.example.chaskirider.data.orders.RoomOrderSyncRepository(applicationContext, orderDatabase.orders(), connectivity)
@@ -75,7 +80,8 @@ object AppContainer {
                     }
                 }
             },
-            verifyPin = DeliveryPinRemote::verify
+            verifyPin = DeliveryPinRemote::verify,
+            resolveAbsence = customerAbsenceService::resolve
         )
     }
 
@@ -84,6 +90,9 @@ object AppContainer {
     }
     val supportRepository: com.example.chaskirider.domain.support.SupportRepository by lazy {
         com.example.chaskirider.data.support.FirebaseSupportRepository()
+    }
+    val assistantRepository: com.example.chaskirider.domain.support.AssistantRepository by lazy {
+        com.example.chaskirider.data.support.FirebaseAssistantRepository(supportRepository, customerAbsenceService::awaitSync)
     }
     val orderChatRepository: com.example.chaskirider.domain.chat.OrderChatRepository by lazy {
         com.example.chaskirider.data.chat.FirebaseOrderChatRepository()
@@ -97,6 +106,11 @@ object AppContainer {
         val database = androidx.room.Room.databaseBuilder(applicationContext,
             com.example.chaskirider.data.support.SupportDraftDatabase::class.java, "support_drafts.db").build()
         com.example.chaskirider.data.support.RoomSupportDraftStore(database.drafts())
+    }
+    val customerContactStore: com.example.chaskirider.domain.support.CustomerContactStore by lazy {
+        val database = androidx.room.Room.databaseBuilder(applicationContext,
+            com.example.chaskirider.data.support.CustomerContactDatabase::class.java, "customer_contact.db").build()
+        com.example.chaskirider.data.support.RoomCustomerContactStore(database.contacts())
     }
     val textProvider: TextProvider by lazy { AndroidTextProvider(applicationContext) }
     private val profiles by lazy { RiderProfileRemoteDataSource(textProvider, sessionStore, online = connectivity::isOnline) }

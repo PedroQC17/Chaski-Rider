@@ -35,6 +35,7 @@ class EarningsViewModel(
             }
         }
     }
+    fun updateTime() { render() }
     fun selectTab(tabIndex: Int) { mutableState.update { it.copy(selectedTab = tabIndex.coerceIn(0, 1)) } }
     fun selectFilter(filter: EarningsDateFilter) {
         if (filter == EarningsDateFilter.CUSTOM && mutableState.value.range == null) return
@@ -57,6 +58,8 @@ class EarningsViewModel(
             val records = snapshot.records.filter { it.completedAt >= from && it.completedAt < until && it.completedAt <= now }
             state.copy(records = records, settlements = snapshot.settlements, warning = snapshot.warning,
                 chartPoints = ActivityChart.points(records, from, until),
+                connection = ConnectionSummary.from(snapshot.connections, from, until, now),
+                connectionWarning = snapshot.connectionWarning,
                 selectedOrder = state.selectedOrder?.let { selected -> records.find { it.orderId == selected.orderId } }, isLoading = false)
         }
     }

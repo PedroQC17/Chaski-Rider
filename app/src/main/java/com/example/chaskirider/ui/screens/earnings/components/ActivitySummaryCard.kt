@@ -12,24 +12,35 @@ import com.example.chaskirider.domain.earnings.ActivitySummary
 import java.util.Locale
 
 @Composable
-fun ActivitySummaryCard(activity: ActivitySummary) {
+fun ActivitySummaryCard(activity: ActivitySummary, connection: com.example.chaskirider.domain.earnings.ConnectionSummary, connectionWarning: String?) {
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("Tu actividad", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Metric("Entregas completadas", activity.delivered.toString(), Modifier.weight(1f))
+                Metric("Entregas exitosas", activity.delivered.toString(), Modifier.weight(1f))
                 Metric("Pedidos cancelados", activity.cancelled.toString(), Modifier.weight(1f))
             }
             HorizontalDivider()
-            val duration = activity.averageDurationMillis?.let {
-                String.format(Locale.forLanguageTag("es-PE"), "%.1f min", it / 60_000)
-            } ?: if (activity.delivered == 0) "0 min" else "No disponible"
-            Metric("Tiempo promedio", duration)
-            Text("Desde la aceptación hasta la entrega.", style = MaterialTheme.typography.bodySmall)
-            if (activity.timedDeliveries < activity.delivered) {
-                Text("${activity.timedDeliveries} de ${activity.delivered} entregas tienen tiempos válidos. Las demás no entran en el promedio.",
-                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Metric("Entregas no exitosas", activity.unsuccessful.toString(), Modifier.weight(1f))
+                Metric("Pedidos completados", (activity.delivered + activity.unsuccessful).toString(), Modifier.weight(1f))
             }
+            val deliveryMinutes = activity.averageDurationMillis?.let { String.format(Locale.forLanguageTag("es-PE"), "%.1f min", it / 60_000) } ?: "Sin entregas"
+            Metric("Tiempo promedio de entrega", deliveryMinutes)
+        }
+    }
+    Spacer(Modifier.height(16.dp))
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Text("Conexión", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            fun hours(millis: Long): String {
+                val minutes = millis / 60_000
+                return "${minutes / 60} h ${minutes % 60} min"
+            }
+            Metric("Tiempo conectado", hours(connection.totalMillis))
+            Metric("Promedio diario de conexión", if (connection.days == 0) "Sin conexiones" else hours(connection.averageDailyMillis))
+            if (connection.days > 0) Text("${connection.days} días con conexión", style = MaterialTheme.typography.labelMedium)
+            if (connectionWarning == "No se pudo consultar el tiempo conectado.") Text("Conexión pendiente de actualizar", style = MaterialTheme.typography.bodySmall)
         }
     }
 }

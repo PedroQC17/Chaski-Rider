@@ -20,9 +20,9 @@ internal fun OrderSyncNotice(state: OrderSyncState, onRetry: () -> Unit) {
                 else -> "Hay cambios guardados pendientes de enviar."
             }, style = MaterialTheme.typography.bodySmall)
             if (state.pendingActions > 0) {
-                Text("${state.pendingActions} cambios pendientes de sincronizar.", style = MaterialTheme.typography.labelMedium)
+                Text("${state.pendingActions} cambios por enviar.", style = MaterialTheme.typography.labelMedium)
                 if (!state.online) Text("Se enviarán automáticamente al recuperar conexión.", style = MaterialTheme.typography.bodySmall)
-                else if (!state.syncing) TextButton(onClick = onRetry) { Text("Reintentar sincronización") }
+                else if (!state.syncing) TextButton(onClick = onRetry) { Text("Reintentar envío") }
             }
         }
     }

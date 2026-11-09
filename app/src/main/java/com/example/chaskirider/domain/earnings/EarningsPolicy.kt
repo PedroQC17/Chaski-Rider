@@ -41,13 +41,16 @@ object EarningsPolicy {
         val time = when (order.status) {
             OrderStatus.DELIVERED -> order.deliveredAt
             OrderStatus.CANCELLED -> order.cancelledAt
+            OrderStatus.COMPLETED_UNSUCCESSFUL -> order.completedAt
             else -> return null
         } ?: return null
         val quote = order.earningsQuote?.takeIf { it.valid() }
+        val unsuccessful = order.status == OrderStatus.COMPLETED_UNSUCCESSFUL
+        val base = if (cancelled) 0 else quote?.chaskiCents
+        val tip = if (cancelled || unsuccessful) 0 else quote?.tipCents
+        val total = if (base != null && tip != null) base + tip else null
         return DeliveryEarningsRecord(order.orderId, order.merchantName, time,
-            if (cancelled) 0 else quote?.chaskiCents,
-            if (cancelled) 0 else quote?.tipCents,
-            if (cancelled) 0 else quote?.totalCents, cancelled, quote, order.acceptedAt)
+            base, tip, total, cancelled, quote, order.acceptedAt, unsuccessful)
     }
 }
 

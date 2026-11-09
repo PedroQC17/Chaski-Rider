@@ -66,9 +66,14 @@ class OrderSyncWorker(context: Context, params: WorkerParameters) : CoroutineWor
         require(record.status in com.example.chaskirider.domain.orders.OrderStatus.entries)
         val ref = FirebaseFirestore.getInstance().collection("riders").document(uid)
             .collection("deliveryRecords").document(record.orderId)
+        var remotelyCompleted = false
         withTimeout(20_000) {
             FirebaseFirestore.getInstance().runTransaction { tx ->
                 val old = tx.get(ref)
+                if (old.getString("status") == "COMPLETED_UNSUCCESSFUL") {
+                    remotelyCompleted = true
+                    return@runTransaction
+                }
                 val action = ref.collection("actions").document(entity.actionId)
                 val registeredAction = tx.get(action)
                 val incidents = record.problems.orEmpty().map { problem ->
@@ -120,7 +125,7 @@ class OrderSyncWorker(context: Context, params: WorkerParameters) : CoroutineWor
             }.await()
         }
         if (FirebaseAuth.getInstance().currentUser?.uid != uid) throw kotlinx.coroutines.CancellationException("La sesión cambió")
-        if (record.paidByCustomer && record.status !in listOf(com.example.chaskirider.domain.orders.OrderStatus.DELIVERED, com.example.chaskirider.domain.orders.OrderStatus.CANCELLED))
+        if (!remotelyCompleted && record.paidByCustomer && record.status !in listOf(com.example.chaskirider.domain.orders.OrderStatus.DELIVERED, com.example.chaskirider.domain.orders.OrderStatus.CANCELLED, com.example.chaskirider.domain.orders.OrderStatus.COMPLETED_UNSUCCESSFUL))
             withTimeout(20_000) { DeliveryPinRemote.prepare(record.orderId) }
     }
 

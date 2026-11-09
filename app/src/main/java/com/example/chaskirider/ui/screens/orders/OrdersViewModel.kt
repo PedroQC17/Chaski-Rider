@@ -187,7 +187,7 @@ class OrdersViewModel(
         val state = mutable.value
         val reason = state.problemReason ?: return
         val snapshot = state.snapshot ?: return
-        if (!canWork() || state.busy || snapshot.batch == null || snapshot.isDelivered || state.problemDetail.trim().length < 10) return
+        if (!canWork() || state.busy || snapshot.batch == null || snapshot.isCompleted || state.problemDetail.trim().length < 10) return
         val requestUid = uid
         mutable.update { it.copy(busy = true, error = null) }
         request = viewModelScope.launch {
@@ -246,7 +246,7 @@ class OrdersViewModel(
     }
 
     private fun syncTracking() {
-        val active = foreground && canWork() && mutable.value.snapshot?.batch != null && mutable.value.snapshot?.isDelivered != true
+        val active = foreground && canWork() && mutable.value.snapshot?.batch != null && mutable.value.snapshot?.isCompleted != true
         mutable.update { it.copy(isTrackingActive = active) }
         if (!active) { tracking?.cancel(); return }
         if (tracking?.isActive == true) return

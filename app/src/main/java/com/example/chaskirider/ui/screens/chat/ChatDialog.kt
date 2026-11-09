@@ -100,7 +100,8 @@ fun ChatDialogContent(
     Surface(
         modifier = Modifier
             .fillMaxWidth(0.92f)
-            .fillMaxHeight(0.82f),
+            .fillMaxHeight(0.9f)
+            .imePadding(),
         shape = RoundedCornerShape(20.dp),
         shadowElevation = 8.dp,
         color = BackgroundLight,

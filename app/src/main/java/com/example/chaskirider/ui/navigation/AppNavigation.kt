@@ -1,5 +1,9 @@
 package com.example.chaskirider.ui.navigation
 
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.unit.dp
+
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -134,7 +138,7 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
     }
     val ordersState by demoOrdersViewModel.uiState.collectAsStateWithLifecycle()
     val trackingOrderId = ordersState.snapshot?.batch?.stops?.singleOrNull()?.orderId
-    val shouldTrack = workArea && ordersState.snapshot?.pickedUp == true && ordersState.snapshot?.isDelivered != true
+    val shouldTrack = workArea && ordersState.snapshot?.pickedUp == true && ordersState.snapshot?.isCompleted != true
     androidx.lifecycle.compose.LifecycleStartEffect(user?.id, trackingOrderId, shouldTrack) {
         if (shouldTrack && trackingOrderId != null && user != null)
             com.example.chaskirider.data.orders.OrderTrackingService.start(context, user.id, trackingOrderId)
@@ -151,7 +155,7 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
     fun activeSupportOrder(): SupportOrderContext? {
         val snapshot = ordersState.snapshot ?: return null
         val stop = snapshot.batch?.stops?.firstOrNull() ?: return null
-        if (snapshot.isDelivered) return null
+        if (snapshot.isCompleted) return null
         return SupportOrderContext(stop.orderId, snapshot.merchantName.orEmpty(), snapshot.merchantAddress.orEmpty(),
             stop.address.orEmpty(), snapshot.pickedUp, snapshot.problem?.id,
             com.example.chaskirider.domain.orders.OrderRecord.from(user?.id.orEmpty(), snapshot)!!.status,
@@ -161,6 +165,15 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
         val order = activeSupportOrder() ?: return
         val problem = ordersState.snapshot?.problem
         supportViewModel.openForOrder(order, problem?.reason, problem?.detail)
+        navController.navigate(Screen.Support.route) { launchSingleTop = true }
+    }
+    fun openOrderHelp(reason: com.example.chaskirider.domain.orders.OrderProblemReason) {
+        val order = activeSupportOrder() ?: return
+        supportViewModel.openForOrder(order, reason, null)
+        navController.navigate(Screen.Support.route) { launchSingleTop = true }
+    }
+    fun openSupportTicket(id: String) {
+        supportViewModel.openTicket(id)
         navController.navigate(Screen.Support.route) { launchSingleTop = true }
     }
     LaunchedEffect(ordersState.snapshot) { supportViewModel.setAvailableOrder(activeSupportOrder()) }
@@ -177,7 +190,7 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
     }
     LaunchedEffect(ordersState.snapshot?.offer?.id, ordersState.snapshot?.batch, route, workArea, offersActive) {
         val snapshot = ordersState.snapshot
-        if (workArea && route == Screen.Home.route && ((snapshot?.offer != null && offersActive) || (snapshot?.batch != null && !snapshot.isDelivered))) {
+        if (workArea && route == Screen.Home.route && ((snapshot?.offer != null && offersActive) || (snapshot?.batch != null && !snapshot.isCompleted))) {
             navController.navigate(Screen.Orders.route) { launchSingleTop = true }
         }
     }
@@ -293,7 +306,9 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
                         viewModel = demoOrdersViewModel,
                         onMenu = { scope.launch { drawerState.open() } },
                         isDemo = true,
-                        onSupport = ::openOrderSupport
+                        onSupport = ::openOrderSupport,
+                        onOrderHelp = ::openOrderHelp,
+                        onTicket = ::openSupportTicket
                     )
             }
             composable(Screen.DemoOrders.route) {
@@ -302,7 +317,9 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
                         viewModel = demoOrdersViewModel,
                         onMenu = { scope.launch { drawerState.open() } },
                         isDemo = true,
-                        onSupport = ::openOrderSupport
+                        onSupport = ::openOrderSupport,
+                        onOrderHelp = ::openOrderHelp,
+                        onTicket = ::openSupportTicket
                     )
             }
             composable(Screen.Home.route) {
@@ -373,7 +390,7 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
     documentsState.captureUri?.let { capture ->
         AlertDialog(onDismissRequest = documentsViewModel::discardCapture,
             title = { Text(stringResource(R.string.document_preview)) },
-            text = { Column {
+            text = { androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.heightIn(max = androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp.dp * 0.55f).verticalScroll(androidx.compose.foundation.rememberScrollState())) {
                 AsyncImage(model = capture, contentDescription = null, modifier = Modifier.fillMaxWidth())
                 if (documentsState.isLoading) LinearProgressIndicator(Modifier.fillMaxWidth())
                 documentsState.errorMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
@@ -390,7 +407,7 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
         }) { Text(stringResource(R.string.profile_change_help)) } })
     if (recovery) AlertDialog(onDismissRequest = { if (!state.isLoading) recovery = false },
         title = { Text(stringResource(R.string.text_recuperar_contrasena)) },
-        text = { Column {
+        text = { androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.heightIn(max = androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp.dp * 0.55f).verticalScroll(androidx.compose.foundation.rememberScrollState())) {
             Text(stringResource(R.string.text_ingresa_el_correo_con_el_que_configuraste))
             OutlinedTextField(resetEmail, { resetEmail = it }, label = { Text(stringResource(R.string.text_correo_electronico)) }, singleLine = true)
             state.message?.let { Text(it) }; state.errorMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }

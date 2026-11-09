@@ -12,22 +12,25 @@ data class ActivitySummary(
     val tipCents: Long = 0,
     val unknownAmounts: Int = 0,
     val averageDurationMillis: Double? = null,
-    val timedDeliveries: Int = 0
+    val timedDeliveries: Int = 0,
+    val unsuccessful: Int = 0
 ) {
     val totalCents get() = chaskiCents + tipCents
 
     companion object {
         fun from(records: List<DeliveryEarningsRecord>): ActivitySummary {
-            val delivered = records.filterNot { it.cancelled }
-            val known = delivered.filter { it.hasKnownAmount }
+            val completed = records.filterNot { it.cancelled }
+            val delivered = completed.filterNot { it.unsuccessful }
+            val known = completed.filter { it.hasKnownAmount }
             val durations = delivered.mapNotNull { record ->
                 record.acceptedAt?.takeIf { it > 0 && it <= record.completedAt }?.let { record.completedAt - it }
             }
             return ActivitySummary(delivered.size, records.count { it.cancelled },
                 known.sumOf { it.baseFareCents!!.toLong() },
                 known.sumOf { it.tipCents!!.toLong() },
-                delivered.size - known.size,
-                durations.takeIf { it.isNotEmpty() }?.map { it.toDouble() }?.average(), durations.size)
+                completed.size - known.size,
+                durations.takeIf { it.isNotEmpty() }?.map { it.toDouble() }?.average(), durations.size,
+                completed.count { it.unsuccessful })
         }
     }
 }

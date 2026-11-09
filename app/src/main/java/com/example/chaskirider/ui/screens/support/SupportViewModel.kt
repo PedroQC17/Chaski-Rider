@@ -57,11 +57,20 @@ class SupportViewModel(private val repository: SupportRepository, private val dr
 
     fun selectCategory(category: SupportCategory) { mutable.update { it.copy(category = category, topic = null, notice = null) } }
     fun selectTopic(topic: SupportTopic) { mutable.update { it.copy(topic = topic, notice = null) } }
+    private fun resumeOpenCase(topic: SupportTopic, orderId: String?): Boolean {
+        if (topic == SupportTopic.EMERGENCY) return false
+        val ticket = mutable.value.tickets.firstOrNull {
+            it.status == SupportTicketStatus.OPEN && it.topic == topic && it.order?.orderId == orderId
+        } ?: return false
+        openTicket(ticket.id)
+        return true
+    }
     fun openForm() {
         val state = mutable.value
         val topic = state.topic ?: return
         val draft = state.draft ?: return
         if (state.busy) return
+        if (resumeOpenCase(topic, if (topic.category == SupportCategory.ORDER) state.availableOrder?.orderId else null)) return
         if (draft.body.isNotBlank() && draft.topic != topic) {
             mutable.update { it.copy(formOpen = true, topic = draft.topic, category = draft.topic?.category,
                 notice = "Recuperamos tu borrador anterior. Puedes enviarlo o descartarlo para crear otro.") }
@@ -80,11 +89,13 @@ class SupportViewModel(private val repository: SupportRepository, private val dr
             return
         }
         val topic = when (reason) {
+            OrderProblemReason.ORDER_UNAVAILABLE -> SupportTopic.ORDER_NOT_READY
             OrderProblemReason.LOCAL_CLOSED -> SupportTopic.LOCAL_CLOSED
             OrderProblemReason.CUSTOMER_UNREACHABLE -> SupportTopic.CUSTOMER_UNREACHABLE
             OrderProblemReason.ADDRESS_PROBLEM -> SupportTopic.ADDRESS_PROBLEM
             else -> SupportTopic.ORDER_OTHER
         }
+        if (resumeOpenCase(topic, order.orderId)) return
         if (draft.body.isNotBlank() && (draft.order?.orderId != order.orderId || draft.order?.problemId != order.problemId)) {
             mutable.update { it.copy(formOpen = true, topic = draft.topic, category = draft.topic?.category,
                 notice = "Tienes un borrador anterior. Puedes enviarlo o descartarlo antes de reportar este pedido.") }
@@ -152,6 +163,7 @@ class SupportViewModel(private val repository: SupportRepository, private val dr
         var draft = state.draft ?: return
         val userId = uid ?: return
         if (state.busy || draft.topic == null || !SupportValidation.validBody(draft.body)) return
+        if (resumeOpenCase(requireNotNull(draft.topic), draft.order?.orderId)) return
         val registered = state.tickets.firstOrNull { it.id == draft.id && !it.pending }
         if (registered != null && (registered.topic != draft.topic || registered.order != draft.order || registered.location != draft.location ||
                 registered.messages.firstOrNull()?.body != draft.body.trim())) {

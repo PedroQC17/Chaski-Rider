@@ -1,6 +1,6 @@
 package com.example.chaskirider.domain.orders
 
-enum class OrderStatus { ACCEPTED, AT_MERCHANT, ON_THE_WAY, DELIVERED, CANCELLED }
+enum class OrderStatus { ACCEPTED, AT_MERCHANT, ON_THE_WAY, DELIVERED, CANCELLED, COMPLETED_UNSUCCESSFUL }
 
 data class OrderRecord(
     val orderId: String,
@@ -19,12 +19,15 @@ data class OrderRecord(
     val evidencePhotoUrl: String? = null,
     val deliveryNote: String? = null,
     val paidByCustomer: Boolean = false,
-    val earningsQuote: com.example.chaskirider.domain.earnings.AcceptedEarningsQuote? = null
+    val earningsQuote: com.example.chaskirider.domain.earnings.AcceptedEarningsQuote? = null,
+    val completedAt: Long? = null,
+    val completionReason: String? = null
 ) {
     companion object {
         fun from(uid: String, snapshot: OfferSnapshot): OrderRecord? {
             val stop = snapshot.batch?.stops?.singleOrNull() ?: return null
             val status = when {
+                snapshot.completedUnsuccessfullyAt != null -> OrderStatus.COMPLETED_UNSUCCESSFUL
                 snapshot.isDelivered -> OrderStatus.DELIVERED
                 snapshot.pickedUp -> OrderStatus.ON_THE_WAY
                 snapshot.arrivedAt != null -> OrderStatus.AT_MERCHANT
@@ -34,7 +37,9 @@ data class OrderRecord(
                 snapshot.merchant, stop.point, snapshot.acceptedAt, snapshot.arrivedAt,
                 snapshot.pickedUpAt, snapshot.deliveredAt, waitStartedAt = snapshot.waitStartedAt,
                 evidencePhotoUrl = snapshot.evidencePhotoUrl, deliveryNote = snapshot.deliveryNote, paidByCustomer = snapshot.paidByCustomer,
-                earningsQuote = snapshot.batch?.let { com.example.chaskirider.domain.earnings.AcceptedEarningsQuote.from(it) })
+                earningsQuote = snapshot.batch?.let { com.example.chaskirider.domain.earnings.AcceptedEarningsQuote.from(it) },
+                completedAt = snapshot.completedUnsuccessfullyAt,
+                completionReason = if (snapshot.completedUnsuccessfullyAt != null) "CUSTOMER_UNREACHABLE" else null)
         }
     }
 }

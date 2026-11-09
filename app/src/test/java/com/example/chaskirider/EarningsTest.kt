@@ -41,6 +41,18 @@ class EarningsTest {
         assertEquals(0, cancelled.totalCents); assertEquals(0, cancelled.tipCents)
         assertNull(EarningsPolicy.record(order(status = OrderStatus.ON_THE_WAY)))
     }
+    @Test fun absentCustomerEarnsOnlyRouteAcrossDashboardAndSettlement() {
+        val offer = AcceptedEarningsQuote(3000, 4000, 700, 200, 900, "PEN_1_KM_V1", "SIMULATED_GEODESIC")
+        val records = listOf(OrderStatus.DELIVERED, OrderStatus.COMPLETED_UNSUCCESSFUL, OrderStatus.CANCELLED).map { status ->
+            EarningsPolicy.record(order(status.name, status).copy(earningsQuote = offer, completedAt = monday))!!
+        }
+        assertEquals(listOf(900, 700, 0), records.map { it.totalCents })
+        assertEquals(offer, records[1].quote)
+        assertEquals(0, records[1].tipCents)
+        assertEquals(1600L, ActivitySummary.from(records).totalCents)
+        assertEquals(1600L, ActivityChart.points(records, monday, monday + 86400000).single().amountCents)
+        assertEquals(1600L, EarningsCalendar.weekly(records, emptyList()).single().amountCents)
+    }
     @Test fun legacyAndCorruptRecordsAreNotRepricedOrCountedAsZero() {
         val original = Gson().toJson(order().copy(earningsQuote = null))
         val restored = Gson().fromJson(original, OrderRecord::class.java)

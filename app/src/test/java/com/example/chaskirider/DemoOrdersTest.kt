@@ -8,6 +8,37 @@ import org.junit.Test
 import java.io.File
 
 class DemoOrdersTest {
+    @Test fun absenceCompletionRetainsPayWithoutCountingAsSuccessfulDeliveryAndAllowsNextOrder() = runTest {
+        var resolutions = 0
+        val repo = LocalDemoOfferRepository(store, { uid }, { listOf(first) }, { now }, { true },
+            resolveAbsence = { _, _ -> resolutions++; now })
+        val pending = offer(repo)
+        val id = pending.offer!!.quote.stops.single().orderId
+        repo.execute(OfferAction.ACCEPT, pending.offer.id)
+        repo.execute(OfferAction.ARRIVE_MERCHANT, lat = first.pickup.latitude, lng = first.pickup.longitude)
+        repo.execute(OfferAction.PICKUP, lat = first.pickup.latitude, lng = first.pickup.longitude)
+        val completed = repo.resolveCustomerAbsence(id)
+        assertTrue(completed.isCompleted)
+        assertFalse(completed.isDelivered)
+        assertNull(completed.deliveredAt)
+        assertEquals(completed, repo.resolveCustomerAbsence(id))
+        assertEquals(1, resolutions)
+        val record = OrderRecord.from(uid!!, completed)!!
+        assertEquals(OrderStatus.COMPLETED_UNSUCCESSFUL, record.status)
+        val earning = com.example.chaskirider.domain.earnings.EarningsPolicy.record(record)!!
+        assertEquals(completed.batch!!.totalCents, earning.quote!!.totalCents)
+        assertEquals(earning.quote!!.chaskiCents, earning.totalCents)
+        assertEquals(0, earning.tipCents)
+        assertTrue(earning.unsuccessful)
+        assertFalse(earning.cancelled)
+        val activity = com.example.chaskirider.domain.earnings.ActivitySummary.from(listOf(earning))
+        assertEquals(0, activity.delivered)
+        assertEquals(1, activity.unsuccessful)
+        assertEquals(earning.totalCents!!.toLong(), activity.totalCents)
+        assertNull(activity.averageDurationMillis)
+        repo.execute(OfferAction.RESET)
+        assertNull(repo.execute(OfferAction.STATE).batch)
+    }
     @Test fun locationFixMustBeFreshAccurateAndFiniteBeforeGeofenceChecks() {
         assertTrue(OrderLocationRules.usableFix(-12.0, -77.0, 20f, 1000))
         assertTrue(OrderLocationRules.usableFix(-12.0, -77.0, 100f, 30_000))

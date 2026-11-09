@@ -6,7 +6,11 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.ui.res.painterResource
+import com.example.chaskirider.R
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -16,18 +20,19 @@ import com.example.chaskirider.domain.orders.RoutePoint
 
 @Composable
 internal fun OrderNavigationButton(snapshot: OfferSnapshot?, enabled: Boolean) {
-    if (snapshot?.batch == null || snapshot.isDelivered) return
+    if (snapshot?.batch == null || snapshot.isCompleted) return
     val target = if (snapshot.pickedUp) snapshot.batch.stops.firstOrNull()?.point else snapshot.merchant
     if (target == null || !target.latitude.isFinite() || !target.longitude.isFinite() ||
         target.latitude !in -90.0..90.0 || target.longitude !in -180.0..180.0) return
     val context = LocalContext.current
     var failed by remember(target) { mutableStateOf(false) }
-    Column {
-        OutlinedButton(onClick = { failed = !openOrderNavigation(context, target) },
-            enabled = enabled, modifier = Modifier.fillMaxWidth()) {
-            Text(if (snapshot.pickedUp) "Navegar al cliente" else "Navegar al local")
+    FloatingActionButton(onClick = {
+        if (enabled) {
+            failed = !openOrderNavigation(context, target)
+            if (failed) android.widget.Toast.makeText(context, "No se pudo abrir la navegación", android.widget.Toast.LENGTH_SHORT).show()
         }
-        if (failed) Text("No se pudo abrir la navegación. Instala Google Maps o un navegador y vuelve a intentarlo.")
+    }) {
+        Icon(painterResource(R.drawable.ic_navigation), contentDescription = if (snapshot.pickedUp) "Navegar al cliente" else "Navegar al local")
     }
 }
 

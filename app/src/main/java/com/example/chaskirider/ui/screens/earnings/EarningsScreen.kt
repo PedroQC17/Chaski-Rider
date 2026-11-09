@@ -9,6 +9,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -34,6 +35,12 @@ private fun date(time: Long) = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.forLa
 @Composable
 fun EarningsRoute(viewModel: EarningsViewModel, onMenu: () -> Unit) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    androidx.compose.runtime.LaunchedEffect(viewModel) {
+        while (true) {
+            viewModel.updateTime()
+            kotlinx.coroutines.delay(30_000)
+        }
+    }
     var showRange by remember { mutableStateOf(false) }
     LifecycleResumeEffect(Unit) {
         viewModel.refresh()
@@ -54,7 +61,7 @@ fun EarningsRoute(viewModel: EarningsViewModel, onMenu: () -> Unit) {
             state.warning?.let { message ->
                 Text(message, Modifier.padding(horizontal = 16.dp, vertical = 8.dp), style = MaterialTheme.typography.bodySmall)
             }
-            TextButton(onClick = viewModel::refresh, modifier = Modifier.padding(horizontal = 8.dp)) { Text("Actualizar") }
+
             if (state.selectedTab == 0) {
                 LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp).testTag("earnings-list"), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     item {
@@ -62,7 +69,11 @@ fun EarningsRoute(viewModel: EarningsViewModel, onMenu: () -> Unit) {
                             listOf(EarningsDateFilter.TODAY to "Hoy", EarningsDateFilter.THIS_WEEK to "Esta semana", EarningsDateFilter.THIS_MONTH to "Este mes").forEach { (filter, label) ->
                                 FilterChip(selected = state.selectedFilter == filter, onClick = { viewModel.selectFilter(filter) }, label = { Text(label) })
                             }
-                            FilterChip(selected = state.selectedFilter == EarningsDateFilter.CUSTOM, onClick = { showRange = true }, label = { Text("Elegir fechas") })
+                        }
+                        OutlinedButton(onClick = { showRange = true }, contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)) {
+                            Icon(Icons.Default.DateRange, contentDescription = null, Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Filtrar por fechas")
                         }
                         if (state.selectedFilter == EarningsDateFilter.CUSTOM) state.range?.let { (from, until) ->
                             Text("${EarningsCalendar.day(from)} — ${EarningsCalendar.day(until)}", style = MaterialTheme.typography.bodySmall)
@@ -71,16 +82,15 @@ fun EarningsRoute(viewModel: EarningsViewModel, onMenu: () -> Unit) {
                     item {
                         Card(Modifier.fillMaxWidth()) {
                             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text("Total generado", style = MaterialTheme.typography.labelLarge)
+                                Text(if (state.unknownCount > 0) "Total confirmado" else "Total generado", style = MaterialTheme.typography.labelLarge)
                                 Text(money(state.grandTotalCents), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
                                 HorizontalDivider()
                                 AmountLine("Pago Chaski", money(state.chaskiTotalCents))
-                                AmountLine("Propinas completas", money(state.tipsTotalCents))
-                                if (state.unknownCount > 0) Text("${state.unknownCount} pedidos antiguos sin importe verificable; no se incluyen en el total.", style = MaterialTheme.typography.bodySmall)
+                                AmountLine("Propinas", money(state.tipsTotalCents))
                             }
                         }
                     }
-                    item { ActivitySummaryCard(state.activity) }
+                    item { ActivitySummaryCard(state.activity, state.connection, state.connectionWarning) }
                     item { EarningsChartCard(state.chartPoints) }
                     item { Text("Historial de pedidos (${state.records.size})", fontWeight = FontWeight.Bold) }
                     if (state.records.isEmpty() && !state.isLoading) item { Text("Aún no hay pedidos finalizados en estas fechas.") }
@@ -88,7 +98,7 @@ fun EarningsRoute(viewModel: EarningsViewModel, onMenu: () -> Unit) {
                         Card(Modifier.fillMaxWidth().clickable { viewModel.selectOrder(record) }) {
                             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Text(record.merchantName, fontWeight = FontWeight.Bold)
-                                Text("${if (record.cancelled) "Cancelado" else "Entregado"} · ${date(record.completedAt)}", style = MaterialTheme.typography.bodySmall)
+                                Text("${if (record.cancelled) "Cancelado" else if (record.unsuccessful) "Completado · Entrega no exitosa" else "Entrega exitosa"} · ${date(record.completedAt)}", style = MaterialTheme.typography.bodySmall)
                                 Text(money(record.totalCents), style = MaterialTheme.typography.titleMedium)
                                 if ((record.tipCents ?: 0) > 0) Text("Incluye ${money(record.tipCents)} de propina", style = MaterialTheme.typography.bodySmall)
                             }
@@ -98,8 +108,8 @@ fun EarningsRoute(viewModel: EarningsViewModel, onMenu: () -> Unit) {
                 }
             } else {
                 LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    item { Text("Periodos de lunes a domingo · hora de Lima", style = MaterialTheme.typography.bodySmall) }
-                    item { Text("Un periodo pendiente no confirma una transferencia. El pago se confirma cuando el administrador lo registra.", style = MaterialTheme.typography.bodySmall) }
+                    item { Text("Liquidaciones semanales", style = MaterialTheme.typography.bodySmall) }
+                    
                     if (state.settlements.isEmpty() && !state.isLoading) item { Text("Aún no hay liquidaciones registradas.") }
                     items(state.settlements, key = { it.id }) { settlement ->
                         Card(Modifier.fillMaxWidth()) {
@@ -119,17 +129,18 @@ fun EarningsRoute(viewModel: EarningsViewModel, onMenu: () -> Unit) {
     }
     state.selectedOrder?.let { order ->
         AlertDialog(onDismissRequest = { viewModel.selectOrder(null) }, title = { Text("Detalle de ganancias") }, text = {
-            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(Modifier.heightIn(max = androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp.dp * 0.6f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(order.merchantName, fontWeight = FontWeight.Bold)
                 Text(date(order.completedAt))
                 if (order.cancelled) Text("Pedido cancelado: no genera pago ni propina.")
-                else order.quote?.let { quote ->
+                if (order.unsuccessful) Text("Completado con entrega no exitosa · Cliente ausente. Recibes el pago de la ruta sin propina.")
+                if (!order.cancelled) order.quote?.let { quote ->
                     Text("Distancias estimadas", fontWeight = FontWeight.Bold)
                     Text(String.format(Locale.forLanguageTag("es-PE"), "Hasta el local: %.2f km", quote.approachMeters / 1000.0))
                     Text(String.format(Locale.forLanguageTag("es-PE"), "Local al cliente: %.2f km", quote.deliveryMeters / 1000.0))
-                    Text(if (quote.pricingVersion == "PEN_1_KM_V1") "S/1 por km entre ambos trayectos. Sin bonos adicionales." else "Cotización histórica conservada.")
+                    
                 }
-                if (order.totalCents == null) Text("Este pedido antiguo no tiene una cotización guardada. Su importe requiere revisión; no se ha estimado nuevamente.")
+                if (order.totalCents == null) Text("Importe pendiente de revisión.")
                 HorizontalDivider()
                 AmountLine("Pago Chaski", money(order.baseFareCents))
                 AmountLine("Propina del cliente", money(order.tipCents))
@@ -137,17 +148,9 @@ fun EarningsRoute(viewModel: EarningsViewModel, onMenu: () -> Unit) {
             }
         }, confirmButton = { TextButton(onClick = { viewModel.selectOrder(null) }) { Text("Cerrar") } })
     }
-    if (showRange) {
-        val picker = rememberDateRangePickerState()
-        DatePickerDialog(onDismissRequest = { showRange = false }, confirmButton = {
-            TextButton(enabled = picker.selectedStartDateMillis != null && picker.selectedEndDateMillis != null, onClick = {
-                val utcDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") }
-                viewModel.selectRange(utcDate.format(Date(picker.selectedStartDateMillis!!)), utcDate.format(Date(picker.selectedEndDateMillis!!)))
-                showRange = false
-            }) { Text("Aplicar") }
-        }, dismissButton = { TextButton(onClick = { showRange = false }) { Text("Cancelar") } }) {
-            DateRangePicker(state = picker, modifier = Modifier.height(480.dp), title = { Text("Selecciona el periodo", Modifier.padding(16.dp)) })
-        }
+    if (showRange) EarningsDateFilterDialog(state.range, { showRange = false }) { start, end ->
+        viewModel.selectRange(start, end)
+        showRange = false
     }
 }
 
@@ -157,4 +160,32 @@ private fun AmountLine(label: String, amount: String) {
         Text(label, Modifier.weight(1f))
         Text(amount, fontWeight = FontWeight.Bold)
     }
+}
+
+
+@Composable
+private fun EarningsDateFilterDialog(range: Pair<Long, Long>?, onClose: () -> Unit, onApply: (String, String) -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var start by remember { mutableStateOf(range?.first ?: EarningsCalendar.bounds(EarningsDateFilter.THIS_WEEK, System.currentTimeMillis()).first) }
+    var end by remember { mutableStateOf(range?.second ?: System.currentTimeMillis()) }
+    fun choose(value: Long, change: (Long) -> Unit) {
+        val calendar = java.util.Calendar.getInstance(EarningsCalendar.zone).apply { timeInMillis = value }
+        android.app.DatePickerDialog(context, { _, year, month, day ->
+            val selected = java.util.Calendar.getInstance(EarningsCalendar.zone).apply {
+                clear()
+                set(year, month, day)
+            }
+            change(selected.timeInMillis)
+        }, calendar.get(java.util.Calendar.YEAR), calendar.get(java.util.Calendar.MONTH), calendar.get(java.util.Calendar.DAY_OF_MONTH)).apply {
+            datePicker.maxDate = System.currentTimeMillis()
+        }.show()
+    }
+    AlertDialog(onDismissRequest = onClose, title = { Text("Filtrar por fechas") }, text = {
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            OutlinedButton(onClick = { choose(start) { start = it } }, modifier = Modifier.fillMaxWidth()) { Text("Desde · " + EarningsCalendar.day(start)) }
+            OutlinedButton(onClick = { choose(end) { end = it } }, modifier = Modifier.fillMaxWidth()) { Text("Hasta · " + EarningsCalendar.day(end)) }
+            if (start > end) Text("La fecha final debe ser posterior a la inicial.", color = MaterialTheme.colorScheme.error)
+        }
+    }, confirmButton = { TextButton(onClick = { onApply(EarningsCalendar.day(start), EarningsCalendar.day(end)) }, enabled = start <= end) { Text("Aplicar") } },
+        dismissButton = { TextButton(onClick = onClose) { Text("Cancelar") } })
 }

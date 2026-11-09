@@ -36,18 +36,22 @@ fun SupportScreen(state: SupportUiState, onBack: () -> Unit,
     onReply: (String) -> Unit, onSend: () -> Unit, onRefresh: () -> Unit, onEmergency: () -> Unit = {}) {
     var discardConfirmation by remember { mutableStateOf(false) }
     var emergencyConfirmation by remember { mutableStateOf(false) }
+    var showTickets by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    val ticketList = showTickets && state.selectedTicketId == null && !state.formOpen && state.category == null
+    BackHandler(enabled = ticketList) { showTickets = false }
     val scroll = rememberScrollState()
     LaunchedEffect(state.category, state.topic, state.formOpen, state.selectedTicketId) { scroll.scrollTo(0) }
     val ticket = state.tickets.firstOrNull { it.id == state.selectedTicketId }
     val title = when {
         state.selectedTicketId != null -> "Mi ticket"
+        ticketList -> "Mis tickets"
         state.formOpen -> "Contactar a soporte"
         state.topic != null -> state.topic.title
         state.category != null -> state.category.title
         else -> "Ayuda y soporte"
     }
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().imePadding().padding(horizontal = 20.dp)) {
-        AppHeader(title, onBack)
+        AppHeader(title, { if (ticketList) showTickets = false else onBack() })
         Column(Modifier.weight(1f).verticalScroll(scroll).padding(vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)) {
             if (state.loading || state.busy) LinearProgressIndicator(Modifier.fillMaxWidth())
@@ -65,8 +69,8 @@ fun SupportScreen(state: SupportUiState, onBack: () -> Unit,
                         Text(ticketStatus(ticket), color = MaterialTheme.colorScheme.primary)
                         Text(formatTime(ticket.createdAt), style = MaterialTheme.typography.bodySmall)
                         ticket.order?.let { OrderContextCard(it) }
-                        ticket.location?.let { Text("Ubicación adjunta: ${it.latitude}, ${it.longitude}") }
-                        Text("Abrir un ticket no cancela ni completa un pedido.", style = MaterialTheme.typography.bodySmall)
+                        ticket.location?.let { Text("Ubicación adjunta") }
+                        
                         (ticket.messages + state.conversation).forEach { message ->
                             Surface(color = if (message.sender == SupportSender.SUPPORT) MaterialTheme.colorScheme.secondaryContainer
                                 else MaterialTheme.colorScheme.surfaceVariant, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth()) {
@@ -91,7 +95,7 @@ fun SupportScreen(state: SupportUiState, onBack: () -> Unit,
                 state.formOpen -> {
                     val draft = state.draft
                     Text(draft?.topic?.title.orEmpty(), fontWeight = FontWeight.Bold)
-                    Text("Explica qué ocurrió y qué ayuda necesitas. No incluyas contraseñas ni datos bancarios completos.")
+                    Text("¿Qué ocurrió?")
                     if (draft != null && draft.topic?.category in listOf(SupportCategory.ORDER, SupportCategory.SAFETY)) {
                         if (draft.order != null) OrderContextCard(draft.order)
                         if (state.availableOrder != null && draft.order?.problemId == null && draft.topic?.category == SupportCategory.ORDER) {
@@ -109,7 +113,7 @@ fun SupportScreen(state: SupportUiState, onBack: () -> Unit,
                     }
                     OutlinedTextField(value = draft?.body.orEmpty(), onValueChange = onBody,
                         enabled = !state.busy && draft != null, label = { Text("Describe tu problema") },
-                        supportingText = { Text("Entre 10 y 2000 caracteres. Tu borrador se guarda en este dispositivo.") },
+                        supportingText = { Text("Entre 10 y 2000 caracteres.") },
                         minLines = 4, maxLines = 8, modifier = Modifier.fillMaxWidth().testTag("support_body"))
                     Button(onClick = onCreate, enabled = !state.busy && draft?.topic != null && SupportValidation.validBody(draft.body),
                         modifier = Modifier.fillMaxWidth()) { Text(if (draft?.topic == SupportTopic.EMERGENCY) "Enviar caso urgente" else "Crear ticket") }
@@ -127,7 +131,7 @@ fun SupportScreen(state: SupportUiState, onBack: () -> Unit,
                         OutlinedButton(onClick = { onTopic(topic) }, modifier = Modifier.fillMaxWidth()) { Text(topic.title) }
                     }
                 }
-                else -> {
+                !ticketList -> {
                     Text("¿En qué podemos ayudarte?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     SupportCategory.entries.forEach { category ->
                         OutlinedButton(onClick = { onCategory(category) }, modifier = Modifier.fillMaxWidth()) { Text(category.title) }
@@ -135,9 +139,9 @@ fun SupportScreen(state: SupportUiState, onBack: () -> Unit,
                     if (state.draft?.body?.isNotBlank() == true) {
                         TextButton(onClick = { state.draft.topic?.let(onTopic); onForm() }) { Text("Continuar mi borrador") }
                     }
-                    HorizontalDivider()
-                    Text("Mis tickets", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("Conéctate para enviar tickets y recibir respuestas.", style = MaterialTheme.typography.bodySmall)
+                    OutlinedButton(onClick = { showTickets = true }, modifier = Modifier.fillMaxWidth()) { Text("Mis tickets") }
+                }
+                else -> {
                     if (state.tickets.isEmpty()) Text("Tus tickets registrados aparecerán aquí.", style = MaterialTheme.typography.bodyMedium)
                     state.tickets.forEach { item ->
                         OutlinedCard(onClick = { onTicket(item.id) }, modifier = Modifier.fillMaxWidth()) {
@@ -185,6 +189,7 @@ private fun OrderContextCard(order: SupportOrderContext) {
                 com.example.chaskirider.domain.orders.OrderStatus.ON_THE_WAY -> "En camino al cliente"
                 com.example.chaskirider.domain.orders.OrderStatus.DELIVERED -> "Entregado"
                 com.example.chaskirider.domain.orders.OrderStatus.CANCELLED -> "Cancelado"
+                com.example.chaskirider.domain.orders.OrderStatus.COMPLETED_UNSUCCESSFUL -> "Completado · Entrega no exitosa"
             }, style = MaterialTheme.typography.bodySmall)
             order.problemCategory?.let { Text("Incidencia: " + when (it) {
                 com.example.chaskirider.domain.orders.OrderProblemReason.LOCAL_CLOSED -> "Local cerrado"

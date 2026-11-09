@@ -200,7 +200,7 @@ class SupportViewModelTest {
         assertNotEquals(oldId, replies.single())
     }
 
-    @Test fun editingAPreviouslyRegisteredTicketDoesNotReuseItsId() = runTest(dispatcher) {
+    @Test fun retryOfAnOpenTopicResumesTheExistingTicket() = runTest(dispatcher) {
         val vm = SupportViewModel(repository, store, session); runCurrent(); form(vm); runCurrent()
         val old = vm.uiState.value.draft!!
         failCreate = true; vm.createTicket(); runCurrent()
@@ -208,7 +208,7 @@ class SupportViewModelTest {
             messages = listOf(SupportMessage("initial", SupportSender.RIDER, old.body, 1000)))); runCurrent()
         vm.changeBody("Quiero registrar una consulta distinta a la anterior"); runCurrent()
         failCreate = false; vm.createTicket(); runCurrent()
-        assertEquals(1, created.size)
-        assertNotEquals(old.id, created.single().second.id)
+        assertTrue(created.isEmpty())
+        assertEquals(old.id, vm.uiState.value.selectedTicketId)
     }
 }
