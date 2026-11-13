@@ -110,23 +110,6 @@ interface DemoOrderDao {
         return false
     }
 }
-@Database(entities = [DemoOrderEntity::class, OrderRecordEntity::class, OrderActionEntity::class], version = 3, exportSchema = true)
-abstract class DemoOrderDatabase : RoomDatabase() {
-    abstract fun orders(): DemoOrderDao
-    companion object {
-        val MIGRATION_2_3 = object : Migration(2, 3) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("CREATE TABLE IF NOT EXISTS order_actions (uid TEXT NOT NULL, actionId TEXT NOT NULL, orderId TEXT NOT NULL, revision INTEGER NOT NULL, content TEXT NOT NULL, kind TEXT NOT NULL, pending INTEGER NOT NULL, PRIMARY KEY(uid, actionId))")
-                db.execSQL("INSERT INTO order_actions SELECT uid, orderId || '_' || revision, orderId, revision, content, 'RESTORE_SNAPSHOT', 1 FROM order_records WHERE pending = 1")
-            }
-        }
-        val MIGRATION_1_2 = object : Migration(1, 2) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("CREATE TABLE IF NOT EXISTS order_records (uid TEXT NOT NULL, orderId TEXT NOT NULL, content TEXT NOT NULL, revision INTEGER NOT NULL, pending INTEGER NOT NULL, PRIMARY KEY(uid, orderId))")
-            }
-        }
-    }
-}
 class RoomDemoOrderStore(private val dao: DemoOrderDao, private val scheduleSync: (String) -> Unit = {}) : DemoOrderStore {
     private val gson = Gson()
     override suspend fun load(uid: String) = dao.load(uid)?.let { gson.fromJson(it.state, DemoOrderState::class.java) }
@@ -147,10 +130,9 @@ class RoomDemoOrderStore(private val dao: DemoOrderDao, private val scheduleSync
     }
 }
 
-fun openOrderDatabase(context: android.content.Context, name: String = "demo_orders.db"): DemoOrderDatabase = androidx.room.Room
-    .databaseBuilder(context.applicationContext, DemoOrderDatabase::class.java, name)
-    .enableMultiInstanceInvalidation()
-    .addMigrations(DemoOrderDatabase.MIGRATION_1_2, DemoOrderDatabase.MIGRATION_2_3).build()
+@Deprecated("Usar openChaskiDatabase; se mantiene para los tests de dispositivo.")
+fun openOrderDatabase(context: android.content.Context, name: String = "chaski.db"): com.example.chaskirider.data.local.ChaskiDatabase =
+    com.example.chaskirider.data.local.openChaskiDatabase(context, name)
 
 @Entity(tableName = "customer_contact", primaryKeys = ["uid", "orderId"])
 data class CustomerContactEntity(val uid: String, val orderId: String, val content: String)
@@ -160,11 +142,6 @@ interface CustomerContactDao {
     @Query("SELECT * FROM customer_contact WHERE uid = :uid AND orderId = :orderId")
     suspend fun load(uid: String, orderId: String): CustomerContactEntity?
     @Upsert suspend fun save(value: CustomerContactEntity)
-}
-
-@Database(entities = [CustomerContactEntity::class], version = 1, exportSchema = true)
-abstract class CustomerContactDatabase : RoomDatabase() {
-    abstract fun contacts(): CustomerContactDao
 }
 
 class RoomCustomerContactStore(private val dao: CustomerContactDao) : CustomerContactStore {

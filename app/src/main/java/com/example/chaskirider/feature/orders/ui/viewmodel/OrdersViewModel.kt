@@ -7,9 +7,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.chaskirider.R
-import com.example.chaskirider.core.platform.FileProviderUris
 import com.example.chaskirider.di.AppContainer
-import com.example.chaskirider.core.platform.location.LocationUtils
 import com.example.chaskirider.core.platform.location.GeoPoint
 import com.example.chaskirider.feature.user.domain.RegistrationStatus
 import com.example.chaskirider.feature.orders.domain.*
@@ -17,7 +15,6 @@ import com.example.chaskirider.core.platform.location.LocationRepository
 import com.example.chaskirider.feature.user.domain.RiderSession
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import java.io.File
 
 class OrdersViewModel(
     private val repository: OfferRepository,
@@ -29,34 +26,27 @@ class OrdersViewModel(
     private val synchronization: OrderSyncRepository? = null,
     private val searchSignals: Flow<Unit> = AppContainer.orderChanges
 ) : ViewModel() {
-    private fun savedUri(key: String) = savedStateHandle.get<String>(key)?.let(Uri::parse)
-    private fun clearStoredDeliveryDraft() {
-        for (key in listOf("pending_capture", "evidence_photo", "delivery_note", "delivery_draft_uid", "delivery_draft_order"))
-            savedStateHandle.remove<String>(key)
-    }
+    private val draft = DeliveryDraft(savedStateHandle)
 
     init {
-        val owner = session.user.value?.id
-        if (owner == null || savedStateHandle.get<String>("delivery_draft_uid") != owner) clearStoredDeliveryDraft()
+        draft.ensureOwner(session.user.value?.id)
     }
 
     private val mutable = MutableStateFlow(
         OrdersUiState(
-            pendingCaptureUri = savedUri("pending_capture"),
-            evidencePhotoUri = savedUri("evidence_photo"),
-            deliveryNote = savedStateHandle.get<String>("delivery_note")
+            pendingCaptureUri = draft.pendingUri(),
+            evidencePhotoUri = draft.evidenceUri(),
+            deliveryNote = draft.note()
         )
     )
     val uiState = mutable.asStateFlow()
+    private val riderLocation = RiderLocationTracker(viewModelScope, locations, elapsed, mutable)
     private var request: Job? = null
     private var ticker: Job? = null
     private var search: Job? = null
-    private var tracking: Job? = null
-    private var locationJob: Job? = null
     private var uid: String? = session.user.value?.id
     private var foreground = false
     private var deadline = 0L
-    private var locationConfirmedAt: Long? = null
 
     init {
         viewModelScope.launch {
@@ -70,11 +60,11 @@ class OrdersViewModel(
         viewModelScope.launch {
             session.user.collect { user ->
                 if (user?.id != uid || user == null || user.status != RegistrationStatus.APPROVED || !user.isEnabled) {
-                    clearStoredDeliveryDraft()
+                    draft.clear()
                     uid = user?.id
-                    request?.cancel(); ticker?.cancel(); search?.cancel(); tracking?.cancel(); locationJob?.cancel()
+                    request?.cancel(); ticker?.cancel(); search?.cancel()
+                    riderLocation.stop()
                     mutable.value = OrdersUiState()
-                    locationConfirmedAt = null
                 }
                 mutable.update { it.copy(isAvailable = user?.isAvailable == true) }
                 if (foreground && canWork() && mutable.value.snapshot == null) refresh()
@@ -87,8 +77,8 @@ class OrdersViewModel(
     fun setForeground(active: Boolean) {
         foreground = active
         if (active) refresh() else {
-            search?.cancel(); tracking?.cancel(); ticker?.cancel(); locationJob?.cancel()
-            invalidateLocation()
+            search?.cancel(); ticker?.cancel()
+            riderLocation.stop()
         }
         syncSearch()
         syncTracking()
@@ -124,46 +114,36 @@ class OrdersViewModel(
 
     //funciones para la validacion de finalizacion de entrega
     fun prepareEvidenceCapture(context: Context): Uri {
-        val dir = File(context.cacheDir, "captures").apply { mkdirs() }
-        val tempFile = File(dir, "evidence_${System.currentTimeMillis()}.jpg")
-        val contentUri = FileProviderUris.uriFor(context, tempFile)
-        savedStateHandle["pending_capture"] = contentUri.toString()
-        mutable.update { it.copy(pendingCaptureUri = contentUri) }
-        return contentUri
+        val uri = draft.newCapture(context)
+        mutable.update { it.copy(pendingCaptureUri = uri) }
+        return uri
     }
 
     fun confirmEvidenceCapture(success: Boolean) {
-        val pending = mutable.value.pendingCaptureUri ?: savedUri("pending_capture")
-        if (success && pending != null) {
-            savedStateHandle["evidence_photo"] = pending.toString()
-            savedStateHandle.remove<String>("pending_capture")
-            mutable.update { it.copy(evidencePhotoUri = pending, pendingCaptureUri = null) }
-        } else {
-            savedStateHandle.remove<String>("pending_capture")
-            mutable.update { it.copy(pendingCaptureUri = null) }
+        val evidence = if (success) draft.confirmPending(mutable.value.pendingCaptureUri) else null
+        if (!success) draft.discardPending()
+        mutable.update {
+            if (evidence != null) it.copy(evidencePhotoUri = evidence, pendingCaptureUri = null)
+            else it.copy(pendingCaptureUri = null)
         }
     }
 
-    fun setEvidencePhoto(uri: Uri){
-        savedStateHandle["evidence_photo"] = uri.toString()
-        savedStateHandle.remove<String>("pending_capture")
-        mutable.update{it.copy(evidencePhotoUri = uri, pendingCaptureUri = null)}
+    fun setEvidencePhoto(uri: Uri) {
+        draft.saveEvidence(uri)
+        mutable.update { it.copy(evidencePhotoUri = uri, pendingCaptureUri = null) }
     }
 
-    fun clearEvidencePhoto(){
-        savedStateHandle.remove<String>("pending_capture")
-        savedStateHandle.remove<String>("evidence_photo")
-        mutable.update{it.copy(evidencePhotoUri = null, pendingCaptureUri = null)}
+    fun clearEvidencePhoto() {
+        draft.clearEvidence()
+        mutable.update { it.copy(evidencePhotoUri = null, pendingCaptureUri = null) }
     }
 
-    fun updateDeliveryNote(note: String){
+    fun updateDeliveryNote(note: String) {
         val owner = uid ?: return
         val order = mutable.value.snapshot?.batch?.stops?.singleOrNull()?.orderId ?: return
         val trimmed = note.take(200)
-        savedStateHandle["delivery_draft_uid"] = owner
-        savedStateHandle["delivery_draft_order"] = order
-        savedStateHandle["delivery_note"] = trimmed
-        mutable.update{it.copy(deliveryNote = trimmed)}
+        draft.saveNote(owner, order, trimmed)
+        mutable.update { it.copy(deliveryNote = trimmed) }
     }
     fun updateDeliveryPin(value: String) { mutable.update { it.copy(deliveryPin = value.filter { c -> c in '0'..'9' }.take(4)) } }
     fun deliver() = execute(
@@ -199,75 +179,32 @@ class OrdersViewModel(
         }
     }
 
-    fun updateRiderLocation(point: GeoPoint) {
-        if (!point.latitude.isFinite() || !point.longitude.isFinite() || point.latitude !in -90.0..90.0 || point.longitude !in -180.0..180.0) {
-            invalidateLocation(); return
-        }
-        locationConfirmedAt = elapsed()
-        mutable.update { it.copy(riderLocation = point) }
-        updateDistances()
-    }
-
-    private fun invalidateLocation() {
-        locationConfirmedAt = null
-        mutable.update { it.copy(distanceToMerchantMeters = null, distanceToCustomerMeters = null,
-            isWithinGeofence = false, isNearCustomer = false) }
-    }
-
-    private fun updateDistances() {
-        val point = mutable.value.riderLocation ?: return
-        if (locationConfirmedAt?.let { elapsed() - it in 0..30_000 } != true) { invalidateLocation(); return }
-        val snapshot = mutable.value.snapshot
-        val active = snapshot?.offer != null || snapshot?.batch != null
-        val merchant = snapshot?.merchant?.takeIf { active }
-        val customer = snapshot?.batch?.stops?.firstOrNull()?.point
-        val merchantDistance = merchant?.let { LocationUtils.distanceMeters(point.latitude, point.longitude, it.latitude, it.longitude) }
-        val customerDistance = customer?.let { LocationUtils.distanceMeters(point.latitude, point.longitude, it.latitude, it.longitude) }
-        mutable.update { it.copy(distanceToMerchantMeters = merchantDistance,
-            distanceToCustomerMeters = customerDistance,
-            isWithinGeofence = merchant?.let { target -> OrderPolicy.isNear(point.latitude, point.longitude, target) } == true,
-            isNearCustomer = customer?.let { target -> OrderPolicy.isNear(point.latitude, point.longitude, target) } == true) }
-    }
+    fun updateRiderLocation(point: GeoPoint) = riderLocation.update(point)
 
     fun fetchCurrentLocation() {
         val requestUid = uid
-        locationJob?.cancel()
-        locationJob = viewModelScope.launch {
-            val point = locations.currentLocation().getOrNull()
-            if (requestUid == uid) {
-                if (point != null) updateRiderLocation(point) else invalidateLocation()
-            }
-        }
+        riderLocation.fetch { requestUid == uid }
     }
 
     private fun syncTracking() {
-        val active = foreground && canWork() && mutable.value.snapshot?.batch != null && mutable.value.snapshot?.isCompleted != true
-        mutable.update { it.copy(isTrackingActive = active) }
-        if (!active) { tracking?.cancel(); return }
-        if (tracking?.isActive == true) return
-        tracking = viewModelScope.launch {
-            while (isActive) {
-                val point = locations.currentLocation().getOrNull()
-                if (point != null) updateRiderLocation(point) else invalidateLocation()
-                delay(5_000)
-            }
-        }
+        riderLocation.restartTracking(
+            foreground && canWork() && mutable.value.snapshot?.batch != null && mutable.value.snapshot?.isCompleted != true
+        )
     }
 
     private fun applySnapshot(snapshot: OfferSnapshot, started: Long) {
         val order = snapshot.batch?.stops?.singleOrNull()?.orderId
-        if (savedStateHandle.get<String>("delivery_draft_order") != order) {
-            clearStoredDeliveryDraft()
+        if (draft.boundOrderId() != order) {
+            draft.clear()
             mutable.update { it.copy(deliveryNote = null, evidencePhotoUri = null, pendingCaptureUri = null, deliveryPin = "") }
         }
         if (order != null) {
-            savedStateHandle["delivery_draft_uid"] = uid
-            savedStateHandle["delivery_draft_order"] = order
+            draft.bind(uid, order)
         }
         val remaining = ((snapshot.offer?.expiresAt ?: snapshot.serverTime) - snapshot.serverTime - (elapsed() - started)).coerceAtLeast(0)
         deadline = elapsed() + remaining
         mutable.update { it.copy(snapshot = snapshot, secondsLeft = ((remaining + 999) / 1000).toInt()) }
-        updateDistances()
+        riderLocation.recomputeDistances()
         syncTracking()
         ticker?.cancel()
         val waitStart = snapshot.waitStartedAt
@@ -310,12 +247,12 @@ class OrdersViewModel(
                 val point = if (requiresLocation) locations.currentLocation().getOrNull() else mutable.value.riderLocation
                 if (requestUid != uid || !canWork()) return@launch
                 if (requiresLocation && point == null) {
-                    invalidateLocation()
+                    riderLocation.invalidate()
                     mutable.update { it.copy(error = R.string.orders_location_required) }
                     return@launch
                 }
                 if (requestUid != uid || (action == OfferAction.OFFER && session.user.value?.isAvailable != true)) return@launch
-                if (requiresLocation && point != null) updateRiderLocation(point)
+                if (requiresLocation && point != null) riderLocation.update(point)
                 val started = elapsed()
                 val snapshot = repository.execute(
                     action = action,

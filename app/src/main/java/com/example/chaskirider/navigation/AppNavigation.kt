@@ -1,11 +1,6 @@
 package com.example.chaskirider.navigation
 import com.example.chaskirider.navigation.components.WorkSidebar
 
-import com.example.chaskirider.platform.OrderSearchService
-import com.example.chaskirider.platform.OrderTrackingService
-import com.example.chaskirider.feature.orders.domain.OrderProblemReason
-import com.example.chaskirider.feature.orders.domain.OrderRecord
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.ui.unit.dp
 import android.Manifest
@@ -18,15 +13,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.verticalScroll
 import androidx.core.content.ContextCompat
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import coil.compose.AsyncImage
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.createSavedStateHandle
-import com.example.chaskirider.feature.user.ui.routes.ProfilePhotoRoute
-import com.example.chaskirider.feature.user.ui.viewmodel.ProfilePhotoViewModel
 import com.example.chaskirider.ui.components.ChaskiDialog
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
@@ -34,36 +27,29 @@ import com.example.chaskirider.R
 import com.example.chaskirider.di.AppContainer
 import com.example.chaskirider.feature.user.domain.RiderUser
 import com.example.chaskirider.feature.user.domain.RiderUserService
-import com.example.chaskirider.feature.vehicle.domain.VehicleType
 import com.example.chaskirider.feature.user.domain.RegistrationStatus
 import com.example.chaskirider.feature.user.ui.platform.GoogleSignInClient
-import com.example.chaskirider.feature.user.ui.screens.AccessScreen
-import com.example.chaskirider.feature.user.ui.screens.EmailLoginScreen
 import com.example.chaskirider.feature.user.ui.screens.PasswordSetupDialog
 import com.example.chaskirider.feature.user.ui.screens.SessionLoadingScreen
-import com.example.chaskirider.feature.user.ui.screens.RegistrationStatusScreen
 import com.example.chaskirider.feature.user.ui.viewmodel.AuthViewModel
+import com.example.chaskirider.feature.user.ui.viewmodel.ProfilePhotoViewModel
 import com.example.chaskirider.feature.user.ui.viewmodel.RegistrationReviewViewModel
-import com.example.chaskirider.dashboard.ui.routes.HomeRoute
-import com.example.chaskirider.dashboard.ui.viewmodel.HomeViewModel
-import com.example.chaskirider.feature.notifications.ui.screens.NotificationsScreen
-import com.example.chaskirider.feature.notifications.ui.viewmodel.NotificationsViewModel
-import com.example.chaskirider.feature.user.ui.screens.OnboardingStep1Screen
-import com.example.chaskirider.feature.user.ui.screens.OnboardingStep2Screen
-import com.example.chaskirider.feature.user.ui.screens.OnboardingStep3Screen
 import com.example.chaskirider.feature.user.ui.viewmodel.RegistrationViewModel
-import com.example.chaskirider.feature.orders.ui.screens.OrdersRoute
-import com.example.chaskirider.feature.orders.ui.viewmodel.OrdersViewModel
-import com.example.chaskirider.feature.support.ui.viewmodel.SupportViewModel
-import com.example.chaskirider.feature.support.ui.screens.SupportRoute
-import com.example.chaskirider.feature.support.domain.SupportOrderContext
-import com.example.chaskirider.feature.earnings.ui.screens.EarningsRoute
-import com.example.chaskirider.feature.earnings.ui.viewmodel.EarningsViewModel
-import com.example.chaskirider.feature.user.ui.screens.ProfileScreen
-import com.example.chaskirider.feature.user.ui.screens.ProfilePersonalDataScreen
 import com.example.chaskirider.feature.user.ui.viewmodel.RiderProfileViewModel
-import com.example.chaskirider.feature.vehicle.ui.screens.ProfileVehicleScreen
-import com.example.chaskirider.feature.documents.ui.screens.ProfileDocumentsScreen
+import com.example.chaskirider.feature.user.ui.navigation.authGraph
+import com.example.chaskirider.feature.user.ui.navigation.onboardingGraph
+import com.example.chaskirider.feature.user.ui.navigation.profileGraph
+import com.example.chaskirider.dashboard.ui.viewmodel.HomeViewModel
+import com.example.chaskirider.dashboard.ui.navigation.homeGraph
+import com.example.chaskirider.feature.notifications.ui.viewmodel.NotificationsViewModel
+import com.example.chaskirider.feature.notifications.ui.navigation.notificationsGraph
+import com.example.chaskirider.feature.orders.ui.viewmodel.OrdersViewModel
+import com.example.chaskirider.feature.orders.ui.navigation.ordersGraph
+import com.example.chaskirider.feature.support.ui.viewmodel.SupportViewModel
+import com.example.chaskirider.feature.support.domain.SupportOrderContext
+import com.example.chaskirider.feature.support.ui.navigation.supportGraph
+import com.example.chaskirider.feature.earnings.ui.viewmodel.EarningsViewModel
+import com.example.chaskirider.feature.earnings.ui.navigation.earningsGraph
 import com.example.chaskirider.feature.documents.ui.viewmodel.DocumentsViewModel
 import com.example.chaskirider.feature.documents.ui.screens.DocumentPreviewHost
 import kotlinx.coroutines.CancellationException
@@ -235,155 +221,86 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
         }) {
     Scaffold(contentWindowInsets = WindowInsets(0, 0, 0, 0)) { padding ->
         NavHost(navController, startDestination = Screen.Startup.route, modifier = Modifier.padding(padding)) {
-            composable(Screen.Startup.route) { SessionLoadingScreen(state, authViewModel::checkCurrentUser) }
-            composable(Screen.Access.route) {
-                AccessScreen(
-                    onGoogleSignInClick = {
-                        if (!googleBusy && !state.isLoading) {
-                            googleBusy = true
-                            authViewModel.clearError()
-                            scope.launch {
-                                try { authViewModel.loginWithGoogle(google.getIdToken(context)) }
-                                catch (_: GetCredentialCancellationException) {  }
-                                catch (e: CancellationException) { throw e }
-                                catch (_: Exception) { authViewModel.reportError(context.getString(R.string.text_no_se_pudo_iniciar_sesion_con_google)) }
-                                finally { googleBusy = false }
-                            }
+            authGraph(
+                navController = navController,
+                state = state,
+                busy = state.isLoading || googleBusy,
+                viewModel = authViewModel,
+                onGoogleSignIn = {
+                    if (!googleBusy && !state.isLoading) {
+                        googleBusy = true
+                        authViewModel.clearError()
+                        scope.launch {
+                            try { authViewModel.loginWithGoogle(google.getIdToken(context)) }
+                            catch (_: GetCredentialCancellationException) { }
+                            catch (e: CancellationException) { throw e }
+                            catch (_: Exception) { authViewModel.reportError(context.getString(R.string.text_no_se_pudo_iniciar_sesion_con_google)) }
+                            finally { googleBusy = false }
                         }
-                    },
-                    onEmailLoginClick = { authViewModel.clearError(); navController.navigate(Screen.EmailLogin.route) },
-                    onAccountRecoveryClick = { authViewModel.clearError(); recovery = true },
-                    isLoading = state.isLoading || googleBusy, errorMessage = state.errorMessage
-                )
-            }
-            composable(Screen.EmailLogin.route) {
-                EmailLoginScreen(onNavigateBack = { authViewModel.clearError(); navController.popBackStack() },
-                    onLoginClick = authViewModel::loginWithEmail,
-                    onPasswordResetRequest = authViewModel::sendPasswordResetEmail,
-                    isLoading = state.isLoading, errorMessage = state.errorMessage,
-                    successMessage = state.message)
-            }
-            composable(Screen.OnboardingStep1.route) {
-                user?.let {
-                    OnboardingStep1Screen(state = personalState,
-                        onChange = personalViewModel::change, onTermsChange = personalViewModel::acceptTerms,
-                        onNavigateBack = { authViewModel.logout() },
-                        onRetryDraft = personalViewModel::retryDraft,
-                        onContinue = { personalViewModel.savePersonal { navController.navigate(Screen.OnboardingStep2.route) } })
-                }
-            }
-            composable(Screen.OnboardingStep2.route) {
-                user?.let {
-                    OnboardingStep2Screen(state = personalState,
-                        onVehicleChange = personalViewModel::selectVehicle,
-                        onRetryDraft = personalViewModel::retryDraft,
-                        onNavigateBack = { personalViewModel.clearError(); navController.navigate(Screen.OnboardingStep1.route) { launchSingleTop = true } },
-                        onContinueClick = { personalViewModel.saveVehicle { navController.navigate(Screen.OnboardingStep3.route) } })
-                }
-            }
-            composable(Screen.OnboardingStep3.route) {
-                user?.let {
-                    OnboardingStep3Screen(vehicleType = VehicleType.fromId(it.vehicleTypeId), state = personalState,
-                        onBankChange = personalViewModel::changeBank,
-                        onRetryDraft = personalViewModel::retryDraft,
-                        onNavigateBack = { personalViewModel.clearError(); documentsViewModel.clearError(); navController.navigate(Screen.OnboardingStep2.route) { launchSingleTop = true } },
-                        onDocumentPick = documentsViewModel::uploadDocument,
-                        onDocumentCamera = { type ->
-                            pendingCameraType = type
-                            if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) openDocumentCamera(type)
-                            else documentCameraPermission.launch(Manifest.permission.CAMERA)
-                        },
-                        onDocumentView = documentsViewModel::openDocument,
-                        onFinishRegistrationClick = { personalViewModel.submit {
-                            navController.navigate(Screen.RegistrationStatus.route) { popUpTo(navController.graph.id) { inclusive = true }; launchSingleTop = true }
-                        } },
-                        documentsMap = documentsState.documentsMap, isLoading = personalState.isLoading || documentsState.isLoading,
-                        errorMessage = documentsState.errorMessage ?: personalState.errorMessage)
-                }
-            }
-            composable(Screen.RegistrationStatus.route) {
-                user?.let {
-                    LifecycleResumeEffect(it.id) {
-                        reviewViewModel.refresh()
-                        onPauseOrDispose { }
                     }
-                    RegistrationStatusScreen(state = reviewState,
-                        onResumeRegistrationClick = { if (reviewState.canEdit) {
-                            personalViewModel.clearError(); navController.navigate(Screen.OnboardingStep1.route) { launchSingleTop = true }
-                        } },
-                        onGoToHomeClick = { if (it.status == RegistrationStatus.APPROVED && it.isEnabled) navController.navigate(destination(it)) },
-                        onLogoutClick = { authViewModel.logout() },
-                        onRefresh = reviewViewModel::refresh,
-                        onSupportClick = { navController.navigate(Screen.Support.route) { launchSingleTop = true } })
-                }
-            }
-            composable(Screen.ProfilePhoto.route) {
-                if (needsPhoto) ProfilePhotoRoute(photoViewModel, onLogout = authViewModel::logout)
-            }
-            composable(Screen.Orders.route) {
-                if (workArea)
-                    OrdersRoute(
-                        viewModel = demoOrdersViewModel,
-                        onMenu = { scope.launch { drawerState.open() } },
-                        isDemo = true,
-                        onSupport = ::openOrderSupport,
-                        onOrderHelp = ::openOrderHelp,
-                        onTicket = ::openSupportTicket
-                    )
-            }
-            composable(Screen.Home.route) {
-                if (workArea) HomeRoute(homeViewModel, onOpenMenu = { scope.launch { drawerState.open() } })
-            }
-            composable(Screen.Profile.route) {
-                user?.let {
-                    ProfileScreen(user = it, photoUri = photoState.profileUri,
-                        onOpenMenu = { scope.launch { drawerState.open() } },
-                        onPersonalDataClick = { profileViewModel.clearError(); navController.navigate(Screen.ProfilePersonalData.route) },
-                        onVehicleClick = { profileViewModel.clearError(); navController.navigate(Screen.ProfileVehicle.route) },
-                        onDocumentsClick = { profileViewModel.clearError(); navController.navigate(Screen.ProfileDocuments.route) },
-                        onSupportClick = { navController.navigate(Screen.Support.route) { launchSingleTop = true } },
-                        onLogoutClick = { authViewModel.logout() })
-                }
-            }
-            composable(Screen.ProfilePersonalData.route) {
-                user?.let {
-                    ProfilePersonalDataScreen(user = it,
-                        onNavigateBack = { profileViewModel.clearError(); navController.popBackStack() },
-                        onRequestChange = profileViewModel::showChangeNotice,
-                        onConfigurePassword = { authViewModel.clearError(); passwordDialog = true })
-                }
-            }
-            composable(Screen.ProfileVehicle.route) {
-                user?.let {
-                    ProfileVehicleScreen(user = it,
-                        onNavigateBack = { profileViewModel.clearError(); navController.popBackStack() },
-                        onRequestChange = profileViewModel::showChangeNotice)
-                }
-            }
-            composable(Screen.ProfileDocuments.route) {
-                user?.let {
-                    ProfileDocumentsScreen(vehicleType = VehicleType.fromId(it.vehicleTypeId),
-                        paths = documentsState.documentsMap.mapValues { (_, file) -> file.url },
-                        onNavigateBack = { profileViewModel.clearError(); documentsViewModel.clearError(); navController.popBackStack() },
-                        onDocumentView = documentsViewModel::openDocument,
-                        onRequestChange = profileViewModel::showChangeNotice)
-                }
-            }
-            composable(Screen.Notifications.route) {
-                LaunchedEffect(Unit) { notificationsViewModel.markSeen() }
-                NotificationsScreen(state = notificationsState, onOpenMenu = { scope.launch { drawerState.open() } })
-            }
-            composable(Screen.Support.route) {
-                if (user != null) SupportRoute(supportViewModel, onBack = { navController.popBackStack() })
-            }
-            composable(Screen.Earnings.route) {
-                if (workArea)
-                    EarningsRoute(
-                        viewModel = earningsViewModel,
-                        onMenu = { scope.launch { drawerState.open() } }
-                    )
-            }
-
+                },
+                onAccountRecovery = { recovery = true }
+            )
+            onboardingGraph(
+                navController = navController,
+                user = user,
+                personalState = personalState,
+                reviewState = reviewState,
+                documentsState = documentsState,
+                personalViewModel = personalViewModel,
+                documentsViewModel = documentsViewModel,
+                reviewViewModel = reviewViewModel,
+                photoViewModel = photoViewModel,
+                needsPhoto = needsPhoto,
+                onLogout = authViewModel::logout,
+                onDocumentCamera = { type ->
+                    pendingCameraType = type
+                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) openDocumentCamera(type)
+                    else documentCameraPermission.launch(Manifest.permission.CAMERA)
+                },
+                onSupport = { navController.navigate(Screen.Support.route) { launchSingleTop = true } },
+                onGoHome = { user?.let { navController.navigate(destination(it)) } }
+            )
+            ordersGraph(
+                workArea = workArea,
+                viewModel = demoOrdersViewModel,
+                onMenu = { scope.launch { drawerState.open() } },
+                onSupport = ::openOrderSupport,
+                onOrderHelp = ::openOrderHelp,
+                onTicket = ::openSupportTicket
+            )
+            homeGraph(
+                workArea = workArea,
+                viewModel = homeViewModel,
+                onOpenMenu = { scope.launch { drawerState.open() } }
+            )
+            profileGraph(
+                navController = navController,
+                user = user,
+                photoUri = photoState.profileUri,
+                profileViewModel = profileViewModel,
+                documentsState = documentsState,
+                documentsViewModel = documentsViewModel,
+                onOpenMenu = { scope.launch { drawerState.open() } },
+                onLogout = authViewModel::logout,
+                onSupport = { navController.navigate(Screen.Support.route) { launchSingleTop = true } },
+                onPasswordSetup = { authViewModel.clearError(); passwordDialog = true }
+            )
+            notificationsGraph(
+                state = notificationsState,
+                viewModel = notificationsViewModel,
+                onOpenMenu = { scope.launch { drawerState.open() } }
+            )
+            supportGraph(
+                user = user,
+                viewModel = supportViewModel,
+                onBack = { navController.popBackStack() }
+            )
+            earningsGraph(
+                workArea = workArea,
+                viewModel = earningsViewModel,
+                onMenu = { scope.launch { drawerState.open() } }
+            )
         }
     }
     }

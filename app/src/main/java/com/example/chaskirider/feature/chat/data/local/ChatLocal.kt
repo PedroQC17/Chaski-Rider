@@ -13,8 +13,6 @@ interface ChatDraftDao {
     @Query("DELETE FROM chat_drafts WHERE `key` = :key AND messageId = :id AND body = :body")
     suspend fun delete(key: String, id: String, body: String)
 }
-@Database(entities = [ChatDraftEntity::class], version = 1, exportSchema = true)
-abstract class ChatDraftDatabase : RoomDatabase() { abstract fun drafts(): ChatDraftDao }
 
 class RoomChatDraftStore(private val dao: ChatDraftDao) : ChatDraftStore {
     override suspend fun load(key: String) = dao.load(key)?.let { ChatDraft(it.messageId, it.body) }
