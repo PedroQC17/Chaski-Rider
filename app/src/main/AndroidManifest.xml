@@ -44,12 +44,12 @@
         </activity>
         <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.files" android:exported="false" android:grantUriPermissions="true"><meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" /></provider>
 
-        <service android:name=".data.orders.OrderSearchService"
+        <service android:name=".platform.OrderSearchService"
             android:exported="false" android:foregroundServiceType="location" />
-        <service android:name=".data.orders.OrderTrackingService"
+        <service android:name=".platform.OrderTrackingService"
             android:exported="false" android:foregroundServiceType="location" />
         <service
-            android:name=".data.notifications.ChaskiFirebaseMessagingService"
+            android:name=".platform.ChaskiFirebaseMessagingService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />

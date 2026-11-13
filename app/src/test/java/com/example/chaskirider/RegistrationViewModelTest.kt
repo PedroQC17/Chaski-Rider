@@ -1,10 +1,27 @@
 package com.example.chaskirider
 
+import android.net.Uri
 import androidx.lifecycle.ViewModelStore
-import com.example.chaskirider.domain.model.*
-import com.example.chaskirider.domain.repository.*
-import com.example.chaskirider.domain.text.*
-import com.example.chaskirider.ui.screens.onboarding.*
+import com.example.chaskirider.feature.user.domain.RiderUser
+import com.example.chaskirider.feature.user.domain.RegistrationStatus
+import com.example.chaskirider.feature.user.domain.RegistrationDraft
+import com.example.chaskirider.feature.user.domain.PendingDocumentCapture
+import com.example.chaskirider.feature.bank.domain.BankInfo
+import com.example.chaskirider.feature.bank.domain.BankRepository
+import com.example.chaskirider.feature.vehicle.domain.VehicleRepository
+import com.example.chaskirider.feature.vehicle.domain.VehicleType
+import com.example.chaskirider.feature.documents.domain.DocumentRepository
+import com.example.chaskirider.feature.documents.domain.DocumentSnapshot
+import com.example.chaskirider.feature.documents.domain.DocumentReviewStatus
+import com.example.chaskirider.feature.documents.domain.DocumentReview
+import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.user.domain.RiderUserRepository
+import com.example.chaskirider.feature.user.domain.RegistrationDraftRepository
+import com.example.chaskirider.core.text.*
+import com.example.chaskirider.feature.user.ui.viewmodel.RegistrationViewModel
+import com.example.chaskirider.feature.user.ui.viewmodel.DraftStatus
+import com.example.chaskirider.feature.user.ui.viewmodel.PersonalField
+import com.example.chaskirider.feature.user.ui.viewmodel.BankField
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.*
@@ -18,25 +35,15 @@ class RegistrationViewModelTest {
         override val user = MutableStateFlow<RiderUser?>(RiderUser(id = "ana", email = "ana@example.com"))
     }
     private val drafts = MemoryDrafts()
-    private val profiles = Profiles()
-    private val auth = object : AuthRepository {
-        override suspend fun loginWithEmail(email: String, pass: String) = error("unused")
-        override suspend fun loginWithGoogle(idToken: String) = error("unused")
-        override suspend fun sendPasswordResetEmail(email: String) = Result.success(Unit)
-        override suspend fun linkPassword(password: String): Result<Unit> {
-            session.user.value = session.user.value!!.copy(hasPassword = true)
-            return Result.success(Unit)
-        }
-        override suspend fun logout() { session.user.value = null }
-        override suspend fun getCurrentUser() = Result.success(session.user.value)
-    }
+    private val repository = Repository()
     private val texts = object : TextProvider {
         override fun get(key: TextKey) = key.name
         override fun resolveError(message: String?, fallback: TextKey) = message ?: fallback.name
     }
     @Before fun setup() { Dispatchers.setMain(StandardTestDispatcher()) }
     @After fun teardown() { store.clear(); Dispatchers.resetMain() }
-    private fun model() = RegistrationViewModel(auth, profiles, session, texts, drafts).also { store.put("registration", it) }
+    private fun model() = RegistrationViewModel(repository, banks, vehicles, documents, session, texts, drafts)
+        .also { store.put("registration", it) }
 
     @Test fun recreationRestoresAllThreeFormsButNeverPasswords() = runTest {
         val vm = model(); advanceUntilIdle()
@@ -79,11 +86,11 @@ class RegistrationViewModelTest {
         var navigated = false
         vm.saveVehicle { navigated = true }; advanceUntilIdle()
         assertEquals(DraftStatus.ERROR, vm.uiState.value.draftStatus)
-        assertEquals(0, profiles.vehicleCalls); assertFalse(navigated)
+        assertEquals(0, vehicles.vehicleCalls); assertFalse(navigated)
         drafts.failWrite = false
         vm.retryDraft(); advanceUntilIdle()
         vm.saveVehicle { navigated = true }; advanceUntilIdle()
-        assertTrue(navigated); assertEquals(1, profiles.vehicleCalls)
+        assertTrue(navigated); assertEquals(1, vehicles.vehicleCalls)
     }
 
     @Test fun failedReadDoesNotOverwriteExistingDraftAndCanBeRetried() = runTest {
@@ -103,7 +110,7 @@ class RegistrationViewModelTest {
         var callbacks = 0
         vm.saveVehicle { callbacks++ }; vm.saveVehicle { callbacks++ }
         advanceUntilIdle()
-        assertEquals(1, profiles.vehicleCalls); assertEquals(1, callbacks)
+        assertEquals(1, vehicles.vehicleCalls); assertEquals(1, callbacks)
     }
 
     @Test fun switchingAccountCancelsPendingSaveAndNavigation() = runTest {
@@ -114,7 +121,7 @@ class RegistrationViewModelTest {
         session.user.value = RiderUser(id = "bob")
         advanceUntilIdle()
         assertFalse(navigated)
-        assertEquals(VehicleType.NONE, session.user.value!!.vehicleType)
+        assertEquals(VehicleType.NONE, VehicleType.fromId(session.user.value!!.vehicleTypeId))
         assertEquals(VehicleType.NONE, vm.uiState.value.vehicle)
         assertEquals(VehicleType.BICYCLE, drafts.load("ana")!!.vehicle)
     }
@@ -134,19 +141,18 @@ class RegistrationViewModelTest {
     }
 
     @Test fun rejectedSubmissionRetainsDraftAndOnlyServerSuccessClearsIt() = runTest {
-        session.user.value = RiderUser(id = "ana", hasPassword = true, vehicleType = VehicleType.BICYCLE,
-            dniFrontUrl = "front", dniBackUrl = "back", bankStatementUrl = "bank")
+        session.user.value = RiderUser(id = "ana", hasPassword = true, vehicleTypeId = VehicleType.BICYCLE.name)
         val vm = model(); advanceUntilIdle()
         vm.changeBank(BankField.BANK, "BCP")
         vm.changeBank(BankField.HOLDER, "Ana")
         vm.changeBank(BankField.CCI, "00219100123456780123")
         advanceUntilIdle()
-        profiles.failSubmit = true
+        repository.failSubmit = true
         var callbacks = 0
         vm.submit { callbacks++ }; advanceUntilIdle()
         assertEquals(0, callbacks); assertNotNull(drafts.load("ana"))
         assertEquals("server unavailable", vm.uiState.value.errorMessage)
-        profiles.failSubmit = false
+        repository.failSubmit = false
         vm.submit { callbacks++ }; advanceUntilIdle()
         assertEquals(1, callbacks); assertNull(drafts.load("ana"))
         assertEquals(RegistrationStatus.PENDING_REVIEW, session.user.value!!.status)
@@ -167,43 +173,70 @@ class RegistrationViewModelTest {
         val vm = model(); advanceUntilIdle()
         vm.selectVehicle(VehicleType.BICYCLE); vm.saveVehicle { fail("Must not navigate") }
         advanceUntilIdle()
-        assertFalse(vm.uiState.value.editable); assertEquals(0, profiles.vehicleCalls)
+        assertFalse(vm.uiState.value.editable); assertEquals(0, vehicles.vehicleCalls)
         assertNull(drafts.load("ana"))
     }
 
     @Test fun observedUploadedDocumentMustBeReplacedBeforeResubmission() = runTest {
-        session.user.value = RiderUser(id = "ana", hasPassword = true, vehicleType = VehicleType.BICYCLE,
-            status = RegistrationStatus.NEEDS_CORRECTION, rejectionReason = "Reemplaza el DNI",
-            dniFrontUrl = "front", dniBackUrl = "back", bankStatementUrl = "bank",
-            bankInfo = BankInfo("BCP", "Ana", "123", "00219100123456780123"),
-            documentReviews = mapOf("dniFront" to DocumentReview(DocumentReviewStatus.OBSERVED, "Borrosa")))
+        session.user.value = RiderUser(id = "ana", hasPassword = true,
+            vehicleTypeId = VehicleType.BICYCLE.name,
+            status = RegistrationStatus.NEEDS_CORRECTION, rejectionReason = "Reemplaza el DNI")
+        banks.saved = BankInfo("BCP", "Ana", "123", "00219100123456780123")
+        documents.snapshot = documents.snapshot.copy(
+            reviews = mapOf("dniFront" to DocumentReview(DocumentReviewStatus.OBSERVED, "Borrosa")))
         val vm = model(); advanceUntilIdle()
         vm.submit { fail("Must not navigate") }; advanceUntilIdle()
         assertEquals(TextKey.REGISTRATION_REPLACE_OBSERVED.name, vm.uiState.value.errorMessage)
-        assertEquals(0, profiles.submitCalls)
-        session.user.value = session.user.value!!.copy(dniFrontUrl = "new-front",
-            documentReviews = mapOf("dniFront" to DocumentReview()))
+        assertEquals(0, repository.submitCalls)
+        documents.snapshot = documents.snapshot.copy(reviews = mapOf("dniFront" to DocumentReview()))
+        session.user.value = session.user.value!!.copy(submissionVersion = 1)
         advanceUntilIdle()
         var submitted = false
         vm.submit { submitted = true }; advanceUntilIdle()
-        assertTrue(submitted); assertEquals(1, profiles.submitCalls)
+        assertTrue(submitted); assertEquals(1, repository.submitCalls)
     }
 
-    private inner class Profiles : RiderProfileRepository {
+    private val documents = object : DocumentRepository {
+        var snapshot = DocumentSnapshot(
+            paths = mapOf("dniFront" to "front", "dniBack" to "back", "bankStatement" to "bank"))
+        override suspend fun load() = Result.success(snapshot)
+        override suspend fun createCapture() = error("unused")
+        override suspend fun hasCapture(uri: Uri) = error("unused")
+        override suspend fun deleteCapture(uri: Uri) = error("unused")
+        override suspend fun uploadDocument(docType: String, uri: Uri) = error("unused")
+        override suspend fun getDocument(docType: String) = error("unused")
+    }
+
+    private val banks = object : BankRepository {
+        var saved = BankInfo()
+        override suspend fun load() = Result.success(saved)
+        override suspend fun save(bank: BankInfo): Result<BankInfo> { saved = bank; return Result.success(bank) }
+    }
+
+    private val vehicles = object : VehicleRepository {
         var vehicleCalls = 0
+        override suspend fun load() = Result.success(VehicleType.NONE)
+        override suspend fun save(vehicle: VehicleType): Result<VehicleType> {
+            vehicleCalls++; delay(50)
+            session.user.value = session.user.value!!.copy(vehicleTypeId = vehicle.name)
+            return Result.success(vehicle)
+        }
+    }
+
+    private inner class Repository : FakeRiderUserRepository() {
         var submitCalls = 0
         var failSubmit = false
         private fun update(user: RiderUser): Result<RiderUser> {
             session.user.value = user
             return Result.success(user)
         }
+        override suspend fun linkPassword(password: String): Result<Unit> {
+            session.user.value = session.user.value!!.copy(hasPassword = true)
+            return Result.success(Unit)
+        }
+        override suspend fun getCurrentUser() = Result.success(session.user.value)
         override suspend fun savePersonalData(name: String, lastName: String, dni: String, phone: String, terms: Boolean) =
             update(session.user.value!!.copy(name = name, lastName = lastName, dni = dni, phone = phone, termsAccepted = terms))
-        override suspend fun saveVehicle(vehicle: VehicleType): Result<RiderUser> {
-            vehicleCalls++; delay(50)
-            return update(session.user.value!!.copy(vehicleType = vehicle))
-        }
-        override suspend fun saveBankInfo(bank: BankInfo) = update(session.user.value!!.copy(bankInfo = bank))
         override suspend fun submitRegistration(): Result<RiderUser> {
             submitCalls++
             return if (failSubmit) Result.failure(IllegalStateException("server unavailable"))

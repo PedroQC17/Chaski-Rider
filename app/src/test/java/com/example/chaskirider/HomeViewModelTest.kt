@@ -1,10 +1,15 @@
 package com.example.chaskirider
 
-import com.example.chaskirider.domain.model.*
-import com.example.chaskirider.domain.orders.*
-import com.example.chaskirider.domain.repository.*
-import com.example.chaskirider.domain.text.*
-import com.example.chaskirider.ui.screens.home.HomeViewModel
+import com.example.chaskirider.core.platform.location.GeoPoint
+import com.example.chaskirider.feature.user.domain.RiderUser
+import com.example.chaskirider.feature.bank.domain.BankInfo
+import com.example.chaskirider.feature.vehicle.domain.VehicleType
+import com.example.chaskirider.feature.orders.domain.*
+import com.example.chaskirider.core.platform.location.LocationRepository
+import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.user.domain.RiderUserRepository
+import com.example.chaskirider.core.text.*
+import com.example.chaskirider.dashboard.ui.viewmodel.HomeViewModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.*
@@ -37,11 +42,7 @@ class HomeViewModelTest {
             return Result.success(if (gate == null) GeoPoint(-12.0, -77.0) else withContext(NonCancellable) { gate.await() })
         }
     }
-    private val profiles = object : RiderProfileRepository {
-        override suspend fun savePersonalData(name: String, lastName: String, dni: String, phone: String, terms: Boolean) = error("unused")
-        override suspend fun saveVehicle(vehicle: VehicleType) = error("unused")
-        override suspend fun saveBankInfo(bank: BankInfo) = error("unused")
-        override suspend fun submitRegistration() = error("unused")
+    private val users = object : FakeRiderUserRepository() {
         override suspend fun setAvailability(available: Boolean) = Result.success(session.user.value!!.copy(isAvailable = available))
     }
     private val texts = object : TextProvider {
@@ -51,7 +52,7 @@ class HomeViewModelTest {
     @Before fun setup() { Dispatchers.setMain(dispatcher) }
     @After fun cleanup() { Dispatchers.resetMain() }
     @Test fun accountChangeClearsLocationAndIgnoresLatePreviousZoneResponse() = runTest(dispatcher) {
-        val vm = HomeViewModel(profiles, locations, texts, offers, session)
+        val vm = HomeViewModel(users, locations, texts, offers, session)
         runCurrent(); vm.setLocationPermission(true); vm.locate(); runCurrent()
         assertEquals("alice", vm.uiState.value.demandZones.single().id)
         assertNotNull(vm.uiState.value.location)
@@ -71,7 +72,7 @@ class HomeViewModelTest {
         assertEquals("alice", vm.uiState.value.demandZones.single().id)
     }
     @Test fun revokedLocationPermissionCannotBeUndoneByLateGpsResult() = runTest(dispatcher) {
-        val vm = HomeViewModel(profiles, locations, texts, offers, session)
+        val vm = HomeViewModel(users, locations, texts, offers, session)
         runCurrent(); vm.setLocationPermission(true)
         val gate = CompletableDeferred<GeoPoint?>()
         locationGate = gate; vm.locate(); runCurrent()

@@ -1,9 +1,12 @@
 package com.example.chaskirider
 
-import com.example.chaskirider.data.orders.OrderSearchEngine
-import com.example.chaskirider.domain.model.*
-import com.example.chaskirider.domain.orders.*
-import com.example.chaskirider.domain.repository.*
+import com.example.chaskirider.feature.orders.domain.OrderSearchEngine
+import com.example.chaskirider.core.platform.location.GeoPoint
+import com.example.chaskirider.feature.user.domain.RiderUser
+import com.example.chaskirider.feature.user.domain.RegistrationStatus
+import com.example.chaskirider.feature.orders.domain.*
+import com.example.chaskirider.core.platform.location.LocationRepository
+import com.example.chaskirider.feature.user.domain.RiderSession
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest

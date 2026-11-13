@@ -5,12 +5,17 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
-import com.example.chaskirider.data.support.*
-import com.example.chaskirider.domain.model.RiderUser
-import com.example.chaskirider.domain.orders.*
-import com.example.chaskirider.domain.repository.RiderSession
-import com.example.chaskirider.domain.support.*
-import com.example.chaskirider.ui.screens.support.*
+import com.example.chaskirider.feature.support.data.SupportRepositoryImpl
+import com.example.chaskirider.feature.support.data.local.SupportDraftDatabase
+import com.example.chaskirider.feature.support.data.local.RoomSupportDraftStore
+import com.example.chaskirider.feature.user.domain.RiderUser
+import com.example.chaskirider.feature.orders.domain.*
+import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.support.domain.SupportOrderContext
+import com.example.chaskirider.feature.support.domain.SupportTicketStatus
+import com.example.chaskirider.feature.support.domain.SupportSender
+import com.example.chaskirider.feature.support.ui.screens.SupportRoute
+import com.example.chaskirider.feature.support.ui.viewmodel.SupportViewModel
 import com.example.chaskirider.ui.theme.ChaskiRiderTheme
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -35,7 +40,7 @@ class SupportFirebaseDeviceTest {
         val uid = user!!.uid
         val database = Room.inMemoryDatabaseBuilder(context, SupportDraftDatabase::class.java).build()
         val session = object : RiderSession { override val user = MutableStateFlow<RiderUser?>(RiderUser(id = uid)) }
-        val vm = SupportViewModel(FirebaseSupportRepository(), RoomSupportDraftStore(database.drafts()), session)
+        val vm = SupportViewModel(SupportRepositoryImpl(), RoomSupportDraftStore(database.drafts()), session)
         val report = File(context.getExternalFilesDir(null), "support-verification.json")
         try {
             compose.setContent { ChaskiRiderTheme { SupportRoute(vm, {}) } }

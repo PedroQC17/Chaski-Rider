@@ -1,10 +1,14 @@
 package com.example.chaskirider
 
-import com.example.chaskirider.domain.model.*
-import com.example.chaskirider.domain.orders.*
-import com.example.chaskirider.domain.repository.*
-import com.example.chaskirider.ui.screens.orders.OrdersViewModel
+import com.example.chaskirider.core.platform.location.GeoPoint
+import com.example.chaskirider.feature.user.domain.RiderUser
+import com.example.chaskirider.feature.user.domain.RegistrationStatus
+import com.example.chaskirider.feature.orders.domain.*
+import com.example.chaskirider.core.platform.location.LocationRepository
+import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.orders.ui.viewmodel.OrdersViewModel
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.*
 import org.junit.After
@@ -76,14 +80,17 @@ class OrdersViewModelTest {
         runCurrent(); locationGate!!.complete(Unit); advanceUntilIdle()
         assertTrue(calls.isEmpty())
     }
-    @Test fun automaticSearchRunsOnlyConnectedAndInForeground() = runTest(dispatcher) {
-        val vm = model(); runCurrent(); vm.setForeground(true); runCurrent()
-        advanceTimeBy(5001); runCurrent(); assertTrue(calls.contains(OfferAction.OFFER))
+    @Test fun searchRefreshesOnlyConnectedAndInForeground() = runTest(dispatcher) {
+        val signals = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+        val vm = OrdersViewModel(repository, session, locations = locations,
+            elapsed = { dispatcher.scheduler.currentTime }, searchSignals = signals)
+        runCurrent(); vm.setForeground(true); runCurrent()
+        signals.tryEmit(Unit); runCurrent(); assertTrue(calls.contains(OfferAction.STATE))
         vm.setForeground(false); runCurrent(); val count = calls.size
-        advanceTimeBy(60_000); runCurrent(); assertEquals(count, calls.size)
+        signals.tryEmit(Unit); runCurrent(); assertEquals(count, calls.size)
         session.user.value = session.user.value!!.copy(isAvailable = false); runCurrent()
         vm.setForeground(true); runCurrent(); val restored = calls.size
-        advanceTimeBy(30_000); runCurrent(); assertEquals(restored, calls.size)
+        signals.tryEmit(Unit); runCurrent(); assertEquals(restored, calls.size)
         vm.setForeground(false)
     }
     @Test fun anotherAccountRestoresItsStateWhileAppRemainsOpen() = runTest(dispatcher) {

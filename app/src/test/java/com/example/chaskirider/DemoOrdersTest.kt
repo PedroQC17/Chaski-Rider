@@ -1,7 +1,13 @@
 package com.example.chaskirider
 
-import com.example.chaskirider.data.orders.*
-import com.example.chaskirider.domain.orders.*
+import com.example.chaskirider.feature.earnings.domain.ActivitySummary
+import com.example.chaskirider.feature.earnings.domain.EarningsPolicy
+import com.example.chaskirider.feature.orders.data.local.DemoOrder
+import com.example.chaskirider.feature.orders.data.local.DemoOrderCatalog
+import com.example.chaskirider.feature.orders.data.local.DemoOrderState
+import com.example.chaskirider.feature.orders.data.local.DemoOrderStore
+import com.example.chaskirider.feature.orders.data.OrderRepositoryImpl
+import com.example.chaskirider.feature.orders.domain.*
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Test
@@ -10,7 +16,7 @@ import java.io.File
 class DemoOrdersTest {
     @Test fun absenceCompletionRetainsPayWithoutCountingAsSuccessfulDeliveryAndAllowsNextOrder() = runTest {
         var resolutions = 0
-        val repo = LocalDemoOfferRepository(store, { uid }, { listOf(first) }, { now }, { true },
+        val repo = OrderRepositoryImpl(store, { uid }, { listOf(first) }, { now }, { true },
             resolveAbsence = { _, _ -> resolutions++; now })
         val pending = offer(repo)
         val id = pending.offer!!.quote.stops.single().orderId
@@ -25,13 +31,13 @@ class DemoOrdersTest {
         assertEquals(1, resolutions)
         val record = OrderRecord.from(uid!!, completed)!!
         assertEquals(OrderStatus.COMPLETED_UNSUCCESSFUL, record.status)
-        val earning = com.example.chaskirider.domain.earnings.EarningsPolicy.record(record)!!
+        val earning = com.example.chaskirider.feature.earnings.domain.EarningsPolicy.record(record)!!
         assertEquals(completed.batch!!.totalCents, earning.quote!!.totalCents)
         assertEquals(earning.quote!!.chaskiCents, earning.totalCents)
         assertEquals(0, earning.tipCents)
         assertTrue(earning.unsuccessful)
         assertFalse(earning.cancelled)
-        val activity = com.example.chaskirider.domain.earnings.ActivitySummary.from(listOf(earning))
+        val activity = com.example.chaskirider.feature.earnings.domain.ActivitySummary.from(listOf(earning))
         assertEquals(0, activity.delivered)
         assertEquals(1, activity.unsuccessful)
         assertEquals(earning.totalCents!!.toLong(), activity.totalCents)
@@ -40,20 +46,20 @@ class DemoOrdersTest {
         assertNull(repo.execute(OfferAction.STATE).batch)
     }
     @Test fun locationFixMustBeFreshAccurateAndFiniteBeforeGeofenceChecks() {
-        assertTrue(OrderLocationRules.usableFix(-12.0, -77.0, 20f, 1000))
-        assertTrue(OrderLocationRules.usableFix(-12.0, -77.0, 100f, 30_000))
-        assertFalse(OrderLocationRules.usableFix(-12.0, -77.0, 101f, 1000))
-        assertFalse(OrderLocationRules.usableFix(-12.0, -77.0, Float.NaN, 1000))
-        assertFalse(OrderLocationRules.usableFix(-12.0, -77.0, -1f, 1000))
-        assertFalse(OrderLocationRules.usableFix(Double.NaN, -77.0, 20f, 1000))
-        assertFalse(OrderLocationRules.usableFix(-12.0, 181.0, 20f, 1000))
-        assertFalse(OrderLocationRules.usableFix(-12.0, -77.0, 20f, -1))
-        assertFalse(OrderLocationRules.usableFix(-12.0, -77.0, 20f, 30_001))
+        assertTrue(OrderPolicy.usableFix(-12.0, -77.0, 20f, 1000))
+        assertTrue(OrderPolicy.usableFix(-12.0, -77.0, 100f, 30_000))
+        assertFalse(OrderPolicy.usableFix(-12.0, -77.0, 101f, 1000))
+        assertFalse(OrderPolicy.usableFix(-12.0, -77.0, Float.NaN, 1000))
+        assertFalse(OrderPolicy.usableFix(-12.0, -77.0, -1f, 1000))
+        assertFalse(OrderPolicy.usableFix(Double.NaN, -77.0, 20f, 1000))
+        assertFalse(OrderPolicy.usableFix(-12.0, 181.0, 20f, 1000))
+        assertFalse(OrderPolicy.usableFix(-12.0, -77.0, 20f, -1))
+        assertFalse(OrderPolicy.usableFix(-12.0, -77.0, 20f, 30_001))
     }
     @Test fun paidOrderRequiresPinButNeverPhotoAndWrongPinKeepsItActive() = runTest {
         var verified = false
         val paid = first.copy(paidByCustomer = true)
-        val repo = LocalDemoOfferRepository(store, { uid }, { listOf(paid) }, { now }, { true },
+        val repo = OrderRepositoryImpl(store, { uid }, { listOf(paid) }, { now }, { true },
             verifyPin = { owner, order, code ->
                 assertEquals("alice", owner); assertTrue(order.isNotBlank())
                 if (code != "0123") throw OfferRequestException(428)
@@ -117,7 +123,7 @@ class DemoOrdersTest {
         override suspend fun load(uid: String) = saved[uid]
         override suspend fun save(uid: String, state: DemoOrderState) { saved[uid] = state }
     }
-    private fun repository() = LocalDemoOfferRepository(store, { uid }, { listOf(first, second) }, { now }, { available })
+    private fun repository() = OrderRepositoryImpl(store, { uid }, { listOf(first, second) }, { now }, { available })
     private suspend fun offer(repo: OfferRepository) = repo.execute(OfferAction.OFFER, lat = -12.046, lng = -77.037)
 
     @Test fun catalogCoversLimaWithDistinctPickupAndDelivery() {
@@ -208,7 +214,7 @@ class DemoOrdersTest {
         assertEquals(quote.totalCents, quote.baseCents + quote.approachCents + quote.deliveryCents + quote.guaranteeCents + quote.tipCents)
         assertEquals(0, quote.baseCents)
         assertEquals(0, quote.guaranteeCents)
-        assertEquals(com.example.chaskirider.domain.earnings.EarningsPolicy.routeCents(quote.approachMeters, quote.deliveryMeters) + first.tipCents, quote.totalCents)
+        assertEquals(OrderPolicy.routeCents(quote.approachMeters, quote.deliveryMeters) + first.tipCents, quote.totalCents)
         repo.execute(OfferAction.ACCEPT, pending.offer.id); repo.execute(OfferAction.ARRIVE_MERCHANT, lat = first.pickup.latitude, lng = first.pickup.longitude)
         repo.execute(OfferAction.REPORT_NOT_READY, lat = first.pickup.latitude, lng = first.pickup.longitude); now += 360_000
         val picked = repo.execute(OfferAction.PICKUP, lat = first.pickup.latitude, lng = first.pickup.longitude); assertEquals(0, picked.waitingCompensationCents)
@@ -221,7 +227,7 @@ class DemoOrdersTest {
             override suspend fun save(uid: String, state: DemoOrderState) { error("disk full") }
         }
         val repo = repository(); val pending = offer(repo)
-        val broken = LocalDemoOfferRepository(badStore, { uid }, { listOf(first) }, { now }, { true })
+        val broken = OrderRepositoryImpl(badStore, { uid }, { listOf(first) }, { now }, { true })
         try { broken.execute(OfferAction.ACCEPT, pending.offer!!.id); fail() } catch (_: IllegalStateException) { }
         assertNotNull(repo.execute(OfferAction.STATE).offer)
         assertNull(repo.execute(OfferAction.STATE).batch)
@@ -230,11 +236,11 @@ class DemoOrdersTest {
     @Test fun proximityUsesExactDistanceAndRejectsInvalidCoordinates() {
         val target = RoutePoint(0.0, 0.0)
         fun latitude(meters: Double) = Math.toDegrees(meters / 6371000.0)
-        assertTrue(OrderLocationRules.isNear(latitude(99.99), 0.0, target))
-        assertFalse(OrderLocationRules.isNear(latitude(100.4), 0.0, target))
-        assertFalse(OrderLocationRules.isNear(null, 0.0, target))
-        assertFalse(OrderLocationRules.isNear(Double.NaN, 0.0, target))
-        assertFalse(OrderLocationRules.isNear(91.0, 0.0, target))
+        assertTrue(OrderPolicy.isNear(latitude(99.99), 0.0, target))
+        assertFalse(OrderPolicy.isNear(latitude(100.4), 0.0, target))
+        assertFalse(OrderPolicy.isNear(null, 0.0, target))
+        assertFalse(OrderPolicy.isNear(Double.NaN, 0.0, target))
+        assertFalse(OrderPolicy.isNear(91.0, 0.0, target))
     }
 
     @Test fun arrivalPickupAndDeliveryCannotAdvanceFromAnotherLocation() = runTest {
@@ -305,7 +311,7 @@ class DemoOrdersTest {
             override suspend fun load(uid: String) = saved[uid]
             override suspend fun save(uid: String, state: DemoOrderState) { error("disk full") }
         }
-        val broken = LocalDemoOfferRepository(badStore, { uid }, { listOf(first) }, { now }, { true })
+        val broken = OrderRepositoryImpl(badStore, { uid }, { listOf(first) }, { now }, { true })
         try { broken.reportProblem(OrderProblemReason.LOCAL_CLOSED, "El local tiene las puertas cerradas", true); fail() }
         catch (_: IllegalStateException) { }
         assertEquals(accepted, repository().execute(OfferAction.STATE))

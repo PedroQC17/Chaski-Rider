@@ -12,5 +12,8 @@
     <exclude domain="database" path="support_drafts.db" />
     <exclude domain="database" path="support_drafts.db-wal" />
     <exclude domain="database" path="support_drafts.db-shm" />
+    <exclude domain="database" path="customer_contact.db" />
+    <exclude domain="database" path="customer_contact.db-wal" />
+    <exclude domain="database" path="customer_contact.db-shm" />
     <exclude domain="file" path="registration_documents/" />
 </full-backup-content>

@@ -2,8 +2,11 @@ package com.example.chaskirider
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.work.*
-import com.example.chaskirider.data.orders.*
-import com.example.chaskirider.domain.orders.*
+import com.example.chaskirider.feature.orders.data.remote.DeliveryPinRemote
+import com.example.chaskirider.feature.orders.data.local.OrderRecordEntity
+import com.example.chaskirider.feature.orders.data.local.openOrderDatabase
+import com.example.chaskirider.platform.OrderSyncWorker
+import com.example.chaskirider.feature.orders.domain.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Source

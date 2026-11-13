@@ -5,8 +5,13 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.work.*
-import com.example.chaskirider.data.orders.*
-import com.example.chaskirider.domain.orders.*
+import com.example.chaskirider.core.platform.location.TrackingPosition
+import com.example.chaskirider.feature.orders.data.local.OrderRecordEntity
+import com.example.chaskirider.feature.orders.data.local.openOrderDatabase
+import com.example.chaskirider.feature.orders.data.remote.FirebaseOrderTracking
+import com.example.chaskirider.platform.OrderSyncWorker
+import com.example.chaskirider.platform.OrderTrackingService
+import com.example.chaskirider.feature.orders.domain.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Source

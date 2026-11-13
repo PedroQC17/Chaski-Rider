@@ -1,8 +1,12 @@
 package com.example.chaskirider
 
+import com.example.chaskirider.core.text.AndroidTextProvider
+import com.example.chaskirider.feature.user.data.remote.RiderUserRemote
+import com.example.chaskirider.feature.user.data.local.RiderUserSessionStore
 import androidx.test.platform.app.InstrumentationRegistry
-import com.example.chaskirider.data.orders.*
-import com.example.chaskirider.domain.orders.*
+import com.example.chaskirider.feature.orders.data.local.OrderRecordEntity
+import com.example.chaskirider.feature.orders.data.local.openOrderDatabase
+import com.example.chaskirider.feature.orders.domain.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Source
@@ -47,9 +51,9 @@ class OfflineRecoveryDeviceTest {
         val firestore = FirebaseFirestore.getInstance()
         val server = firestore.document("riders/$uid").get(Source.SERVER).await()
         assertTrue(server.exists())
-        val session = com.example.chaskirider.data.session.RiderSessionStore()
-        val source = com.example.chaskirider.data.remote.RiderProfileRemoteDataSource(
-            com.example.chaskirider.data.text.AndroidTextProvider(context), session, online = { false })
+        val session = com.example.chaskirider.feature.user.data.local.RiderUserSessionStore()
+        val source = com.example.chaskirider.feature.user.data.remote.RiderUserRemote(
+            com.example.chaskirider.core.text.AndroidTextProvider(context), session, online = { false })
         firestore.disableNetwork().await()
         try {
             val cached = withTimeout(5_000) { source.load() }

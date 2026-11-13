@@ -1,7 +1,7 @@
 package com.example.chaskirider
 
-import com.example.chaskirider.domain.support.CallAttemptDetector
-import com.example.chaskirider.domain.support.PhoneCallState.*
+import com.example.chaskirider.feature.orders.domain.CallAttemptDetector
+import com.example.chaskirider.feature.orders.domain.PhoneCallState.*
 import org.junit.Assert.*
 import org.junit.Test
 

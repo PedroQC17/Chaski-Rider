@@ -1,11 +1,11 @@
 package com.example.chaskirider
 
-import com.example.chaskirider.domain.earnings.*
-import com.example.chaskirider.domain.orders.*
-import com.example.chaskirider.domain.model.RiderUser
-import com.example.chaskirider.domain.repository.RiderSession
-import com.example.chaskirider.ui.screens.earnings.EarningsViewModel
-import com.example.chaskirider.data.earnings.SettlementParser
+import com.example.chaskirider.feature.earnings.domain.*
+import com.example.chaskirider.feature.orders.domain.*
+import com.example.chaskirider.feature.user.domain.RiderUser
+import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.earnings.ui.viewmodel.EarningsViewModel
+import com.example.chaskirider.feature.earnings.data.local.SettlementParser
 import com.google.firebase.Timestamp
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
@@ -28,10 +28,10 @@ class EarningsTest {
     @After fun cleanup() { Dispatchers.resetMain() }
 
     @Test fun tariffRoundsCombinedDistanceToCentAndAddsNoBonus() {
-        assertEquals(358, EarningsPolicy.routeCents(1234, 2345))
-        assertEquals(1, EarningsPolicy.routeCents(4, 4))
-        assertEquals(0, EarningsPolicy.routeCents(0, 0))
-        assertEquals(1000, EarningsPolicy.routeCents(4000, 6000))
+        assertEquals(358, OrderPolicy.routeCents(1234, 2345))
+        assertEquals(1, OrderPolicy.routeCents(4, 4))
+        assertEquals(0, OrderPolicy.routeCents(0, 0))
+        assertEquals(1000, OrderPolicy.routeCents(4000, 6000))
     }
     @Test fun completedUsesAcceptedQuoteAndCancellationEarnsZeroIncludingTip() {
         val done = EarningsPolicy.record(order())!!

@@ -1,6 +1,7 @@
 package com.example.chaskirider
 
-import com.example.chaskirider.domain.orders.*
+import com.example.chaskirider.core.platform.location.TrackingPosition
+import com.example.chaskirider.feature.orders.domain.*
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Test

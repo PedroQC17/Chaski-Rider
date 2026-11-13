@@ -1,9 +1,9 @@
 package com.example.chaskirider
 
 import androidx.test.platform.app.InstrumentationRegistry
-import com.example.chaskirider.data.support.DevicePhoneCalls
-import com.example.chaskirider.domain.support.CallAttemptDetector
-import com.example.chaskirider.domain.support.PhoneCallState
+import com.example.chaskirider.platform.DevicePhoneCalls
+import com.example.chaskirider.feature.orders.domain.CallAttemptDetector
+import com.example.chaskirider.feature.orders.domain.PhoneCallState
 import kotlinx.coroutines.*
 import org.junit.Assert.*
 import org.junit.Assume.assumeTrue

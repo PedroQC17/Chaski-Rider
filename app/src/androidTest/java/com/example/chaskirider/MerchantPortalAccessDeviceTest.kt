@@ -1,4 +1,4 @@
-package com.example.chaskirider
+﻿package com.example.chaskirider
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.functions.FirebaseFunctions
@@ -23,7 +23,7 @@ class MerchantPortalAccessDeviceTest {
         } catch (error: FirebaseFunctionsException) {
             assertFalse(operator)
             assertEquals(FirebaseFunctionsException.Code.PERMISSION_DENIED, error.code)
-            assertTrue(error.message.orEmpty().contains("Esta cuenta no está habilitada"))
+            assertTrue(error.message.orEmpty().contains("Esta cuenta no estÃ¡ habilitada"))
         }
     }
 }

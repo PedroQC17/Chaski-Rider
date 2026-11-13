@@ -1,6 +1,6 @@
 package com.example.chaskirider
 
-import com.example.chaskirider.domain.support.CustomerContact
+import com.example.chaskirider.feature.orders.domain.CustomerContact
 import org.junit.Assert.*
 import org.junit.Test
 

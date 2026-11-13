@@ -1,10 +1,10 @@
 package com.example.chaskirider
 
-import com.example.chaskirider.domain.chat.*
-import com.example.chaskirider.domain.model.RiderUser
-import com.example.chaskirider.domain.orders.*
-import com.example.chaskirider.domain.repository.RiderSession
-import com.example.chaskirider.ui.screens.chat.ChatViewModel
+import com.example.chaskirider.feature.chat.domain.*
+import com.example.chaskirider.feature.user.domain.RiderUser
+import com.example.chaskirider.feature.orders.domain.*
+import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.chat.ui.viewmodel.ChatViewModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.test.*
