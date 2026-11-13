@@ -17,10 +17,6 @@ interface SupportDraftDao {
     suspend fun delete(uid: String, content: String)
 }
 
-@Database(entities = [SupportDraftEntity::class], version = 1, exportSchema = true)
-abstract class SupportDraftDatabase : RoomDatabase() {
-    abstract fun drafts(): SupportDraftDao
-}
 
 class RoomSupportDraftStore(private val dao: SupportDraftDao) : SupportDraftStore {
     private val gson = Gson()

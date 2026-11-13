@@ -14,14 +14,6 @@ import com.example.chaskirider.feature.orders.domain.CallAttemptDetector
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-data class CustomerContactUiState(
-    val contact: CustomerContact? = null,
-    val waitedMillis: Long = 0,
-    val loading: Boolean = true,
-    val busy: Boolean = false,
-    val error: String? = null
-)
-
 class CustomerContactViewModel(
     private val store: CustomerContactStore,
     private val session: RiderSession,

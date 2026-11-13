@@ -30,11 +30,6 @@ interface RegistrationDraftDao {
     @Query("DELETE FROM document_captures WHERE uid = :uid") suspend fun clearCapture(uid: String)
 }
 
-@Database(entities = [RegistrationDraftEntity::class, DocumentCaptureEntity::class], version = 1, exportSchema = true)
-abstract class RegistrationDatabase : RoomDatabase() {
-    abstract fun drafts(): RegistrationDraftDao
-}
-
 class RoomRegistrationDraftRepository(private val dao: RegistrationDraftDao) : RegistrationDraftRepository {
     override suspend fun load(uid: String) = dao.load(uid)?.let {
         RegistrationDraft(it.uid, it.name, it.lastName, it.dni, it.phone, it.termsAccepted,

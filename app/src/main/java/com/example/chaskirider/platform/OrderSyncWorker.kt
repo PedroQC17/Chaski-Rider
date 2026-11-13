@@ -1,6 +1,6 @@
 package com.example.chaskirider.platform
 import com.example.chaskirider.feature.orders.data.local.OrderActionEntity
-import com.example.chaskirider.feature.orders.data.local.openOrderDatabase
+import com.example.chaskirider.data.local.openChaskiDatabase
 import com.example.chaskirider.feature.orders.data.remote.DeliveryPinRemote
 
 import com.example.chaskirider.feature.orders.domain.OrderStatus
@@ -24,7 +24,7 @@ class OrderSyncWorker(context: Context, params: WorkerParameters) : CoroutineWor
         val uid = inputData.getString("uid") ?: return Result.failure()
         val auth = FirebaseAuth.getInstance()
         if (auth.currentUser?.uid != uid) return Result.success()
-        val database = openOrderDatabase(applicationContext)
+        val database = openChaskiDatabase(applicationContext)
         try {
             val dao = database.orders()
             var blocked = false

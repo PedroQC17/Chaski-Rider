@@ -1,6 +1,6 @@
 package com.example.chaskirider.platform
-import com.example.chaskirider.feature.orders.data.local.DemoOrderDatabase
-import com.example.chaskirider.feature.orders.data.local.openOrderDatabase
+import com.example.chaskirider.data.local.ChaskiDatabase
+import com.example.chaskirider.data.local.openChaskiDatabase
 import com.example.chaskirider.feature.orders.data.remote.FirebaseOrderTracking
 
 import android.Manifest
@@ -29,7 +29,7 @@ class OrderTrackingService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var job: Job? = null
     private var activeKey: String? = null
-    private var database: DemoOrderDatabase? = null
+    private var database: ChaskiDatabase? = null
     private val auth = FirebaseAuth.getInstance()
     private var uid: String? = null
     private val authListener = FirebaseAuth.AuthStateListener { if (it.currentUser?.uid != uid) stopSelf() }
@@ -59,7 +59,7 @@ class OrderTrackingService : Service() {
         }
         auth.removeAuthStateListener(authListener)
         auth.addAuthStateListener(authListener)
-        val db = database ?: openOrderDatabase(this).also { database = it }
+        val db = database ?: openChaskiDatabase(this).also { database = it }
         val gson = Gson()
         val source = TrackingLocationSource(this)
         val remote = FirebaseOrderTracking(owner, orderId)

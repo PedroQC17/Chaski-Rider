@@ -1,209 +1,42 @@
 package com.example.chaskirider.feature.orders.ui.screens
-import com.example.chaskirider.feature.orders.ui.components.OrderNavigationButton
-import com.example.chaskirider.feature.orders.ui.components.OrderQuoteCard
-import com.example.chaskirider.feature.orders.ui.components.OrdersMap
-import com.example.chaskirider.feature.orders.ui.components.OrderSyncNotice
-import com.example.chaskirider.feature.support.ui.screens.AssistantDialog
-import com.example.chaskirider.feature.support.ui.screens.OrderHelpPage
 
-import com.example.chaskirider.di.AppContainer
-import com.example.chaskirider.feature.orders.ui.viewmodel.CustomerContactViewModel
-import com.example.chaskirider.feature.orders.ui.viewmodel.OrdersUiState
-import com.example.chaskirider.feature.orders.ui.viewmodel.OrdersViewModel
-import com.example.chaskirider.feature.support.domain.SupportCategory
-import com.example.chaskirider.feature.support.domain.SupportTopic
-import com.example.chaskirider.feature.support.ui.viewmodel.AssistantViewModel
-import android.net.Uri
-import android.Manifest
-import android.content.pm.PackageManager
-import androidx.core.content.ContextCompat
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
-import com.example.chaskirider.feature.orders.domain.OrderProblemReason
-import com.example.chaskirider.R
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
 import com.example.chaskirider.feature.chat.ui.components.ChatDialog
 import com.example.chaskirider.feature.chat.ui.viewmodel.ChatUiState
 import com.example.chaskirider.feature.chat.ui.viewmodel.ChatViewModel
-import com.example.chaskirider.ui.theme.Orange
-import java.util.Locale
+import com.example.chaskirider.feature.orders.ui.components.ChatFloatingActionButton
+import com.example.chaskirider.feature.orders.ui.components.ExpandedOrderContent
+import com.example.chaskirider.feature.orders.ui.components.OrderActions
+import com.example.chaskirider.feature.orders.ui.components.OrderNavigationButton
+import com.example.chaskirider.feature.orders.ui.components.OrdersMap
+import com.example.chaskirider.feature.orders.ui.components.OrdersTopHeader
+import com.example.chaskirider.feature.orders.ui.viewmodel.OrdersUiState
 
 @Composable
-fun OrdersRoute(viewModel: OrdersViewModel, onMenu: () -> Unit, isDemo: Boolean = false, onSupport: () -> Unit = {},
-    onOrderHelp: (OrderProblemReason) -> Unit = { onSupport() },
-    onTicket: (String) -> Unit = { onSupport() },
-    chatViewModel: ChatViewModel = viewModel {
-        ChatViewModel(com.example.chaskirider.di.AppContainer.orderChatRepository,
-            com.example.chaskirider.di.AppContainer.chatDraftStore,
-            com.example.chaskirider.di.AppContainer.riderSession)
-    }) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val chatState by chatViewModel.uiState.collectAsStateWithLifecycle()
-
-    val context = LocalContext.current
-    val contactOwner by com.example.chaskirider.di.AppContainer.riderSession.user.collectAsStateWithLifecycle()
-    val activeOrderId = state.snapshot?.batch?.stops?.singleOrNull()?.orderId
-    var helpPage by androidx.compose.runtime.saveable.rememberSaveable(contactOwner?.id, activeOrderId) { mutableStateOf("order") }
-
-    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
-        viewModel.confirmEvidenceCapture(success)
-    }
-
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted && state.pendingCaptureUri != null) {
-            try { cameraLauncher.launch(state.pendingCaptureUri!!) } catch (e: Exception) { e.printStackTrace() }
-        }
-    }
-
-    val launchCamera = {
-        val uri = viewModel.prepareEvidenceCapture(context)
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-            try { cameraLauncher.launch(uri) } catch (e: Exception) { e.printStackTrace() }
-        } else {
-            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-        }
-    }
-
-    val owner = LocalLifecycleOwner.current
-    DisposableEffect(owner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.refresh()
-                viewModel.fetchCurrentLocation()
-            }
-        }
-        owner.lifecycle.addObserver(observer)
-        viewModel.refresh()
-        viewModel.fetchCurrentLocation()
-        onDispose { owner.lifecycle.removeObserver(observer) }
-    }
-
-    LaunchedEffect(state.snapshot) {
-        chatViewModel.syncOrderState(state.snapshot)
-    }
-
-    if (helpPage == "order" || activeOrderId == null || state.snapshot?.isCompleted == true) OrdersScreen(
-        state = state,
-        chatState = chatState,
-        chatViewModel = chatViewModel,
-        isDemo = isDemo,
-        onMenu = onMenu,
-        onOffer = viewModel::createOffer,
-        onAccept = viewModel::accept,
-        onReject = viewModel::reject,
-        onArriveMerchant = viewModel::arriveAtMerchant,
-        onReportNotReady = viewModel::reportNotReady,
-        onPickup = viewModel::pickup,
-        onDeliver = viewModel::deliver,
-        onClearEvidencePhoto = viewModel::clearEvidencePhoto,
-        onTakeEvidencePhoto = { launchCamera() },
-        onUpdateDeliveryNote = viewModel::updateDeliveryNote,
-        onUpdatePin = viewModel::updateDeliveryPin,
-        onReset = { if (state.snapshot?.batch != null && state.snapshot?.isCompleted != true) viewModel.openProblem() else viewModel.reset() },
-        onRefresh = viewModel::refresh,
-        onRetrySync = viewModel::retrySync,
-        onClearError = viewModel::clearError,
-        onSupport = onSupport,
-        onOrderHelp = { helpPage = "help" },
-    )
-    if (state.problemDialogOpen) OrderProblemDialog(state, viewModel::closeProblem,
-        viewModel::selectProblem, viewModel::updateProblemDetail, viewModel::confirmProblem)
-    if (helpPage == "help" && activeOrderId != null && state.snapshot?.isCompleted != true)
-        com.example.chaskirider.feature.support.ui.screens.OrderHelpPage("Ayuda con este pedido", { helpPage = "order" }) {
-            Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { helpPage = "assistant" }, modifier = Modifier.fillMaxWidth()) { Text("Consultar al asistente Chaski") }
-                com.example.chaskirider.feature.support.domain.SupportTopic.entries.filter {
-                    it.category == com.example.chaskirider.feature.support.domain.SupportCategory.ORDER && when (it) {
-                        com.example.chaskirider.feature.support.domain.SupportTopic.LOCAL_CLOSED,
-                        com.example.chaskirider.feature.support.domain.SupportTopic.ORDER_NOT_READY -> state.snapshot?.pickedUp != true
-                        com.example.chaskirider.feature.support.domain.SupportTopic.CUSTOMER_UNREACHABLE -> state.snapshot?.pickedUp == true
-                        else -> true
-                    }
-                }.forEach { topic ->
-                    OutlinedButton(modifier = Modifier.fillMaxWidth(), onClick = {
-                        helpPage = "order"
-                        if (topic == com.example.chaskirider.feature.support.domain.SupportTopic.CUSTOMER_UNREACHABLE &&
-                            state.snapshot?.pickedUp == true && state.snapshot?.isCompleted != true) helpPage = "contact"
-                        else onOrderHelp(when (topic) {
-                            com.example.chaskirider.feature.support.domain.SupportTopic.CUSTOMER_UNREACHABLE -> OrderProblemReason.CUSTOMER_UNREACHABLE
-                            com.example.chaskirider.feature.support.domain.SupportTopic.ORDER_NOT_READY -> OrderProblemReason.ORDER_UNAVAILABLE
-                            com.example.chaskirider.feature.support.domain.SupportTopic.LOCAL_CLOSED -> OrderProblemReason.LOCAL_CLOSED
-                            com.example.chaskirider.feature.support.domain.SupportTopic.ADDRESS_PROBLEM -> OrderProblemReason.ADDRESS_PROBLEM
-                            else -> OrderProblemReason.OTHER
-                        })
-                    }) { Text(topic.title) }
-                }
-            }
-        }
-    val contactStop = state.snapshot?.batch?.stops?.singleOrNull()
-    if (helpPage == "contact" && contactStop != null && state.snapshot?.pickedUp == true && state.snapshot?.isCompleted != true) {
-        val application = context.applicationContext
-        val contactViewModel: com.example.chaskirider.feature.orders.ui.viewmodel.CustomerContactViewModel = viewModel {
-            com.example.chaskirider.feature.orders.ui.viewmodel.CustomerContactViewModel(
-                com.example.chaskirider.di.AppContainer.customerContactStore,
-                com.example.chaskirider.di.AppContainer.riderSession,
-                com.example.chaskirider.di.AppContainer.locationRepository,
-                boot = { android.provider.Settings.Global.getInt(application.contentResolver, android.provider.Settings.Global.BOOT_COUNT, -1) },
-                service = com.example.chaskirider.di.AppContainer.customerAbsenceService)
-        }
-        LaunchedEffect(state.snapshot, contactOwner?.id) { contactViewModel.bind(state.snapshot) }
-        com.example.chaskirider.feature.orders.ui.screens.CustomerContactDialog(contactViewModel, contactStop.orderId,
-            contactStop.customerPhone, onClose = { helpPage = "help" }, onSupport = {
-                helpPage = "assistantFromContact"
-            })
-    }
-    if (helpPage in listOf("assistant", "assistantFromContact") && contactStop != null && state.snapshot?.isCompleted != true) {
-        val assistant: com.example.chaskirider.feature.support.ui.viewmodel.AssistantViewModel = viewModel {
-            com.example.chaskirider.feature.support.ui.viewmodel.AssistantViewModel(
-                com.example.chaskirider.di.AppContainer.assistantRepository,
-                com.example.chaskirider.di.AppContainer.chatDraftStore,
-                com.example.chaskirider.di.AppContainer.riderSession,
-                finishOrder = { com.example.chaskirider.di.AppContainer.offerRepository.resolveCustomerAbsence(it) })
-        }
-        LaunchedEffect(contactStop.orderId) { assistant.bind(contactStop.orderId) }
-        val assistantState by assistant.uiState.collectAsStateWithLifecycle()
-        com.example.chaskirider.feature.support.ui.screens.AssistantDialog(assistantState, assistant::changeBody,
-            onSend = { assistant.send() }, onHuman = { assistant.send(human = true) },
-            onResolve = { assistant.resolve { helpPage = "order"; viewModel.refresh() } },
-            onTicket = { helpPage = "order"; onTicket(it) }, onClose = { helpPage = if (helpPage == "assistantFromContact") "contact" else "help" })
-    }
-}
-
-@Composable
-private fun OrdersScreen(
+internal fun OrdersScreen(
     state: OrdersUiState,
     chatState: ChatUiState,
     chatViewModel: ChatViewModel,
-    isDemo: Boolean,
     onMenu: () -> Unit,
-    onOffer: () -> Unit,
     onAccept: () -> Unit,
     onReject: () -> Unit,
     onArriveMerchant: () -> Unit,
@@ -217,14 +50,11 @@ private fun OrdersScreen(
     onReset: () -> Unit,
     onRefresh: () -> Unit,
     onRetrySync: () -> Unit,
-    onClearError: () -> Unit,
     onSupport: () -> Unit,
     onOrderHelp: () -> Unit,
 ) {
     val snapshot = state.snapshot
     val actionsEnabled = !state.busy
-    val offer = snapshot?.offer
-    val quote = offer?.quote ?: snapshot?.batch
     var bottomCardHeight by remember { mutableStateOf(300.dp) }
     val density = LocalDensity.current
 
@@ -256,24 +86,23 @@ private fun OrdersScreen(
         ) {
             ExpandedOrderContent(
                 state = state,
-                isDemo = isDemo,
                 actionsEnabled = actionsEnabled,
                 onRefresh = onRefresh,
                 onRetrySync = onRetrySync,
-                onClearError = onClearError,
-                onReject = onReject,
-                onAccept = onAccept,
-                onArriveMerchant = onArriveMerchant,
-                onReportNotReady = onReportNotReady,
-                onPickup = onPickup,
-                onDeliver = onDeliver,
-                onClearEvidencePhoto = onClearEvidencePhoto,
-                onTakeEvidencePhoto = onTakeEvidencePhoto,
-                onUpdateDeliveryNote = onUpdateDeliveryNote,
-                onUpdatePin = onUpdatePin,
-                onReset = onReset,
-                onOffer = onOffer,
                 onSupport = onSupport,
+                actions = OrderActions(
+                    onAccept = onAccept,
+                    onReject = onReject,
+                    onArriveMerchant = onArriveMerchant,
+                    onReportNotReady = onReportNotReady,
+                    onPickup = onPickup,
+                    onDeliver = onDeliver,
+                    onClearEvidencePhoto = onClearEvidencePhoto,
+                    onTakeEvidencePhoto = onTakeEvidencePhoto,
+                    onUpdateDeliveryNote = onUpdateDeliveryNote,
+                    onUpdatePin = onUpdatePin,
+                    onReset = onReset,
+                ),
             )
         }
 
@@ -288,474 +117,4 @@ private fun OrdersScreen(
             onSpeechError = chatViewModel::setSpeechError
         )
     }
-}
-
-@Composable
-private fun OrdersTopHeader(onMenu: () -> Unit) {
-    Surface(
-        Modifier.statusBarsPadding().padding(16.dp),
-        shape = RoundedCornerShape(22.dp),
-        shadowElevation = 4.dp
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 4.dp)) {
-            IconButton(onClick = onMenu) { Icon(Icons.Default.Menu, stringResource(R.string.orders_menu)) }
-            Text(
-                stringResource(R.string.text_pedidos),
-                Modifier.padding(end = 12.dp),
-                fontWeight = FontWeight.Bold
-            )
-        }
-    }
-}
-
-@Composable
-private fun BoxScope.ChatFloatingActionButton(onClick: () -> Unit) {
-    ExtendedFloatingActionButton(
-        onClick = onClick,
-        modifier = Modifier
-            .align(Alignment.TopEnd)
-            .statusBarsPadding()
-            .padding(top = 76.dp, end = 16.dp),
-        containerColor = Orange,
-        contentColor = Color.White,
-        shape = RoundedCornerShape(22.dp),
-        elevation = FloatingActionButtonDefaults.elevation(4.dp),
-        icon = {
-            Icon(
-                imageVector = Icons.Default.Email,
-                contentDescription = "Chat del Pedido",
-                modifier = Modifier.size(20.dp)
-            )
-        },
-        text = {
-            Text(
-                text = "Chat",
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.labelLarge
-            )
-        }
-    )
-}
-
-@Composable
-private fun ExpandedOrderContent(
-    state: OrdersUiState,
-    isDemo: Boolean,
-    actionsEnabled: Boolean,
-    onRefresh: () -> Unit,
-    onRetrySync: () -> Unit,
-    onClearError: () -> Unit,
-    onReject: () -> Unit,
-    onAccept: () -> Unit,
-    onArriveMerchant: () -> Unit,
-    onReportNotReady: () -> Unit,
-    onPickup: () -> Unit,
-    onDeliver: () -> Unit,
-    onClearEvidencePhoto: () -> Unit,
-    onTakeEvidencePhoto: () -> Unit,
-    onUpdateDeliveryNote: (String) -> Unit,
-    onUpdatePin: (String) -> Unit,
-    onReset: () -> Unit,
-    onOffer: () -> Unit,
-    onSupport: () -> Unit,
-) {
-    val snapshot = state.snapshot
-    val offer = snapshot?.offer
-    val quote = offer?.quote ?: snapshot?.batch
-    val scroll = rememberScrollState()
-    LaunchedEffect(offer?.id, snapshot?.batch?.stops?.firstOrNull()?.orderId,
-        snapshot?.arrivedAt, snapshot?.pickedUp, snapshot?.isCompleted) { scroll.scrollTo(0) }
-
-    if (offer != null) {
-        Column(Modifier.height(LocalConfiguration.current.screenHeightDp.dp * 0.25f).padding(horizontal = 16.dp, vertical = 8.dp)) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Nueva oferta", fontWeight = FontWeight.Bold)
-                Text("${state.secondsLeft} s", color = MaterialTheme.colorScheme.primary)
-                Text(stringResource(R.string.orders_money, offer.quote.totalCents / 100.0), fontWeight = FontWeight.Bold)
-            }
-            Column(Modifier.weight(1f).verticalScroll(scroll), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("RECOJO · ${snapshot.merchantName.orEmpty()}", fontWeight = FontWeight.SemiBold)
-                snapshot.merchantAddress?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-                Text("ENTREGA", fontWeight = FontWeight.SemiBold)
-                Text(offer.quote.stops.firstOrNull()?.address.orEmpty(), style = MaterialTheme.typography.bodySmall)
-                state.error?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error) }
-            }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedButton(onClick = onReject, enabled = actionsEnabled && state.secondsLeft > 0 && state.isAvailable, modifier = Modifier.weight(1f)) { Text("Rechazar") }
-                Button(onClick = onAccept, enabled = actionsEnabled && state.secondsLeft > 0 && state.isAvailable, modifier = Modifier.weight(1f)) { Text("Aceptar") }
-            }
-        }
-        return
-    }
-    val maxHeight = LocalConfiguration.current.screenHeightDp.dp * 0.25f
-    Column(Modifier.height(maxHeight)) {
-        Column(
-            Modifier.fillMaxWidth().weight(1f, fill = false).verticalScroll(scroll).padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            if (state.busy) LinearProgressIndicator(Modifier.fillMaxWidth())
-            OrderSyncNotice(state.sync, onRetrySync)
-
-
-            state.error?.let { errorRes ->
-                Surface(
-                    color = MaterialTheme.colorScheme.errorContainer,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(
-                            stringResource(errorRes),
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            TextButton(onClick = onRefresh, enabled = !state.busy) {
-                                Text(stringResource(R.string.orders_refresh))
-                            }
-                            if (isDemo) {
-                                Button(
-                                    onClick = onClearError,
-                                    enabled = !state.busy,
-                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                                ) {
-                                    Text("Cerrar aviso")
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (offer != null) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(stringResource(R.string.orders_new_offer), fontWeight = FontWeight.Bold)
-                    Text(stringResource(R.string.orders_seconds, state.secondsLeft), color = MaterialTheme.colorScheme.primary)
-                }
-                LinearProgressIndicator(progress = { (state.secondsLeft / 45f).coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth())
-            } else {
-                val title = when {
-                    snapshot?.completedUnsuccessfullyAt != null -> "Completado · Entrega no exitosa"
-                    snapshot?.isDelivered == true -> "Entrega completada con éxito"
-                    snapshot?.pickedUp == true -> " En camino al cliente"
-                    snapshot?.arrivedAt != null -> " En establecimiento"
-                    quote != null -> stringResource(R.string.orders_accepted)
-                    else -> stringResource(R.string.orders_empty)
-                }
-                Text(title, fontWeight = FontWeight.Bold)
-            }
-
-            snapshot?.problem?.let { problem ->
-                Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = RoundedCornerShape(12.dp)) {
-                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("Problema registrado", fontWeight = FontWeight.Bold)
-                        Text(problemLabel(problem.reason), style = MaterialTheme.typography.bodyMedium)
-                        Text(problem.detail, style = MaterialTheme.typography.bodySmall)
-                        Text("Consulta Ayuda para resolver esta incidencia.",
-                            style = MaterialTheme.typography.bodySmall)
-                        
-                    }
-                }
-            }
-
-            quote?.let {
-                OrderQuoteCard(
-                    quote = it,
-                    additional = offer != null && snapshot?.batch != null,
-                    merchantName = snapshot?.merchantName,
-                    merchantZone = snapshot?.merchantZone,
-                    merchantAddress = snapshot?.merchantAddress,
-                    offerReason = offer?.reason,
-                    reasonMeters = offer?.reasonMeters,
-                    waitingCompensationCents = snapshot?.waitingCompensationCents ?: 0,
-                    showPaymentDetails = offer != null || snapshot?.isCompleted == true
-                )
-            }
-
-            if (offer != null) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Ganancia del pedido", fontWeight = FontWeight.Bold)
-                Text(stringResource(R.string.orders_money, offer.quote.totalCents / 100.0), fontWeight = FontWeight.Bold)
-            }
-            OrderActionControls(
-                state = state,
-                isDemo = isDemo,
-                actionsEnabled = actionsEnabled,
-                onReject = onReject,
-                onAccept = onAccept,
-                onArriveMerchant = onArriveMerchant,
-                onReportNotReady = onReportNotReady,
-                onPickup = onPickup,
-                onDeliver = onDeliver,
-                onClearEvidencePhoto = onClearEvidencePhoto,
-                onTakeEvidencePhoto = onTakeEvidencePhoto,
-                onUpdateDeliveryNote = onUpdateDeliveryNote,
-                onUpdatePin = onUpdatePin,
-                onReset = onReset,
-                onOffer = onOffer,
-            )
-        }
-    }
-}
-
-@Composable
-private fun OrderActionControls(
-    state: OrdersUiState,
-    isDemo: Boolean,
-    actionsEnabled: Boolean,
-    onReject: () -> Unit,
-    onAccept: () -> Unit,
-    onArriveMerchant: () -> Unit,
-    onReportNotReady: () -> Unit,
-    onPickup: () -> Unit,
-    onDeliver: () -> Unit,
-    onClearEvidencePhoto: () -> Unit,
-    onTakeEvidencePhoto: () -> Unit,
-    onUpdateDeliveryNote: (String) -> Unit,
-    onUpdatePin: (String) -> Unit,
-    onReset: () -> Unit,
-    onOffer: () -> Unit,
-) {
-    val snapshot = state.snapshot
-    val offer = snapshot?.offer
-    val quote = offer?.quote ?: snapshot?.batch
-
-    if (offer != null) {
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedButton(
-                onClick = onReject,
-                enabled = actionsEnabled && state.secondsLeft > 0 && state.isAvailable,
-                modifier = Modifier.weight(1f)
-            ) { Text(stringResource(R.string.orders_reject)) }
-
-            Button(
-                onClick = onAccept,
-                enabled = actionsEnabled && state.secondsLeft > 0 && state.isAvailable,
-                modifier = Modifier.weight(1f)
-            ) { Text(stringResource(R.string.orders_accept)) }
-        }
-    } else if (quote != null) {
-        val isCompleted = snapshot?.isCompleted == true
-        val isPickedUp = snapshot?.pickedUp == true
-
-        if (isCompleted) {
-            Surface(
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-            ) {
-                Column(Modifier.padding(12.dp)) {
-                    Text(
-                        if (snapshot?.completedUnsuccessfullyAt != null) "Completado · Entrega no exitosa · Cliente ausente"
-                        else "El pedido fue entregado al cliente.",
-                        fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Text(
-                        if (snapshot?.completedUnsuccessfullyAt != null)
-                            "Recibes el pago de la ruta sin propina. Puedes continuar repartiendo."
-                        else "Listo para recibir otro pedido.",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            }
-
-            Button(
-                onClick = onReset,
-                enabled = actionsEnabled,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Siguiente Pedido")
-            }
-        } else if (isPickedUp) {
-            val distCustomer = state.distanceToCustomerMeters
-            if (distCustomer != null) {
-                Text(
-                    text = String.format(Locale.getDefault(), "Distancia al cliente: %.1f km", distCustomer / 1000.0),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-            }
-
-            if (!state.isNearCustomer) Text(
-                stringResource(if (distCustomer == null) R.string.orders_checking_location else R.string.orders_near_delivery),
-                style = MaterialTheme.typography.bodySmall)
-
-            if (snapshot?.paidByCustomer == true) {
-                Text("Pedido pagado · Solicita al cliente su PIN de 4 dígitos")
-                if (!state.sync.online) Text(stringResource(R.string.orders_pin_connection), style = MaterialTheme.typography.bodySmall)
-                OutlinedTextField(value = state.deliveryPin, onValueChange = onUpdatePin,
-                    label = { Text("PIN del cliente") }, singleLine = true, enabled = actionsEnabled,
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.NumberPassword),
-                    visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth())
-            } else Text("")
-
-            // nota opcional para verificacion de entrega
-            OutlinedTextField(
-                value = state.deliveryNote ?: "",
-                onValueChange = onUpdateDeliveryNote,
-                label = { Text("Nota de entrega (opcional)") },
-                placeholder = { Text("Ej: Dejado en recepción") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
-            )
-
-            Button(
-                onClick = onDeliver,
-                enabled = actionsEnabled && state.isNearCustomer && (snapshot?.paidByCustomer != true || (state.deliveryPin.length == 4 && state.sync.online)),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Confirmar entrega")
-            }
-
-        } else {
-            val arrived = snapshot?.arrivedAt != null
-            if (!state.isWithinGeofence) Text(
-                stringResource(if (state.distanceToMerchantMeters == null) R.string.orders_checking_location else R.string.orders_near_pickup),
-                style = MaterialTheme.typography.bodySmall)
-
-            if (!arrived) {
-                val dist = state.distanceToMerchantMeters
-                if (dist != null) {
-                    Text(
-                        text = "Distancia al establecimiento: $dist m",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.secondary
-                    )
-                }
-
-                Button(
-                    onClick = onArriveMerchant,
-                    enabled = actionsEnabled && state.isWithinGeofence,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        "Llegué al local"
-                    )
-                }
-            } else {
-                val notReady = snapshot.isNotReadyReported
-                if (!notReady) {
-                    OutlinedButton(
-                        onClick = onReportNotReady,
-                        enabled = actionsEnabled && state.isWithinGeofence,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Reportar: Pedido no está listo")
-                    }
-                } else {
-                    val mins = state.elapsedWaitSeconds / 60
-                    val secs = state.elapsedWaitSeconds % 60
-                    val timeStr = String.format(Locale.getDefault(), "%02d:%02d", mins, secs)
-
-                    Surface(
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-                    ) {
-                        Column(Modifier.padding(12.dp)) {
-                            Text(
-                                text = "⏱ Tiempo de espera: $timeStr min",
-                                fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                            if (state.elapsedWaitSeconds > 300) {
-                                val extraMins = (state.elapsedWaitSeconds - 300 + 59) / 60
-                                val compSol = (extraMins * 20) / 100.0
-                                Text(
-                                    text = String.format(Locale.getDefault(), "Compensación acumulada: S/ %.2f", compSol),
-                                    color = MaterialTheme.colorScheme.primary,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-                        }
-                    }
-                }
-
-                Button(
-                    onClick = onPickup,
-                    enabled = actionsEnabled && state.isWithinGeofence,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Confirmar recojo")
-                }
-            }
-
-            if (isDemo) {
-                TextButton(
-                    onClick = onReset,
-                    enabled = actionsEnabled,
-                    modifier = Modifier.fillMaxWidth()
-                ) { Text("Cancelar pedido") }
-            }
-        }
-    } else {
-        if (isDemo) {
-            val canOffer = snapshot != null && state.isAvailable
-            Text(stringResource(if (!state.isAvailable) R.string.orders_connect_to_search else if (state.searched) R.string.orders_wait_nearby else R.string.orders_searching_nearby), style = MaterialTheme.typography.bodySmall)
-            if (canOffer) {
-                Button(
-                    onClick = onOffer,
-                    enabled = actionsEnabled,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(stringResource(R.string.orders_generate))
-                }
-
-            }
-        } else {
-            Text(
-                "Esperando ofertas de pedidos en tiempo real...",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-        }
-    }
-}
-
-private fun problemLabel(reason: OrderProblemReason): String = when (reason) {
-    OrderProblemReason.LOCAL_CLOSED -> "El local está cerrado"
-    OrderProblemReason.ORDER_UNAVAILABLE -> "El local no tiene el pedido"
-    OrderProblemReason.VEHICLE_PROBLEM -> "Problema con mi vehículo"
-    OrderProblemReason.CUSTOMER_UNREACHABLE -> "El cliente no responde"
-    OrderProblemReason.ADDRESS_PROBLEM -> "Problema con la dirección"
-    OrderProblemReason.OTHER -> "Otro problema"
-}
-
-@Composable
-private fun OrderProblemDialog(state: OrdersUiState, onClose: () -> Unit,
-    onReason: (OrderProblemReason) -> Unit, onDetail: (String) -> Unit, onConfirm: () -> Unit) {
-    val pickedUp = state.snapshot?.pickedUp == true
-    val reasons = if (pickedUp) listOf(OrderProblemReason.CUSTOMER_UNREACHABLE, OrderProblemReason.ADDRESS_PROBLEM,
-        OrderProblemReason.VEHICLE_PROBLEM, OrderProblemReason.OTHER)
-        else listOf(OrderProblemReason.LOCAL_CLOSED, OrderProblemReason.ORDER_UNAVAILABLE,
-            OrderProblemReason.VEHICLE_PROBLEM, OrderProblemReason.OTHER)
-    AlertDialog(onDismissRequest = onClose,
-        title = { Text(if (pickedUp) "Problema con la entrega" else "Cancelar pedido") },
-        text = {
-            Column(Modifier.heightIn(max = LocalConfiguration.current.screenHeightDp.dp * 0.55f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(if (pickedUp) "El pedido seguirá activo mientras soporte revisa el problema."
-                    else "Indica el motivo para cancelar el pedido.")
-                reasons.forEach { reason ->
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        RadioButton(selected = state.problemReason == reason, onClick = { onReason(reason) }, enabled = !state.busy)
-                        TextButton(onClick = { onReason(reason) }, enabled = !state.busy) { Text(problemLabel(reason)) }
-                    }
-                }
-                OutlinedTextField(value = state.problemDetail, onValueChange = onDetail, enabled = !state.busy,
-                    label = { Text("Describe lo ocurrido") }, supportingText = { Text("Entre 10 y 500 caracteres") },
-                    modifier = Modifier.fillMaxWidth(), minLines = 2, maxLines = 4)
-                state.error?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error) }
-            }
-        },
-        confirmButton = { TextButton(onClick = onConfirm,
-            enabled = !state.busy && state.problemReason != null && state.problemDetail.trim().length >= 10) {
-            Text(if (pickedUp) "Registrar problema" else "Confirmar cancelación")
-        } },
-        dismissButton = { TextButton(onClick = onClose, enabled = !state.busy) { Text("Volver al pedido") } })
 }
