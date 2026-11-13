@@ -1,6 +1,6 @@
 package com.example.chaskirider.platform
 import com.example.chaskirider.feature.orders.data.local.OrderActionEntity
-import com.example.chaskirider.data.local.openChaskiDatabase
+import com.example.chaskirider.database.openChaskiDatabase
 import com.example.chaskirider.feature.orders.data.remote.DeliveryPinRemote
 
 import com.example.chaskirider.feature.orders.domain.OrderStatus

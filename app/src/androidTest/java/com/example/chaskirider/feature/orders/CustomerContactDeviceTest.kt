@@ -7,8 +7,8 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
-import com.example.chaskirider.data.local.ChaskiDatabase
-import com.example.chaskirider.data.local.openChaskiDatabase
+import com.example.chaskirider.database.ChaskiDatabase
+import com.example.chaskirider.database.openChaskiDatabase
 import com.example.chaskirider.feature.orders.data.local.RoomCustomerContactStore
 import com.example.chaskirider.core.platform.location.GeoPoint
 import com.example.chaskirider.feature.user.domain.RiderUser

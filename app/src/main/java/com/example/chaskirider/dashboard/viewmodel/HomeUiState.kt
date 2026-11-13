@@ -1,4 +1,4 @@
-package com.example.chaskirider.dashboard.ui.viewmodel
+package com.example.chaskirider.dashboard.viewmodel
 
 import com.example.chaskirider.core.platform.location.GeoPoint
 import com.example.chaskirider.feature.user.domain.RiderUser

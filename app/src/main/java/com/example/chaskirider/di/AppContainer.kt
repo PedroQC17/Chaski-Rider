@@ -18,7 +18,7 @@ import com.example.chaskirider.feature.support.domain.AssistantRepository
 import com.example.chaskirider.feature.support.domain.SupportDraftStore
 import com.example.chaskirider.feature.support.domain.SupportRepository
 import com.example.chaskirider.feature.user.data.local.RoomRegistrationDraftRepository
-import com.example.chaskirider.data.local.openChaskiDatabase
+import com.example.chaskirider.database.openChaskiDatabase
 import android.content.Context
 import com.example.chaskirider.core.platform.location.DeviceLocationRepository
 import com.example.chaskirider.core.text.AndroidTextProvider

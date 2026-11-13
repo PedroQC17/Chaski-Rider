@@ -1,4 +1,4 @@
-package com.example.chaskirider.dashboard.ui.components
+package com.example.chaskirider.dashboard.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,7 +10,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.chaskirider.R
-import com.example.chaskirider.dashboard.ui.viewmodel.HomeUiState
+import com.example.chaskirider.dashboard.viewmodel.HomeUiState
 
 @Composable
 fun ConnectionPanel(state: HomeUiState, onToggle: () -> Unit) {

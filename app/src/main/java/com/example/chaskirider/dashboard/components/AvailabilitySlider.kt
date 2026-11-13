@@ -1,4 +1,4 @@
-package com.example.chaskirider.dashboard.ui.components
+package com.example.chaskirider.dashboard.components
 
 import com.example.chaskirider.R
 import androidx.compose.ui.res.stringResource

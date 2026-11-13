@@ -1,4 +1,4 @@
-package com.example.chaskirider.data.local
+package com.example.chaskirider.database
 
 import android.content.Context
 import android.util.Log

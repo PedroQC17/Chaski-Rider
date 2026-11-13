@@ -1,4 +1,4 @@
-package com.example.chaskirider.dashboard.ui.components
+package com.example.chaskirider.dashboard.components
 import com.example.chaskirider.ui.components.riderMapMarker
 
 import com.example.chaskirider.feature.orders.domain.DemandZone
@@ -19,7 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.chaskirider.BuildConfig
 import com.example.chaskirider.R
-import com.example.chaskirider.dashboard.ui.viewmodel.HomeUiState
+import com.example.chaskirider.dashboard.viewmodel.HomeUiState
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng

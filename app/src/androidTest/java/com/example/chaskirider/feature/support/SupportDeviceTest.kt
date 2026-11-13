@@ -5,9 +5,9 @@ import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.room.Room
-import com.example.chaskirider.data.local.ChaskiDatabase
+import com.example.chaskirider.database.ChaskiDatabase
 import androidx.test.platform.app.InstrumentationRegistry
-import com.example.chaskirider.data.local.openChaskiDatabase
+import com.example.chaskirider.database.openChaskiDatabase
 import com.example.chaskirider.feature.support.data.local.RoomSupportDraftStore
 import com.example.chaskirider.feature.user.domain.RiderUser
 import com.example.chaskirider.feature.user.domain.RiderSession

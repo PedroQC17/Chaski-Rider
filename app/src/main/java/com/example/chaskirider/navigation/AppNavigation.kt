@@ -39,8 +39,8 @@ import com.example.chaskirider.feature.user.ui.viewmodel.RiderProfileViewModel
 import com.example.chaskirider.feature.user.ui.navigation.authGraph
 import com.example.chaskirider.feature.user.ui.navigation.onboardingGraph
 import com.example.chaskirider.feature.user.ui.navigation.profileGraph
-import com.example.chaskirider.dashboard.ui.viewmodel.HomeViewModel
-import com.example.chaskirider.dashboard.ui.navigation.homeGraph
+import com.example.chaskirider.dashboard.viewmodel.HomeViewModel
+import com.example.chaskirider.dashboard.navigation.homeGraph
 import com.example.chaskirider.feature.notifications.ui.viewmodel.NotificationsViewModel
 import com.example.chaskirider.feature.notifications.ui.navigation.notificationsGraph
 import com.example.chaskirider.feature.orders.ui.viewmodel.OrdersViewModel

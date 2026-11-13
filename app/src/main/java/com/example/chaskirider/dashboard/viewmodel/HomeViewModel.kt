@@ -1,4 +1,4 @@
-package com.example.chaskirider.dashboard.ui.viewmodel
+package com.example.chaskirider.dashboard.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
