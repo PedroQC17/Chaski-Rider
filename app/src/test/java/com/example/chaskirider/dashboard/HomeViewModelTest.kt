@@ -9,7 +9,7 @@ import com.example.chaskirider.feature.user.domain.RiderSession
 import com.example.chaskirider.feature.user.domain.RiderUserRepository
 import com.example.chaskirider.feature.user.FakeRiderUserRepository
 import com.example.chaskirider.core.text.*
-import com.example.chaskirider.dashboard.ui.viewmodel.HomeViewModel
+import com.example.chaskirider.dashboard.viewmodel.HomeViewModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.*

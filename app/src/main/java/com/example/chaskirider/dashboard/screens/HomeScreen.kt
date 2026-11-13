@@ -1,6 +1,6 @@
-package com.example.chaskirider.dashboard.ui.screens
+package com.example.chaskirider.dashboard.screens
 
-import com.example.chaskirider.dashboard.ui.viewmodel.HomeUiState
+import com.example.chaskirider.dashboard.viewmodel.HomeUiState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -19,8 +19,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.chaskirider.R
 import com.example.chaskirider.feature.orders.domain.DemandZone
-import com.example.chaskirider.dashboard.ui.components.ConnectionPanel
-import com.example.chaskirider.dashboard.ui.components.WorkMap
+import com.example.chaskirider.dashboard.components.ConnectionPanel
+import com.example.chaskirider.dashboard.components.WorkMap
 import com.example.chaskirider.ui.theme.ChaskiRiderTheme
 import java.text.SimpleDateFormat
 import java.util.Date

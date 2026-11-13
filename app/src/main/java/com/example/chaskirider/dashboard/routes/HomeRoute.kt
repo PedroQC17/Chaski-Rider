@@ -1,7 +1,7 @@
-package com.example.chaskirider.dashboard.ui.routes
-import com.example.chaskirider.dashboard.ui.screens.HomeScreen
+package com.example.chaskirider.dashboard.routes
+import com.example.chaskirider.dashboard.screens.HomeScreen
 
-import com.example.chaskirider.dashboard.ui.viewmodel.HomeViewModel
+import com.example.chaskirider.dashboard.viewmodel.HomeViewModel
 import com.example.chaskirider.platform.OrderSearchService
 import android.Manifest
 import android.os.Build

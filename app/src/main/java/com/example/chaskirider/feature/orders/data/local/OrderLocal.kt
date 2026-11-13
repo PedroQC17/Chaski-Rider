@@ -131,8 +131,8 @@ class RoomDemoOrderStore(private val dao: DemoOrderDao, private val scheduleSync
 }
 
 @Deprecated("Usar openChaskiDatabase; se mantiene para los tests de dispositivo.")
-fun openOrderDatabase(context: android.content.Context, name: String = "chaski.db"): com.example.chaskirider.data.local.ChaskiDatabase =
-    com.example.chaskirider.data.local.openChaskiDatabase(context, name)
+fun openOrderDatabase(context: android.content.Context, name: String = "chaski.db"): com.example.chaskirider.database.ChaskiDatabase =
+    com.example.chaskirider.database.openChaskiDatabase(context, name)
 
 @Entity(tableName = "customer_contact", primaryKeys = ["uid", "orderId"])
 data class CustomerContactEntity(val uid: String, val orderId: String, val content: String)

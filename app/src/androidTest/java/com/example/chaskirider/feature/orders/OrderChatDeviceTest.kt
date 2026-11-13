@@ -10,7 +10,7 @@ import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.work.*
 import com.example.chaskirider.feature.chat.data.local.*
-import com.example.chaskirider.data.local.openChaskiDatabase
+import com.example.chaskirider.database.openChaskiDatabase
 import com.example.chaskirider.feature.orders.data.local.OrderRecordEntity
 import com.example.chaskirider.feature.orders.data.local.openOrderDatabase
 import com.example.chaskirider.platform.OrderSyncWorker

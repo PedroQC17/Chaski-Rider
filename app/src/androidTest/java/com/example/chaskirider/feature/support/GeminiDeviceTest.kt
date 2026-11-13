@@ -9,7 +9,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
 import com.example.chaskirider.feature.chat.data.local.*
-import com.example.chaskirider.data.local.ChaskiDatabase
+import com.example.chaskirider.database.ChaskiDatabase
 import com.example.chaskirider.feature.support.data.SupportRepositoryImpl
 import com.example.chaskirider.feature.support.data.FirebaseAssistantRepository
 import com.example.chaskirider.feature.user.domain.RiderUser

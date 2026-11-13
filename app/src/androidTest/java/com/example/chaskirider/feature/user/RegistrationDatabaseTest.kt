@@ -1,5 +1,5 @@
 package com.example.chaskirider.feature.user
-import com.example.chaskirider.data.local.openChaskiDatabase
+import com.example.chaskirider.database.openChaskiDatabase
 import com.example.chaskirider.feature.user.data.local.RoomRegistrationDraftRepository
 
 import androidx.test.platform.app.InstrumentationRegistry
