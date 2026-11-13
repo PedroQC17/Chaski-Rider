@@ -1,4 +1,5 @@
 package com.example.chaskirider
+import com.example.chaskirider.feature.vehicle.domain.VehiclePolicy
 
 import android.graphics.Bitmap
 import androidx.activity.ComponentActivity
@@ -6,9 +7,19 @@ import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.platform.app.InstrumentationRegistry
-import com.example.chaskirider.domain.model.*
-import com.example.chaskirider.ui.screens.auth.*
-import com.example.chaskirider.ui.screens.onboarding.*
+import com.example.chaskirider.feature.user.domain.RiderUser
+import com.example.chaskirider.feature.user.domain.RegistrationStatus
+import com.example.chaskirider.feature.bank.domain.BankInfo
+import com.example.chaskirider.feature.vehicle.domain.VehicleType
+import com.example.chaskirider.feature.documents.domain.DocumentFile
+import com.example.chaskirider.feature.documents.domain.DocumentUploadState
+import com.example.chaskirider.feature.documents.domain.DocumentReviewStatus
+import com.example.chaskirider.feature.documents.domain.DocumentReview
+import com.example.chaskirider.feature.user.ui.screens.RegistrationStatusScreen
+import com.example.chaskirider.feature.user.ui.viewmodel.RegistrationReviewUiState
+import com.example.chaskirider.feature.user.ui.screens.OnboardingStep3Screen
+import com.example.chaskirider.feature.user.ui.viewmodel.DraftStatus
+import com.example.chaskirider.feature.user.ui.viewmodel.RegistrationUiState
 import com.example.chaskirider.ui.theme.ChaskiRiderTheme
 import org.junit.Assert.*
 import org.junit.Rule
@@ -41,9 +52,10 @@ class RegistrationReviewScreensTest {
     @Test fun correctableRegistrationShowsObservedDocumentAndAllowsResume() {
         var resumed = false
         compose.setContent { ChaskiRiderTheme {
-            RegistrationStatusScreen(RegistrationReviewUiState(RiderUser(status = RegistrationStatus.NEEDS_CORRECTION,
-                vehicleType = VehicleType.BICYCLE, rejectionReason = "Vuelve a tomar la foto del DNI",
-                documentReviews = mapOf("dniFront" to DocumentReview(DocumentReviewStatus.OBSERVED, "El número no es legible")))),
+            RegistrationStatusScreen(RegistrationReviewUiState(
+                    user = RiderUser(status = RegistrationStatus.NEEDS_CORRECTION,
+                        vehicleTypeId = VehicleType.BICYCLE.name, rejectionReason = "Vuelve a tomar la foto del DNI"),
+                    documentReviews = mapOf("dniFront" to DocumentReview(DocumentReviewStatus.OBSERVED, "El número no es legible"))),
                 onResumeRegistrationClick = { resumed = true })
         } }
         compose.onNodeWithText("El número no es legible").assertExists()
@@ -75,7 +87,7 @@ class RegistrationReviewScreensTest {
     }
 
     @Test fun uploadedObservedDocumentPreventsSendingAgain() {
-        val documents = RegistrationValidation.requiredDocuments(VehicleType.BICYCLE)
+        val documents = VehiclePolicy.requiredDocuments(VehicleType.BICYCLE)
             .associateWith { DocumentFile(id = it, uploadState = DocumentUploadState.UPLOADED) }
         compose.setContent { ChaskiRiderTheme {
             OnboardingStep3Screen(VehicleType.BICYCLE, RegistrationUiState(ready = true, editable = true,
@@ -89,12 +101,10 @@ class RegistrationReviewScreensTest {
     }
 
     @Test fun firestoreCanDecodeRejectedProfileAndNestedDocumentReview() {
-        val raw = mapOf("id" to "ana", "status" to "REJECTED", "submissionVersion" to 2L,
-            "documentReviews" to mapOf("dniFront" to mapOf("status" to "OBSERVED", "reason" to "Borrosa")))
+        val raw = mapOf("id" to "ana", "status" to "REJECTED", "submissionVersion" to 2L)
         val reference = com.google.firebase.firestore.FirebaseFirestore.getInstance().document("riders/ana")
         val user = com.google.firebase.firestore.util.CustomClassMapper.convertToCustomClass(raw, RiderUser::class.java, reference)
         assertEquals(RegistrationStatus.REJECTED, user.status)
-        assertEquals(DocumentReviewStatus.OBSERVED, user.documentReviews["dniFront"]!!.status)
         assertEquals(2L, user.submissionVersion)
     }
 }

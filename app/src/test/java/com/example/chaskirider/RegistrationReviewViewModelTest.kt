@@ -1,10 +1,16 @@
 package com.example.chaskirider
 
 import androidx.lifecycle.ViewModelStore
-import com.example.chaskirider.domain.model.*
-import com.example.chaskirider.domain.repository.*
-import com.example.chaskirider.domain.text.*
-import com.example.chaskirider.ui.screens.auth.*
+import com.example.chaskirider.feature.documents.domain.DocumentRepository
+import com.example.chaskirider.feature.documents.domain.DocumentSnapshot
+import com.example.chaskirider.feature.user.domain.RiderUser
+import com.example.chaskirider.feature.user.domain.RegistrationStatus
+import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.user.domain.RiderUserRepository
+import com.example.chaskirider.core.text.*
+import com.example.chaskirider.feature.user.ui.viewmodel.RegistrationReviewViewModel
+import com.example.chaskirider.feature.user.ui.viewmodel.RegistrationReviewStage
+import com.example.chaskirider.feature.user.ui.viewmodel.RegistrationReviewUiState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -21,12 +27,7 @@ class RegistrationReviewViewModelTest {
     }
     private var result: Result<RiderUser?> = Result.success(session.user.value)
     private var calls = 0
-    private val repository = object : AuthRepository {
-        override suspend fun loginWithEmail(email: String, pass: String) = error("unused")
-        override suspend fun loginWithGoogle(idToken: String) = error("unused")
-        override suspend fun sendPasswordResetEmail(email: String) = error("unused")
-        override suspend fun linkPassword(password: String) = error("unused")
-        override suspend fun logout() = error("unused")
+    private val repository = object : FakeRiderUserRepository() {
         override suspend fun getCurrentUser(): Result<RiderUser?> {
             calls++; delay(100)
             result.getOrNull()?.let { session.user.value = it }
@@ -39,7 +40,16 @@ class RegistrationReviewViewModelTest {
     }
     @Before fun setup() { Dispatchers.setMain(StandardTestDispatcher()) }
     @After fun teardown() { store.clear(); Dispatchers.resetMain() }
-    private fun model() = RegistrationReviewViewModel(repository, session, texts).also { store.put("review", it) }
+    private val documents = object : DocumentRepository {
+        override suspend fun load() = Result.success(DocumentSnapshot())
+        override suspend fun createCapture() = error("unused")
+        override suspend fun hasCapture(uri: android.net.Uri) = error("unused")
+        override suspend fun deleteCapture(uri: android.net.Uri) = error("unused")
+        override suspend fun uploadDocument(docType: String, uri: android.net.Uri) = error("unused")
+        override suspend fun getDocument(docType: String) = error("unused")
+    }
+    private fun model() = RegistrationReviewViewModel(repository, documents, session, texts)
+        .also { store.put("review", it) }
 
     @Test fun failedRefreshRetainsDecisionAndRetryLoadsCorrection() = runTest {
         val vm = model(); advanceUntilIdle()

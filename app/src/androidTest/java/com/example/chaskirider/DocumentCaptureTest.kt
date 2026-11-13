@@ -2,10 +2,19 @@ package com.example.chaskirider
 
 import android.net.Uri
 import androidx.lifecycle.ViewModelStore
-import com.example.chaskirider.domain.model.*
-import com.example.chaskirider.domain.repository.*
-import com.example.chaskirider.domain.text.*
-import com.example.chaskirider.ui.screens.profile.documents.DocumentsViewModel
+import com.example.chaskirider.feature.user.domain.RiderUser
+import com.example.chaskirider.feature.user.domain.RegistrationStatus
+import com.example.chaskirider.feature.user.domain.RegistrationDraft
+import com.example.chaskirider.feature.user.domain.PendingDocumentCapture
+import com.example.chaskirider.feature.documents.domain.DocumentUploadState
+import com.example.chaskirider.feature.documents.domain.DocumentPage
+import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.user.domain.RegistrationDraftRepository
+import com.example.chaskirider.feature.documents.domain.DocumentRepository
+import com.example.chaskirider.feature.documents.domain.DocumentSnapshot
+import com.example.chaskirider.feature.documents.domain.DocumentPreviewRepository
+import com.example.chaskirider.core.text.*
+import com.example.chaskirider.feature.documents.ui.viewmodel.DocumentsViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,12 +41,14 @@ class DocumentCaptureTest {
     private var uploadFails = true
     private var deleted = false
     private val repository = object : DocumentRepository {
+        override suspend fun load() = Result.success(DocumentSnapshot(
+            paths = if (deleted) emptyMap() else mapOf("dniFront" to "uploaded")))
         override suspend fun createCapture() = Result.success(uri)
         override suspend fun hasCapture(uri: Uri) = Result.success(!deleted)
         override suspend fun deleteCapture(uri: Uri): Result<Unit> { deleted = true; return Result.success(Unit) }
-        override suspend fun uploadDocument(docType: String, uri: Uri): Result<RiderUser> =
+        override suspend fun uploadDocument(docType: String, uri: Uri): Result<Unit> =
             if (uploadFails) Result.failure(IllegalStateException("offline"))
-            else Result.success(session.user.value!!.copy(dniFrontUrl = "uploaded"))
+            else Result.success(Unit)
         override suspend fun getDocument(docType: String) = Result.success(uri)
     }
     private val texts = object : TextProvider {

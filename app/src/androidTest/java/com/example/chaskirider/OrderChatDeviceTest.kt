@@ -1,4 +1,5 @@
 package com.example.chaskirider
+import com.example.chaskirider.feature.chat.data.ChatRepositoryImpl
 
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.*
@@ -8,13 +9,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.work.*
-import com.example.chaskirider.data.chat.*
-import com.example.chaskirider.data.orders.*
-import com.example.chaskirider.domain.chat.*
-import com.example.chaskirider.domain.model.RiderUser
-import com.example.chaskirider.domain.orders.*
-import com.example.chaskirider.domain.repository.RiderSession
-import com.example.chaskirider.ui.screens.chat.*
+import com.example.chaskirider.feature.chat.data.local.*
+import com.example.chaskirider.feature.orders.data.local.OrderRecordEntity
+import com.example.chaskirider.feature.orders.data.local.openOrderDatabase
+import com.example.chaskirider.platform.OrderSyncWorker
+import com.example.chaskirider.feature.chat.domain.*
+import com.example.chaskirider.feature.user.domain.RiderUser
+import com.example.chaskirider.feature.orders.domain.*
+import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.chat.ui.components.ChatDialog
+import com.example.chaskirider.feature.chat.ui.viewmodel.ChatViewModel
 import com.example.chaskirider.ui.theme.ChaskiRiderTheme
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -68,7 +72,7 @@ class OrderChatDeviceTest {
         context.deleteDatabase(draftName)
         val draftDb = Room.databaseBuilder(context, ChatDraftDatabase::class.java, draftName).build()
         val drafts = RoomChatDraftStore(draftDb.drafts())
-        val repo = FirebaseOrderChatRepository()
+        val repo = ChatRepositoryImpl()
         val session = object : RiderSession { override val user = MutableStateFlow<RiderUser?>(RiderUser(id = uid)) }
         var vm = ChatViewModel(repo, drafts, session)
         var displayed by mutableStateOf(vm)

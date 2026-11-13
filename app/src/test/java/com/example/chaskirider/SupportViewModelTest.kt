@@ -1,10 +1,23 @@
 package com.example.chaskirider
 
-import com.example.chaskirider.domain.model.RiderUser
-import com.example.chaskirider.domain.orders.OrderProblemReason
-import com.example.chaskirider.domain.repository.RiderSession
-import com.example.chaskirider.domain.support.*
-import com.example.chaskirider.ui.screens.support.SupportViewModel
+import com.example.chaskirider.core.platform.location.GeoPoint
+import com.example.chaskirider.core.platform.location.LocationRepository
+import com.example.chaskirider.feature.orders.domain.OrderStatus
+import com.example.chaskirider.feature.user.domain.RiderUser
+import com.example.chaskirider.feature.orders.domain.OrderProblemReason
+import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.support.domain.SupportCategory
+import com.example.chaskirider.feature.support.domain.SupportTopic
+import com.example.chaskirider.feature.support.domain.SupportOrderContext
+import com.example.chaskirider.feature.support.domain.SupportDraft
+import com.example.chaskirider.feature.support.domain.SupportTicketStatus
+import com.example.chaskirider.feature.support.domain.SupportSender
+import com.example.chaskirider.feature.support.domain.SupportMessage
+import com.example.chaskirider.feature.support.domain.SupportTicket
+import com.example.chaskirider.feature.support.domain.SupportDraftStore
+import com.example.chaskirider.feature.support.domain.SupportRepository
+import com.example.chaskirider.feature.support.domain.SupportValidation
+import com.example.chaskirider.feature.support.ui.viewmodel.SupportViewModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.test.*
@@ -66,7 +79,7 @@ class SupportViewModelTest {
     @Test fun orderHelpAutomaticallyAttachesExactStageAndIncidentCategory() = runTest(dispatcher) {
         val vm = SupportViewModel(repository, store, session); runCurrent()
         val order = SupportOrderContext("order", "Local", "Recojo", "Destino", true, "incident",
-            com.example.chaskirider.domain.orders.OrderStatus.ON_THE_WAY, OrderProblemReason.VEHICLE_PROBLEM)
+            com.example.chaskirider.feature.orders.domain.OrderStatus.ON_THE_WAY, OrderProblemReason.VEHICLE_PROBLEM)
         vm.setAvailableOrder(order); vm.selectCategory(SupportCategory.ORDER)
         vm.selectTopic(SupportTopic.ORDER_OTHER); vm.openForm(); runCurrent()
         assertEquals(order, vm.uiState.value.draft!!.order)
@@ -75,8 +88,8 @@ class SupportViewModelTest {
     }
 
     @Test fun emergencyPreparesLocationButNeverSendsBeforeReview() = runTest(dispatcher) {
-        val locations = object : com.example.chaskirider.domain.repository.LocationRepository {
-            override suspend fun currentLocation() = Result.success(com.example.chaskirider.domain.model.GeoPoint(-12.04, -77.03))
+        val locations = object : com.example.chaskirider.core.platform.location.LocationRepository {
+            override suspend fun currentLocation() = Result.success(com.example.chaskirider.core.platform.location.GeoPoint(-12.04, -77.03))
         }
         val vm = SupportViewModel(repository, store, session, locations); runCurrent()
         vm.prepareEmergency(); runCurrent()

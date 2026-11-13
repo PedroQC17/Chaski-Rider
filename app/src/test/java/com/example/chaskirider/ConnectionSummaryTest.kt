@@ -1,7 +1,9 @@
 package com.example.chaskirider
-import com.example.chaskirider.domain.earnings.*
+
+import com.example.chaskirider.feature.earnings.domain.*
 import org.junit.Assert.*
 import org.junit.Test
+
 class ConnectionSummaryTest {
  private val day = EarningsCalendar.parseDay("2026-11-02")!!
  private val hour = 3600000L

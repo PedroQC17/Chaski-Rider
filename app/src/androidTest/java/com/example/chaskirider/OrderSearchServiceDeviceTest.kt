@@ -4,11 +4,11 @@ import android.app.NotificationManager
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.platform.app.InstrumentationRegistry
-import com.example.chaskirider.data.orders.OrderSearchService
-import com.example.chaskirider.data.session.RiderSessionStore
+import com.example.chaskirider.platform.OrderSearchService
+import com.example.chaskirider.feature.user.data.local.RiderUserSessionStore
 import com.example.chaskirider.di.AppContainer
-import com.example.chaskirider.domain.model.RegistrationStatus
-import com.example.chaskirider.domain.model.RiderUser
+import com.example.chaskirider.feature.user.domain.RegistrationStatus
+import com.example.chaskirider.feature.user.domain.RiderUser
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -30,7 +30,7 @@ class OrderSearchServiceDeviceTest {
         shell("pm grant ${context.packageName} android.permission.ACCESS_FINE_LOCATION")
         shell("pm grant ${context.packageName} android.permission.POST_NOTIFICATIONS")
         AppContainer.initialize(context)
-        val session = AppContainer.riderSession as RiderSessionStore
+        val session = AppContainer.riderSession as RiderUserSessionStore
         val rider = RiderUser(id = "background-device-test", status = RegistrationStatus.APPROVED,
             isAvailable = true, profilePhotoPath = "local-test-photo")
         val manager = context.getSystemService(NotificationManager::class.java)

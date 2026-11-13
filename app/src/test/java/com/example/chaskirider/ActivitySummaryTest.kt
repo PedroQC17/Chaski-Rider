@@ -1,9 +1,9 @@
 package com.example.chaskirider
 
-import com.example.chaskirider.domain.earnings.*
-import com.example.chaskirider.domain.model.RiderUser
-import com.example.chaskirider.domain.repository.RiderSession
-import com.example.chaskirider.ui.screens.earnings.EarningsViewModel
+import com.example.chaskirider.feature.earnings.domain.*
+import com.example.chaskirider.feature.user.domain.RiderUser
+import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.earnings.ui.viewmodel.EarningsViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.*

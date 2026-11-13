@@ -1,9 +1,13 @@
 package com.example.chaskirider
 
+import com.example.chaskirider.feature.orders.domain.AcceptedEarningsQuote
+import com.example.chaskirider.feature.earnings.domain.EarningsPolicy
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.work.*
-import com.example.chaskirider.data.orders.*
-import com.example.chaskirider.domain.orders.*
+import com.example.chaskirider.feature.orders.data.local.OrderRecordEntity
+import com.example.chaskirider.feature.orders.data.local.openOrderDatabase
+import com.example.chaskirider.platform.OrderSyncWorker
+import com.example.chaskirider.feature.orders.domain.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Source
@@ -123,7 +127,7 @@ class OrderSyncDeviceTest {
         val now = System.currentTimeMillis()
         val good = OrderRecord(goodId, uid, OrderStatus.CANCELLED, "Prueba técnica HU16 cancelada", RoutePoint(-12.0, -77.0),
             RoutePoint(-12.01, -77.01), now, null, null, null, cancelledAt = now, paidByCustomer = true,
-            earningsQuote = com.example.chaskirider.domain.earnings.AcceptedEarningsQuote(1000, 2000, 300, 150, 450, "PEN_1_KM_V1", "SIMULATED_GEODESIC"))
+            earningsQuote = AcceptedEarningsQuote(1000, 2000, 300, 150, 450, "PEN_1_KM_V1", "SIMULATED_GEODESIC"))
         try {
             dao.saveRecord(OrderRecordEntity(uid, badId, "{}", 1, true))
             dao.saveRecord(OrderRecordEntity(uid, goodId, Gson().toJson(good), 1, true))
@@ -139,7 +143,7 @@ class OrderSyncDeviceTest {
             assertEquals("CANCELLED", remote.getString("status"))
             assertEquals(450L, (remote.get("earningsQuote") as Map<*, *>)["totalCents"])
             assertEquals(1, dao.actions(uid, goodId).size)
-            assertEquals(0, com.example.chaskirider.domain.earnings.EarningsPolicy.record(good)!!.totalCents)
+            assertEquals(0, com.example.chaskirider.feature.earnings.domain.EarningsPolicy.record(good)!!.totalCents)
         } finally {
             manager.cancelUniqueWork(name).result.get(10, TimeUnit.SECONDS)
             for (id in listOf(badId, goodId)) {

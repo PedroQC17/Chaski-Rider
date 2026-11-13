@@ -1,16 +1,21 @@
 package com.example.chaskirider
 
+import com.example.chaskirider.feature.earnings.data.EarningsRepositoryImpl
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
-import com.example.chaskirider.data.orders.*
-import com.example.chaskirider.domain.earnings.*
-import com.example.chaskirider.domain.model.RiderUser
-import com.example.chaskirider.domain.orders.*
-import com.example.chaskirider.domain.repository.RiderSession
-import com.example.chaskirider.ui.screens.earnings.*
+import com.example.chaskirider.feature.orders.data.local.DemoOrderState
+import com.example.chaskirider.feature.orders.data.local.OrderRecordEntity
+import com.example.chaskirider.feature.orders.data.local.DemoOrderDatabase
+import com.example.chaskirider.feature.orders.data.local.RoomDemoOrderStore
+import com.example.chaskirider.feature.earnings.domain.*
+import com.example.chaskirider.feature.user.domain.RiderUser
+import com.example.chaskirider.feature.orders.domain.*
+import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.earnings.ui.screens.EarningsRoute
+import com.example.chaskirider.feature.earnings.ui.viewmodel.EarningsViewModel
 import com.example.chaskirider.ui.theme.ChaskiRiderTheme
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.*
@@ -93,8 +98,8 @@ class EarningsDeviceTest {
         compose.runOnIdle { session.user.value = RiderUser(id = "bob") }
         compose.waitForIdle()
         compose.onNodeWithText("Negocio de prueba").assertDoesNotExist()
-        compose.onNodeWithTag("earnings-list").performScrollToNode(hasText("Aún no hay pedidos finalizados en estas fechas."))
-        compose.onNodeWithText("Aún no hay pedidos finalizados en estas fechas.").assertIsDisplayed()
+        compose.onNodeWithTag("earnings-list").performScrollToNode(hasText("AÃºn no hay pedidos finalizados en estas fechas."))
+        compose.onNodeWithText("AÃºn no hay pedidos finalizados en estas fechas.").assertIsDisplayed()
     }
 
     @Test fun unsuccessfulCompletionShowsItsResultAndPreservedEarnings() {
@@ -115,7 +120,7 @@ class EarningsDeviceTest {
             assertEquals(300L, model.uiState.value.grandTotalCents)
             compose.onNodeWithTag("earnings-list").performScrollToNode(hasText("Cliente ausente de prueba"))
             compose.onNodeWithText("Cliente ausente de prueba").performClick()
-            compose.onNodeWithText("Completado con entrega no exitosa · Cliente ausente. Recibes el pago de la ruta sin propina.").assertExists()
+            compose.onNodeWithText("Completado con entrega no exitosa Â· Cliente ausente. Recibes el pago de la ruta sin propina.").assertExists()
             compose.onNodeWithText("Hasta el local: 1.00 km").assertExists()
         } finally { compose.runOnIdle { models.clear() } }
     }
@@ -128,7 +133,7 @@ class EarningsDeviceTest {
         val session = object : RiderSession { override val user = MutableStateFlow<RiderUser?>(RiderUser(id = uid)) }
         val monday = EarningsCalendar.parseDay("2026-11-02")!!
         val day = 86_400_000L
-        val model = EarningsViewModel(com.example.chaskirider.data.earnings.LocalEarningsRepository(db.orders()), session) {
+        val model = EarningsViewModel(com.example.chaskirider.feature.earnings.data.EarningsRepositoryImpl(db.orders()), session) {
             monday + day + 12 * 3_600_000
         }
         val models = androidx.lifecycle.ViewModelStore().apply { put("dashboard", model) }
@@ -152,8 +157,8 @@ class EarningsDeviceTest {
             compose.onNodeWithTag("earnings-list").performScrollToNode(hasContentDescription("Entregas exitosas: 2"))
             compose.onNodeWithContentDescription("Entregas exitosas: 2").assertIsDisplayed()
             compose.onNodeWithContentDescription("Pedidos cancelados: 1").assertIsDisplayed()
-            compose.onNodeWithTag("earnings-list").performScrollToNode(hasContentDescription("Promedio diario de conexión: Sin conexiones"))
-            compose.onNodeWithContentDescription("Promedio diario de conexión: Sin conexiones").assertIsDisplayed()
+            compose.onNodeWithTag("earnings-list").performScrollToNode(hasContentDescription("Promedio diario de conexiÃ³n: Sin conexiones"))
+            compose.onNodeWithContentDescription("Promedio diario de conexiÃ³n: Sin conexiones").assertIsDisplayed()
             assertEquals(1100L, model.uiState.value.grandTotalCents)
             assertEquals(7, model.uiState.value.chartPoints.size)
             compose.onNodeWithTag("earnings-list").performScrollToNode(hasText("Hoy"))
@@ -161,8 +166,8 @@ class EarningsDeviceTest {
             compose.onNodeWithTag("earnings-list").performScrollToNode(hasContentDescription("Entregas exitosas: 1"))
             compose.onNodeWithContentDescription("Entregas exitosas: 1").assertIsDisplayed()
             compose.onNodeWithContentDescription("Pedidos cancelados: 0").assertIsDisplayed()
-            compose.onNodeWithTag("earnings-list").performScrollToNode(hasContentDescription("Promedio diario de conexión: Sin conexiones"))
-            compose.onNodeWithContentDescription("Promedio diario de conexión: Sin conexiones").assertIsDisplayed()
+            compose.onNodeWithTag("earnings-list").performScrollToNode(hasContentDescription("Promedio diario de conexiÃ³n: Sin conexiones"))
+            compose.onNodeWithContentDescription("Promedio diario de conexiÃ³n: Sin conexiones").assertIsDisplayed()
             assertEquals(550L, model.uiState.value.grandTotalCents)
             assertEquals(1, model.uiState.value.chartPoints.size)
             compose.onNodeWithTag("earnings-list").performScrollToNode(hasText("Esta semana"))

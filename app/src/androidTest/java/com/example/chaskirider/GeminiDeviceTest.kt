@@ -9,12 +9,14 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
-import com.example.chaskirider.data.chat.*
-import com.example.chaskirider.data.support.*
-import com.example.chaskirider.domain.model.*
-import com.example.chaskirider.domain.repository.RiderSession
-import com.example.chaskirider.domain.support.*
-import com.example.chaskirider.ui.screens.support.*
+import com.example.chaskirider.feature.chat.data.local.*
+import com.example.chaskirider.feature.support.data.SupportRepositoryImpl
+import com.example.chaskirider.feature.support.data.FirebaseAssistantRepository
+import com.example.chaskirider.feature.user.domain.RiderUser
+import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.support.domain.SupportSender
+import com.example.chaskirider.feature.support.ui.screens.AssistantDialog
+import com.example.chaskirider.feature.support.ui.viewmodel.AssistantViewModel
 import com.example.chaskirider.ui.theme.ChaskiRiderTheme
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.*
@@ -29,7 +31,7 @@ class GeminiDeviceTest {
     @get:Rule val compose = createComposeRule()
 
     @Test fun realGeminiConversationPersistsAndCanBeHandedToHumanSupport() = runBlocking {
-        Assume.assumeTrue("Consume una consulta real de Gemini solo con autorización explícita",
+        Assume.assumeTrue("Consume una consulta real de Gemini solo con autorizaciÃ³n explÃ­cita",
             InstrumentationRegistry.getArguments().getString("testGeminiLive") == "true")
         val uid = FirebaseAuth.getInstance().currentUser?.uid
         assertNotNull(uid)
@@ -39,13 +41,13 @@ class GeminiDeviceTest {
         val now = System.currentTimeMillis()
         val remote = FirebaseFirestore.getInstance().document("riders/$owner/deliveryRecords/$id")
         remote.set(mapOf("orderId" to id, "riderId" to owner, "status" to "ON_THE_WAY", "revision" to 1,
-            "merchantName" to "Prueba técnica Gemini", "pickup" to mapOf("latitude" to -12.04, "longitude" to -77.03),
+            "merchantName" to "Prueba tÃ©cnica Gemini", "pickup" to mapOf("latitude" to -12.04, "longitude" to -77.03),
             "destination" to mapOf("latitude" to -12.05, "longitude" to -77.04), "acceptedAt" to now-3000,
             "arrivedAt" to now-2000, "pickedUpAt" to now-1000, "deliveredAt" to null, "cancelledAt" to null,
             "earningsQuote" to mapOf("approachMeters" to 1000, "deliveryMeters" to 1000, "chaskiCents" to 200,
                 "tipCents" to 50, "totalCents" to 250, "pricingVersion" to "PEN_1_KM_V1", "distanceSource" to "SIMULATED_GEODESIC"),
             "updatedAt" to FieldValue.serverTimestamp())).await()
-        val repository = FirebaseAssistantRepository(FirebaseSupportRepository())
+        val repository = FirebaseAssistantRepository(SupportRepositoryImpl())
         val database = Room.inMemoryDatabaseBuilder(context, ChatDraftDatabase::class.java).build()
         val drafts = RoomChatDraftStore(database.drafts())
         val holder = ViewModelStore()
@@ -64,12 +66,12 @@ class GeminiDeviceTest {
                     { model.resolve {} }, {}, {})
             } }
             compose.waitUntil(15000) { !model.uiState.value.loading }
-            compose.onNodeWithText("Escribe tu consulta").performScrollTo().performTextInput("El cliente no responde. ¿Cuáles son los pasos antes de finalizar?")
+            compose.onNodeWithText("Escribe tu consulta").performScrollTo().performTextInput("El cliente no responde. Â¿CuÃ¡les son los pasos antes de finalizar?")
             compose.onNodeWithText("Enviar").performScrollTo().performClick()
             compose.waitUntil(60000) { !model.uiState.value.busy && model.uiState.value.messages.size >= 2 }
             assertEquals("GEMINI", model.uiState.value.mode)
             assertFalse(model.uiState.value.canResolve)
-            compose.onNodeWithText("Gemini · Asistente Chaski").assertExists()
+            compose.onNodeWithText("Gemini Â· Asistente Chaski").assertExists()
             val messages = withTimeout(15000) { repository.messages(owner,id).first { it.size >= 2 } }
             assertEquals(2,messages.size)
             val first = messages.first { it.sender == SupportSender.RIDER }

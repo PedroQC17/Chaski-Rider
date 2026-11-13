@@ -7,13 +7,23 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
-import com.example.chaskirider.data.orders.*
-import com.example.chaskirider.domain.model.*
-import com.example.chaskirider.domain.orders.*
-import com.example.chaskirider.domain.repository.*
-import com.example.chaskirider.ui.screens.orders.*
-import com.example.chaskirider.domain.chat.*
-import com.example.chaskirider.ui.screens.chat.ChatViewModel
+import com.example.chaskirider.feature.orders.data.local.DemoOrderCatalog
+import com.example.chaskirider.feature.orders.data.local.DemoOrderState
+import com.example.chaskirider.feature.orders.data.local.OrderRecordEntity
+import com.example.chaskirider.feature.orders.data.local.DemoOrderDatabase
+import com.example.chaskirider.feature.orders.data.local.RoomDemoOrderStore
+import com.example.chaskirider.feature.orders.data.OrderRepositoryImpl
+import com.example.chaskirider.core.platform.location.GeoPoint
+import com.example.chaskirider.feature.user.domain.RiderUser
+import com.example.chaskirider.feature.user.domain.RegistrationStatus
+import com.example.chaskirider.feature.orders.domain.*
+import com.example.chaskirider.core.platform.location.LocationRepository
+import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.orders.ui.screens.OrdersRoute
+import com.example.chaskirider.feature.orders.ui.viewmodel.OrdersViewModel
+import com.example.chaskirider.feature.orders.ui.components.orderNavigationIntent
+import com.example.chaskirider.feature.chat.domain.*
+import com.example.chaskirider.feature.chat.ui.viewmodel.ChatViewModel
 import com.example.chaskirider.ui.theme.ChaskiRiderTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
@@ -97,7 +107,7 @@ class DemoOrdersDeviceTest {
         val database = Room.inMemoryDatabaseBuilder(context, DemoOrderDatabase::class.java).build()
         try {
             val dao = database.orders()
-            val repo = LocalDemoOfferRepository(RoomDemoOrderStore(dao), { "alice" }, { catalog() }, hasOffer = { true })
+            val repo = OrderRepositoryImpl(RoomDemoOrderStore(dao), { "alice" }, { catalog() }, hasOffer = { true })
             val offer = repo.execute(OfferAction.OFFER, lat = -12.046, lng = -77.037)
             val accepted = repo.execute(OfferAction.ACCEPT, offer.offer!!.id)
             val id = accepted.batch!!.stops.single().orderId
@@ -139,14 +149,14 @@ class DemoOrdersDeviceTest {
         var database = Room.databaseBuilder(context, DemoOrderDatabase::class.java, name).build()
         try {
             var uid = "alice"
-            var repo = LocalDemoOfferRepository(RoomDemoOrderStore(database.orders()), { uid }, { catalog() }, hasOffer = { true })
+            var repo = OrderRepositoryImpl(RoomDemoOrderStore(database.orders()), { uid }, { catalog() }, hasOffer = { true })
             val offer = repo.execute(OfferAction.OFFER, lat = -12.046, lng = -77.037)
             assertNotNull(offer.offer)
             repo.execute(OfferAction.ACCEPT, offer.offer!!.id)
             val picked = repo.execute(OfferAction.ARRIVE_MERCHANT, lat = offer.merchant.latitude, lng = offer.merchant.longitude)
             database.close()
             database = Room.databaseBuilder(context, DemoOrderDatabase::class.java, name).build()
-            repo = LocalDemoOfferRepository(RoomDemoOrderStore(database.orders()), { uid }, { catalog() }, hasOffer = { true })
+            repo = OrderRepositoryImpl(RoomDemoOrderStore(database.orders()), { uid }, { catalog() }, hasOffer = { true })
             val restored = repo.execute(OfferAction.STATE)
             assertEquals(picked.batch, restored.batch)
             assertEquals(picked.merchant, restored.merchant)
@@ -166,7 +176,7 @@ class DemoOrdersDeviceTest {
         val locations = object : LocationRepository {
             override suspend fun currentLocation(): Result<GeoPoint?> = Result.success(gps)
         }
-        val repo = LocalDemoOfferRepository(RoomDemoOrderStore(database.orders()), { session.user.value?.id }, { catalog() }, hasOffer = { true })
+        val repo = OrderRepositoryImpl(RoomDemoOrderStore(database.orders()), { session.user.value?.id }, { catalog() }, hasOffer = { true })
         val vm = OrdersViewModel(repo, session, locations = locations, automaticSearch = false)
         try {
             val chat = ChatViewModel(object : OrderChatRepository {
@@ -189,18 +199,18 @@ class DemoOrdersDeviceTest {
             try {
                 compose.waitUntil(10_000) { vm.uiState.value.snapshot?.batch != null && !vm.uiState.value.busy }
             } catch (error: Throwable) {
-                throw AssertionError("Aceptación: busy=${vm.uiState.value.busy}, error=${vm.uiState.value.error}, segundos=${vm.uiState.value.secondsLeft}", error)
+                throw AssertionError("AceptaciÃ³n: busy=${vm.uiState.value.busy}, error=${vm.uiState.value.error}, segundos=${vm.uiState.value.secondsLeft}", error)
             }
             screenshot("orders-accepted.png")
             compose.onNodeWithText("Navegar al local").assertExists()
             assertEquals("google.navigation:q=${vm.uiState.value.snapshot!!.merchant.latitude},${vm.uiState.value.snapshot!!.merchant.longitude}",
                 orderNavigationIntent(vm.uiState.value.snapshot!!.merchant).dataString)
-            compose.onNodeWithText("Llegué al local").assertIsNotEnabled()
+            compose.onNodeWithText("LleguÃ© al local").assertIsNotEnabled()
             val pickup = vm.uiState.value.snapshot!!.merchant
             gps = GeoPoint(pickup.latitude, pickup.longitude)
             compose.runOnUiThread { vm.fetchCurrentLocation() }
             compose.waitUntil(10_000) { vm.uiState.value.isWithinGeofence }
-            compose.onNodeWithText("Llegué al local").performScrollTo().performClick()
+            compose.onNodeWithText("LleguÃ© al local").performScrollTo().performClick()
             compose.waitUntil(10_000) { vm.uiState.value.snapshot?.arrivedAt != null && !vm.uiState.value.busy }
             val destination = vm.uiState.value.snapshot!!.batch!!.stops.single().point
             gps = GeoPoint(destination.latitude, destination.longitude)

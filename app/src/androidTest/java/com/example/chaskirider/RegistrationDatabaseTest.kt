@@ -1,9 +1,13 @@
 package com.example.chaskirider
+import com.example.chaskirider.feature.user.data.local.RegistrationDatabase
+import com.example.chaskirider.feature.user.data.local.RoomRegistrationDraftRepository
 
 import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
-import com.example.chaskirider.data.local.*
-import com.example.chaskirider.domain.model.*
+import com.example.chaskirider.feature.user.domain.RegistrationDraft
+import com.example.chaskirider.feature.user.domain.PendingDocumentCapture
+import com.example.chaskirider.feature.bank.domain.BankInfo
+import com.example.chaskirider.feature.vehicle.domain.VehicleType
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Test

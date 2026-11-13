@@ -1,25 +1,63 @@
 package com.example.chaskirider.di
+import com.example.chaskirider.feature.notifications.data.remote.RiderTopicSubscription
 
+import com.example.chaskirider.core.network.DeviceConnectivity
+import com.example.chaskirider.feature.chat.data.local.ChatDraftDatabase
+import com.example.chaskirider.feature.chat.data.ChatRepositoryImpl
+import com.example.chaskirider.feature.chat.data.local.RoomChatDraftStore
+import com.example.chaskirider.feature.chat.domain.ChatDraftStore
+import com.example.chaskirider.feature.chat.domain.OrderChatRepository
+import com.example.chaskirider.feature.documents.data.DocumentPreviewRepositoryImpl
+import com.example.chaskirider.feature.orders.data.local.CustomerContactDatabase
+import com.example.chaskirider.feature.orders.data.remote.FirebaseCustomerAbsence
+import com.example.chaskirider.platform.OfferNotifier
+import com.example.chaskirider.feature.orders.data.local.RoomCustomerContactStore
+import com.example.chaskirider.feature.orders.data.OrderSyncRepositoryImpl
+import com.example.chaskirider.feature.orders.domain.CustomerContactStore
+import com.example.chaskirider.feature.orders.domain.OrderSyncRepository
+import com.example.chaskirider.feature.support.data.FirebaseAssistantRepository
+import com.example.chaskirider.feature.support.data.SupportRepositoryImpl
+import com.example.chaskirider.feature.support.data.local.RoomSupportDraftStore
+import com.example.chaskirider.feature.support.data.local.SupportDraftDatabase
+import com.example.chaskirider.feature.support.domain.AssistantRepository
+import com.example.chaskirider.feature.support.domain.SupportDraftStore
+import com.example.chaskirider.feature.support.domain.SupportRepository
+import com.example.chaskirider.feature.user.data.local.RegistrationDatabase
+import com.example.chaskirider.feature.user.data.local.RoomRegistrationDraftRepository
 import android.content.Context
-import com.example.chaskirider.data.location.DeviceLocationRepository
-import com.example.chaskirider.data.text.AndroidTextProvider
-import com.example.chaskirider.domain.text.TextProvider
-import com.example.chaskirider.data.notifications.NotificationsInitializer
-import com.example.chaskirider.data.documents.RiderDocumentDataSource
-import com.example.chaskirider.data.earnings.LocalEarningsRepository
-import com.example.chaskirider.data.orders.DemoOrderCatalog
-import com.example.chaskirider.data.orders.DeliveryPinRemote
-import com.example.chaskirider.data.orders.LocalDemoOfferRepository
-import com.example.chaskirider.data.orders.OrderSyncWorker
-import com.example.chaskirider.data.orders.RealOfferRepository
-import com.example.chaskirider.data.orders.RoomDemoOrderStore
-import com.example.chaskirider.data.orders.openOrderDatabase
-import com.example.chaskirider.data.remote.RiderProfileRemoteDataSource
-import com.example.chaskirider.data.repository.*
-import com.example.chaskirider.data.session.RiderSessionStore
-import com.example.chaskirider.domain.earnings.EarningsRepository
-import com.example.chaskirider.domain.orders.OfferRepository
-import com.example.chaskirider.domain.repository.*
+import com.example.chaskirider.core.platform.location.DeviceLocationRepository
+import com.example.chaskirider.core.text.AndroidTextProvider
+import com.example.chaskirider.core.text.TextProvider
+import com.example.chaskirider.feature.notifications.data.remote.NotificationsInitializer
+import com.example.chaskirider.feature.documents.data.local.RiderDocumentDataSource
+import com.example.chaskirider.feature.documents.data.remote.DocumentRemote
+import com.example.chaskirider.feature.earnings.data.EarningsRepositoryImpl
+import com.example.chaskirider.feature.orders.data.local.DemoOrderCatalog
+import com.example.chaskirider.feature.orders.data.remote.DeliveryPinRemote
+import com.example.chaskirider.feature.orders.data.OrderRepositoryImpl
+import com.example.chaskirider.platform.OrderSyncWorker
+import com.example.chaskirider.feature.orders.data.local.RoomDemoOrderStore
+import com.example.chaskirider.feature.orders.data.local.openOrderDatabase
+import com.example.chaskirider.feature.user.data.remote.RiderUserRemote
+import com.example.chaskirider.feature.user.data.RiderUserRepositoryImpl
+import com.example.chaskirider.feature.documents.data.DocumentRepositoryImpl
+import com.example.chaskirider.feature.notifications.data.NotificationsRepositoryImpl
+import com.example.chaskirider.feature.user.data.local.RiderUserSessionStore
+import com.example.chaskirider.feature.earnings.domain.EarningsRepository
+import com.example.chaskirider.feature.orders.domain.OfferRepository
+import com.example.chaskirider.core.platform.location.LocationRepository
+import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.bank.data.BankRepositoryImpl
+import com.example.chaskirider.feature.bank.data.remote.BankRemote
+import com.example.chaskirider.feature.bank.domain.BankRepository
+import com.example.chaskirider.feature.vehicle.data.VehicleRepositoryImpl
+import com.example.chaskirider.feature.vehicle.data.remote.VehicleRemote
+import com.example.chaskirider.feature.vehicle.domain.VehicleRepository
+import com.example.chaskirider.feature.user.domain.RiderUserRepository
+import com.example.chaskirider.feature.user.domain.RegistrationDraftRepository
+import com.example.chaskirider.feature.documents.domain.DocumentRepository
+import com.example.chaskirider.feature.documents.domain.DocumentPreviewRepository
+import com.example.chaskirider.feature.notifications.domain.NotificationsRepository
 
 object AppContainer {
     private lateinit var applicationContext: Context
@@ -28,47 +66,43 @@ object AppContainer {
         applicationContext = context.applicationContext
         NotificationsInitializer().initialize(applicationContext)
         if (firstInitialization) com.google.firebase.auth.FirebaseAuth.getInstance().addAuthStateListener { auth ->
-            auth.currentUser?.uid?.let { com.example.chaskirider.data.orders.OrderSyncWorker.schedule(applicationContext, it) }
+            auth.currentUser?.uid?.let { com.example.chaskirider.platform.OrderSyncWorker.schedule(applicationContext, it) }
         }
     }
-    private val sessionStore = RiderSessionStore()
+    private val riderTopics by lazy { com.example.chaskirider.feature.notifications.data.remote.RiderTopicSubscription() }
+    private val sessionStore = RiderUserSessionStore { uid -> riderTopics.bind(uid) }
     val riderSession: RiderSession = sessionStore
     val orderChanges = kotlinx.coroutines.flow.MutableSharedFlow<Unit>(extraBufferCapacity = 1)
-    val offerNotifier by lazy { com.example.chaskirider.data.orders.OfferNotifier(applicationContext) }
+    val offerNotifier by lazy { com.example.chaskirider.platform.OfferNotifier(applicationContext) }
     private val registrationDatabase by lazy {
         androidx.room.Room.databaseBuilder(applicationContext,
-            com.example.chaskirider.data.local.RegistrationDatabase::class.java, "registration.db").build()
+            com.example.chaskirider.feature.user.data.local.RegistrationDatabase::class.java, "registration.db").build()
     }
     val registrationDraftRepository: RegistrationDraftRepository by lazy {
-        com.example.chaskirider.data.local.RoomRegistrationDraftRepository(registrationDatabase.drafts())
+        com.example.chaskirider.feature.user.data.local.RoomRegistrationDraftRepository(registrationDatabase.drafts())
     }
     
-    // Repositorio real de ofertas (Nube / Firebase)
-    val realOfferRepository: OfferRepository by lazy {
-        RealOfferRepository()
-    }
-
     private val orderDatabase by lazy { openOrderDatabase(applicationContext) }
     val customerAbsenceService by lazy {
-        com.example.chaskirider.data.support.FirebaseCustomerAbsence(orderDatabase.orders()) {
+        com.example.chaskirider.feature.orders.data.remote.FirebaseCustomerAbsence(orderDatabase.orders()) {
             OrderSyncWorker.schedule(applicationContext, it)
         }
     }
-    private val connectivity by lazy { com.example.chaskirider.data.orders.DeviceConnectivity(applicationContext) }
-    val orderSyncRepository: com.example.chaskirider.domain.orders.OrderSyncRepository by lazy {
-        com.example.chaskirider.data.orders.RoomOrderSyncRepository(applicationContext, orderDatabase.orders(), connectivity)
+    private val connectivity by lazy { com.example.chaskirider.core.network.DeviceConnectivity(applicationContext) }
+    val orderSyncRepository: com.example.chaskirider.feature.orders.domain.OrderSyncRepository by lazy {
+        com.example.chaskirider.feature.orders.data.OrderSyncRepositoryImpl(applicationContext, orderDatabase.orders(), connectivity)
     }
     val localEarningsRepository by lazy {
-        LocalEarningsRepository(orderDatabase.orders())
+        EarningsRepositoryImpl(orderDatabase.orders())
     }
     val earningsRepository: EarningsRepository by lazy {
         localEarningsRepository
     }
 
-    // Repositorio de demostración (Datos simulados locales para test)
+    // Repositorio de demostraciÃ³n (Datos simulados locales para test)
     val demoOfferRepository: OfferRepository by lazy {
         val database = orderDatabase
-        LocalDemoOfferRepository(
+        OrderRepositoryImpl(
             store = RoomDemoOrderStore(database.orders()) {
                 OrderSyncWorker.schedule(applicationContext, it)
             },
@@ -88,38 +122,48 @@ object AppContainer {
     val offerRepository: OfferRepository by lazy {
         demoOfferRepository
     }
-    val supportRepository: com.example.chaskirider.domain.support.SupportRepository by lazy {
-        com.example.chaskirider.data.support.FirebaseSupportRepository()
+    val supportRepository: com.example.chaskirider.feature.support.domain.SupportRepository by lazy {
+        com.example.chaskirider.feature.support.data.SupportRepositoryImpl()
     }
-    val assistantRepository: com.example.chaskirider.domain.support.AssistantRepository by lazy {
-        com.example.chaskirider.data.support.FirebaseAssistantRepository(supportRepository, customerAbsenceService::awaitSync)
+    val assistantRepository: com.example.chaskirider.feature.support.domain.AssistantRepository by lazy {
+        com.example.chaskirider.feature.support.data.FirebaseAssistantRepository(supportRepository, customerAbsenceService::awaitSync)
     }
-    val orderChatRepository: com.example.chaskirider.domain.chat.OrderChatRepository by lazy {
-        com.example.chaskirider.data.chat.FirebaseOrderChatRepository()
+    val orderChatRepository: com.example.chaskirider.feature.chat.domain.OrderChatRepository by lazy {
+        com.example.chaskirider.feature.chat.data.ChatRepositoryImpl()
     }
-    val chatDraftStore: com.example.chaskirider.domain.chat.ChatDraftStore by lazy {
+    val chatDraftStore: com.example.chaskirider.feature.chat.domain.ChatDraftStore by lazy {
         val database = androidx.room.Room.databaseBuilder(applicationContext,
-            com.example.chaskirider.data.chat.ChatDraftDatabase::class.java, "chat_drafts.db").build()
-        com.example.chaskirider.data.chat.RoomChatDraftStore(database.drafts())
+            com.example.chaskirider.feature.chat.data.local.ChatDraftDatabase::class.java, "chat_drafts.db").build()
+        com.example.chaskirider.feature.chat.data.local.RoomChatDraftStore(database.drafts())
     }
-    val supportDraftStore: com.example.chaskirider.domain.support.SupportDraftStore by lazy {
+    val supportDraftStore: com.example.chaskirider.feature.support.domain.SupportDraftStore by lazy {
         val database = androidx.room.Room.databaseBuilder(applicationContext,
-            com.example.chaskirider.data.support.SupportDraftDatabase::class.java, "support_drafts.db").build()
-        com.example.chaskirider.data.support.RoomSupportDraftStore(database.drafts())
+            com.example.chaskirider.feature.support.data.local.SupportDraftDatabase::class.java, "support_drafts.db").build()
+        com.example.chaskirider.feature.support.data.local.RoomSupportDraftStore(database.drafts())
     }
-    val customerContactStore: com.example.chaskirider.domain.support.CustomerContactStore by lazy {
+    val customerContactStore: com.example.chaskirider.feature.orders.domain.CustomerContactStore by lazy {
         val database = androidx.room.Room.databaseBuilder(applicationContext,
-            com.example.chaskirider.data.support.CustomerContactDatabase::class.java, "customer_contact.db").build()
-        com.example.chaskirider.data.support.RoomCustomerContactStore(database.contacts())
+            com.example.chaskirider.feature.orders.data.local.CustomerContactDatabase::class.java, "customer_contact.db").build()
+        com.example.chaskirider.feature.orders.data.local.RoomCustomerContactStore(database.contacts())
     }
     val textProvider: TextProvider by lazy { AndroidTextProvider(applicationContext) }
-    private val profiles by lazy { RiderProfileRemoteDataSource(textProvider, sessionStore, online = connectivity::isOnline) }
-    private val documents by lazy { RiderDocumentDataSource(textProvider, applicationContext, profiles) }
-    val authRepository: AuthRepository by lazy { AuthRepositoryImpl(textProvider, profiles, sessionStore) }
-    val riderProfileRepository: RiderProfileRepository by lazy { RiderProfileRepositoryImpl(textProvider, profiles) }
-    val profilePhotoRepository: ProfilePhotoRepository by lazy { com.example.chaskirider.data.profile.ProfilePhotoRepositoryImpl(applicationContext, textProvider, profiles) }
+    private val profiles by lazy { RiderUserRemote(textProvider, sessionStore, online = connectivity::isOnline) }
+    private val documents by lazy {
+        RiderDocumentDataSource(textProvider, applicationContext,
+            DocumentRemote(textProvider, online = connectivity::isOnline), refreshRiderUser)
+    }
+    val riderUserRepository: RiderUserRepository by lazy {
+        RiderUserRepositoryImpl(applicationContext, textProvider, profiles, sessionStore, notificationsRepository)
+    }
+    private val refreshRiderUser: suspend () -> Unit = { riderUserRepository.refresh() }
+    val bankRepository: BankRepository by lazy {
+        BankRepositoryImpl(textProvider, BankRemote(textProvider), refreshRiderUser)
+    }
+    val vehicleRepository: VehicleRepository by lazy {
+        VehicleRepositoryImpl(textProvider, VehicleRemote(textProvider), refreshRiderUser)
+    }
     val locationRepository: LocationRepository by lazy { DeviceLocationRepository(applicationContext) }
-    val documentPreviewRepository: DocumentPreviewRepository by lazy { com.example.chaskirider.data.documents.DocumentPreviewRepositoryImpl(applicationContext, textProvider) }
+    val documentPreviewRepository: DocumentPreviewRepository by lazy { com.example.chaskirider.feature.documents.data.DocumentPreviewRepositoryImpl(applicationContext, textProvider) }
     val documentRepository: DocumentRepository by lazy { DocumentRepositoryImpl(documents) }
     val notificationsRepository: NotificationsRepository by lazy { NotificationsRepositoryImpl() }
 }

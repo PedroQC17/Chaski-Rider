@@ -2,12 +2,17 @@ package com.example.chaskirider
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.work.*
-import com.example.chaskirider.data.orders.*
-import com.example.chaskirider.data.support.FirebaseCustomerAbsence
-import com.example.chaskirider.data.support.FirebaseAssistantRepository
-import com.example.chaskirider.data.support.FirebaseSupportRepository
-import com.example.chaskirider.domain.orders.*
-import com.example.chaskirider.domain.earnings.*
+import com.example.chaskirider.feature.orders.data.local.DemoOrderState
+import com.example.chaskirider.feature.orders.data.local.OrderRecordEntity
+import com.example.chaskirider.feature.orders.data.local.RoomDemoOrderStore
+import com.example.chaskirider.feature.orders.data.local.openOrderDatabase
+import com.example.chaskirider.feature.orders.data.OrderRepositoryImpl
+import com.example.chaskirider.platform.OrderSyncWorker
+import com.example.chaskirider.feature.orders.data.remote.FirebaseCustomerAbsence
+import com.example.chaskirider.feature.support.data.FirebaseAssistantRepository
+import com.example.chaskirider.feature.support.data.SupportRepositoryImpl
+import com.example.chaskirider.feature.orders.domain.*
+import com.example.chaskirider.feature.earnings.domain.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FieldValue
@@ -22,11 +27,11 @@ import java.util.concurrent.TimeUnit
 
 class CustomerAbsenceFirebaseDeviceTest {
     @Test fun serverResolutionClosesTicketPreservesPayAndReleasesLocalOrder() = runBlocking {
-        org.junit.Assume.assumeTrue("Prueba real opcional; requiere preparar los tiempos del pedido técnico",
+        org.junit.Assume.assumeTrue("Prueba real opcional; requiere preparar los tiempos del pedido tÃ©cnico",
             InstrumentationRegistry.getArguments().getString("testAbsenceFixture") == "true")
         val context=InstrumentationRegistry.getInstrumentation().targetContext
         val uid=FirebaseAuth.getInstance().currentUser?.uid
-        assertNotNull("Se requiere una sesión de pruebas aprobada",uid)
+        assertNotNull("Se requiere una sesiÃ³n de pruebas aprobada",uid)
         val owner=uid!!
         val id=UUID.randomUUID().toString()
         val name="verify-absence-$id.db"
@@ -36,7 +41,7 @@ class CustomerAbsenceFirebaseDeviceTest {
         val now=System.currentTimeMillis()
         val point=RoutePoint(-12.04,-77.03)
         val quote=DeliveryQuote(listOf(DeliveryStop("1",id,null,point)),1000,2000,300,0,100,200,50,0,350,0,emptyList(),"PEN_1_KM_V1")
-        val snapshot=OfferSnapshot(now,true,quote,null,point,merchantName="Prueba técnica cliente ausente",
+        val snapshot=OfferSnapshot(now,true,quote,null,point,merchantName="Prueba tÃ©cnica cliente ausente",
             arrivedAt=now-8000,pickedUpAt=now-5000,acceptedAt=now-10000,paidByCustomer=true)
         val remote=FirebaseFirestore.getInstance().document("riders/$owner/deliveryRecords/$id")
         try {
@@ -50,7 +55,7 @@ class CustomerAbsenceFirebaseDeviceTest {
                 "paidByCustomer" to true,"earningsQuote" to mapOf("approachMeters" to 1000,"deliveryMeters" to 2000,
                     "chaskiCents" to 300,"tipCents" to 50,"totalCents" to 350,"pricingVersion" to "PEN_1_KM_V1","distanceSource" to "SIMULATED_GEODESIC"),
                 "updatedAt" to FieldValue.serverTimestamp())).await()
-            val service=FirebaseCustomerAbsence(database.orders()) { error("El pedido técnico ya está sincronizado") }
+            val service=FirebaseCustomerAbsence(database.orders()) { error("El pedido tÃ©cnico ya estÃ¡ sincronizado") }
             service.arrive(owner,id,point.latitude,point.longitude)
             service.call(owner,id,1)
             report.writeText("""{"uid":"$owner","orderId":"$id","phase":"WAITING_FIXTURE"}""")
@@ -58,12 +63,12 @@ class CustomerAbsenceFirebaseDeviceTest {
             service.call(owner,id,2)
             val withGemini=InstrumentationRegistry.getArguments().getString("testAbsenceGemini")=="true"
             if(withGemini) {
-                val assistant=FirebaseAssistantRepository(FirebaseSupportRepository())
+                val assistant=FirebaseAssistantRepository(SupportRepositoryImpl())
                 val answer=assistant.send(owner,id,UUID.randomUUID().toString(),
-                    "El cliente sigue ausente. Ya registré las llamadas y cumplí la espera. Revisa los requisitos del servidor para finalizar.",false)
+                    "El cliente sigue ausente. Ya registrÃ© las llamadas y cumplÃ­ la espera. Revisa los requisitos del servidor para finalizar.",false)
                 assertEquals("GEMINI",answer.mode);assertTrue(answer.canResolve);assertFalse(answer.needsHuman)
             }
-            val repo=LocalDemoOfferRepository(RoomDemoOrderStore(database.orders()),{owner},{emptyList()},resolveAbsence=service::resolve)
+            val repo=OrderRepositoryImpl(RoomDemoOrderStore(database.orders()),{owner},{emptyList()},resolveAbsence=service::resolve)
             val completed=repo.resolveCustomerAbsence(id)
             assertTrue(completed.isCompleted);assertFalse(completed.isDelivered);assertNull(completed.deliveredAt)
             assertEquals(completed,repo.resolveCustomerAbsence(id))
@@ -96,7 +101,7 @@ class CustomerAbsenceFirebaseDeviceTest {
                 mainDatabase.close()
             }
             database.close();database=openOrderDatabase(context,name)
-            val restored=LocalDemoOfferRepository(RoomDemoOrderStore(database.orders()),{owner},{emptyList()})
+            val restored=OrderRepositoryImpl(RoomDemoOrderStore(database.orders()),{owner},{emptyList()})
             assertTrue(restored.execute(OfferAction.STATE).isCompleted)
             restored.execute(OfferAction.RESET)
             assertNull(restored.execute(OfferAction.STATE).batch)
