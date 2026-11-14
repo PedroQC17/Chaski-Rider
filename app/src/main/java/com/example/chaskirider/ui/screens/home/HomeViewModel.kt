@@ -23,7 +23,8 @@ class HomeViewModel(
     private val locations: LocationRepository,
     private val texts: TextProvider,
     private val offers: OfferRepository,
-    private val session: RiderSession
+    private val session: RiderSession,
+    private val forecast: (Long) -> List<DemandZone> = { emptyList() }
 ) : ViewModel() {
     private val state = MutableStateFlow(HomeUiState())
     val uiState = state.asStateFlow()
@@ -45,6 +46,14 @@ class HomeViewModel(
                     refreshZones()
                 }
             }
+        }
+    }
+    suspend fun observeForecast() {
+        while (true) {
+            val hour = System.currentTimeMillis() / 3_600_000L
+            val zones = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { forecast(hour) }
+            state.update { it.copy(forecastZones = zones) }
+            kotlinx.coroutines.delay(((hour + 1) * 3_600_000L - System.currentTimeMillis()).coerceAtLeast(1))
         }
     }
     fun clearError() { state.update { it.copy(errorMessage = null, locationUnavailable = false) } }

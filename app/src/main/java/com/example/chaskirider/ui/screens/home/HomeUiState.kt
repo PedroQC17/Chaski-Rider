@@ -15,6 +15,7 @@ data class HomeUiState(
     val locationUnavailable: Boolean = false,
     // HU05: zonas de demanda, última actualización y selección.
     val demandZones: List<DemandZone> = emptyList(),
+    val forecastZones: List<DemandZone> = emptyList(),
     val zonesLoaded: Boolean = false,
     val zonesUpdatedAt: Long? = null,
     val isRefreshingZones: Boolean = false,

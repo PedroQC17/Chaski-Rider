@@ -41,8 +41,9 @@ internal data class MerchantDto(val latitude: Double, val longitude: Double, val
     fun toPoint() = RoutePoint(latitude, longitude)
 }
 internal data class DemandZoneDto(val id: String, val name: String, val level: String,
-    val latitude: Double, val longitude: Double, val radiusMeters: Int, val updatedAt: Long) {
-    fun toDomain() = DemandZone(id, name, level, latitude, longitude, radiusMeters, updatedAt)
+    val latitude: Double, val longitude: Double, val radiusMeters: Int, val updatedAt: Long,
+    val forecastLevel: String? = null) {
+    fun toDomain() = DemandZone(id, name, level, latitude, longitude, radiusMeters, updatedAt, forecastLevel)
 }
 internal data class SnapshotDto(val serverTime: Long, val pickedUp: Boolean,
     val batch: QuoteDto?, val offer: OfferDto?, val merchant: MerchantDto,

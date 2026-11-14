@@ -51,9 +51,10 @@ import kotlinx.coroutines.flow.collect
 fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = rememberNavController(), authViewModel: AuthViewModel = viewModel { AuthViewModel(AppContainer.textProvider, AppContainer.authRepository, AppContainer.riderSession) }) {
 
     val state by authViewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
     val homeViewModel: HomeViewModel = viewModel { HomeViewModel(AppContainer.riderProfileRepository,
         AppContainer.locationRepository, AppContainer.textProvider, AppContainer.offerRepository,
-        AppContainer.riderSession) }
+        AppContainer.riderSession, com.example.chaskirider.data.orders.DemoDemandForecast(context.applicationContext.assets)::zones) }
     val homeState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
 
@@ -71,7 +72,7 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
     val documentsState by documentsViewModel.uiState.collectAsStateWithLifecycle()
     val notificationsViewModel: NotificationsViewModel = viewModel { NotificationsViewModel(AppContainer.notificationsRepository) }
     val notificationsState by notificationsViewModel.uiState.collectAsStateWithLifecycle()
-    val context = LocalContext.current
+
     val scope = rememberCoroutineScope()
     val google = remember { GoogleSignInClient() }
     var googleBusy by remember { mutableStateOf(false) }
@@ -177,6 +178,9 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
         navController.navigate(Screen.Support.route) { launchSingleTop = true }
     }
     LaunchedEffect(ordersState.snapshot) { supportViewModel.setAvailableOrder(activeSupportOrder()) }
+    val orderSnapshot = ordersState.snapshot
+    val showDemand = offersActive && orderSnapshot != null && orderSnapshot.offer == null &&
+        (orderSnapshot.batch == null || orderSnapshot.isCompleted)
     val searchingForOffers = offersActive && ordersState.snapshot?.batch == null
     androidx.lifecycle.compose.LifecycleStartEffect(demoOrdersViewModel, searchingForOffers, user?.id) {
         demoOrdersViewModel.setForeground(true)
@@ -192,6 +196,14 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
         val snapshot = ordersState.snapshot
         if (workArea && route == Screen.Home.route && ((snapshot?.offer != null && offersActive) || (snapshot?.batch != null && !snapshot.isCompleted))) {
             navController.navigate(Screen.Orders.route) { launchSingleTop = true }
+        }
+    }
+    LaunchedEffect(route, showDemand, orderSnapshot?.batch) {
+        if (route == Screen.Orders.route && showDemand && orderSnapshot?.batch == null) {
+            navController.navigate(Screen.Home.route) {
+                popUpTo(Screen.Orders.route) { inclusive = true }
+                launchSingleTop = true
+            }
         }
     }
     LaunchedEffect(demoRequest, offersActive) {
@@ -323,7 +335,7 @@ fun AppNavigation(demoRequest: Long = 0, navController: NavHostController = reme
                     )
             }
             composable(Screen.Home.route) {
-                if (workArea) HomeRoute(homeViewModel, onOpenMenu = { scope.launch { drawerState.open() } })
+                if (workArea) HomeRoute(homeViewModel, showDemand = showDemand, onOpenMenu = { scope.launch { drawerState.open() } })
             }
             composable(Screen.Profile.route) {
                 user?.let {

@@ -2,7 +2,8 @@ package com.example.chaskirider.domain.orders
 
 //zonas de demanda de los pedidos
 data class DemandZone(val id: String, val name: String, val level: String,
-    val latitude: Double, val longitude: Double, val radiusMeters: Int, val updatedAt: Long)
+    val latitude: Double, val longitude: Double, val radiusMeters: Int, val updatedAt: Long,
+    val forecastLevel: String? = null)
 data class DeliveryOffer(val id: String, val expiresAt: Long, val quote: DeliveryQuote,
     // razon de asignacion del pedido
     val reason: String? = null, val reasonMeters: Int? = null)

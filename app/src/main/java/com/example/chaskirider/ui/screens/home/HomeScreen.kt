@@ -50,14 +50,24 @@ fun HomeScreen(state: HomeUiState, onOpenMenu: () -> Unit,
         }
         Column(Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(16.dp).widthIn(max = 480.dp),
             horizontalAlignment = Alignment.End) {
-            state.selectedZone?.let { zone ->
+            state.selectedZone?.takeIf { state.user?.isAvailable == true }?.let { zone ->
                 Surface(shape = RoundedCornerShape(12.dp), shadowElevation = 3.dp, modifier = Modifier.fillMaxWidth()) {
                     Row(Modifier.padding(horizontal = 12.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(stringResource(R.string.home_zone_detail, zone.name, stringResource(when (zone.level) {
+                        val currentDetail = stringResource(when (zone.level) {
                             "HIGH" -> R.string.home_zone_level_high
                             "MEDIUM" -> R.string.home_zone_level_medium
                             else -> R.string.home_zone_level_generic
-                        })), modifier = Modifier.weight(1f), style = MaterialTheme.typography.labelLarge)
+                        })
+                        val details = mutableListOf(zone.name)
+                        if (zone.level.isNotBlank()) details.add(currentDetail)
+                        if (zone.forecastLevel != null) {
+                            val hour = SimpleDateFormat("HH:mm", Locale.getDefault()).apply {
+                                timeZone = java.util.TimeZone.getTimeZone("America/Lima")
+                            }
+                            val start = state.forecastZones.find { it.id == zone.id }?.updatedAt
+                            if (start != null) details.add("Previsión · " + hour.format(Date(start)) + "–" + hour.format(Date(start + 3_600_000L)))
+                        }
+                        Text(details.joinToString("\n"), modifier = Modifier.weight(1f), style = MaterialTheme.typography.labelLarge)
                         IconButton(onClick = onClearZone) {
                             Icon(Icons.Default.Close, stringResource(R.string.text_cerrar))
                         }
@@ -66,7 +76,7 @@ fun HomeScreen(state: HomeUiState, onOpenMenu: () -> Unit,
                 Spacer(Modifier.height(8.dp))
             }
             val zonesUpdatedAt = state.zonesUpdatedAt
-            if (zonesUpdatedAt != null && state.demandZones.isNotEmpty()) {
+            if (state.user?.isAvailable == true && zonesUpdatedAt != null && state.demandZones.isNotEmpty()) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (state.isRefreshingZones) CircularProgressIndicator(Modifier.size(14.dp), strokeWidth = 2.dp)
                     else Text(stringResource(R.string.home_zones_updated,
