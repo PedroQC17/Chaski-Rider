@@ -58,15 +58,7 @@ fun HomeRoute(viewModel: HomeViewModel, showDemand: Boolean, onOpenMenu: () -> U
     LaunchedEffect(showDemand, lifecycleOwner) {
         if (showDemand) lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { viewModel.observeForecast() }
     }
-    val zones = if (showDemand) {
-        val combined = state.forecastZones.associateBy { it.id }.toMutableMap()
-        for (current in state.demandZones) {
-            val prediction = combined[current.id]
-            combined[current.id] = if (prediction == null) current else current.copy(forecastLevel = prediction.forecastLevel)
-        }
-        combined.values.toList()
-    } else emptyList()
-    val visibleState = state.copy(demandZones = zones, selectedZone = zones.find { it.id == state.selectedZone?.id })
+    val visibleState = if (showDemand) state else state.copy(demandZones = emptyList(), selectedZone = null)
     HomeScreen(state = visibleState, onOpenMenu = onOpenMenu,
         onToggleAvailability = {
             if (state.user?.isAvailable == true) viewModel.setAvailability(false)

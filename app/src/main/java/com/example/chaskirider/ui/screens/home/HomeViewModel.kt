@@ -52,7 +52,7 @@ class HomeViewModel(
         while (true) {
             val hour = System.currentTimeMillis() / 3_600_000L
             val zones = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { forecast(hour) }
-            state.update { it.copy(forecastZones = zones) }
+            state.update { it.updateZones(forecast = zones) }
             kotlinx.coroutines.delay(((hour + 1) * 3_600_000L - System.currentTimeMillis()).coerceAtLeast(1))
         }
     }
@@ -85,9 +85,8 @@ class HomeViewModel(
             try {
                 val snapshot = offers.execute(OfferAction.STATE)
                 if (session.user.value?.id == owner) state.update { s ->
-                    s.copy(zonesLoaded = true, demandZones = snapshot.demandZones,
-                        zonesUpdatedAt = snapshot.demandZones.maxOfOrNull { it.updatedAt } ?: snapshot.serverTime,
-                        selectedZone = snapshot.demandZones.find { it.id == s.selectedZone?.id })
+                    s.updateZones(current = snapshot.demandZones).copy(zonesLoaded = true,
+                        zonesUpdatedAt = snapshot.demandZones.maxOfOrNull { it.updatedAt } ?: snapshot.serverTime)
                 }
             } catch (error: kotlinx.coroutines.CancellationException) { throw error }
             catch (_: Exception) { }
