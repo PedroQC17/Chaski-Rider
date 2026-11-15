@@ -41,8 +41,6 @@ import com.example.chaskirider.feature.rider.ui.navigation.onboardingGraph
 import com.example.chaskirider.feature.rider.ui.navigation.profileGraph
 import com.example.chaskirider.dashboard.viewmodel.HomeViewModel
 import com.example.chaskirider.dashboard.navigation.homeGraph
-import com.example.chaskirider.feature.notifications.ui.viewmodel.NotificationsViewModel
-import com.example.chaskirider.feature.notifications.ui.navigation.notificationsGraph
 import com.example.chaskirider.feature.orders.ui.viewmodel.OrdersViewModel
 import com.example.chaskirider.feature.orders.ui.navigation.ordersGraph
 import com.example.chaskirider.feature.support.ui.viewmodel.SupportViewModel
@@ -80,8 +78,6 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
     val documentsViewModel: DocumentsViewModel = viewModel { DocumentsViewModel(AppContainer.textProvider, AppContainer.documentRepository, AppContainer.riderSession, AppContainer.documentPreviewRepository,
         AppContainer.registrationDraftRepository) }
     val documentsState by documentsViewModel.uiState.collectAsStateWithLifecycle()
-    val notificationsViewModel: NotificationsViewModel = viewModel { NotificationsViewModel(AppContainer.notificationsRepository) }
-    val notificationsState by notificationsViewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val google = remember { GoogleSignInClient() }
@@ -127,7 +123,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
         } else if (user != null && (user.status != RiderStatus.APPROVED || !user.isEnabled) && route in listOf(
                 Screen.Home.route, Screen.Orders.route, Screen.Profile.route,
                 Screen.ProfilePersonalData.route, Screen.ProfileVehicle.route, Screen.ProfileDocuments.route,
-                Screen.Notifications.route, Screen.Earnings.route)) {
+                Screen.Earnings.route)) {
             navController.navigate(Screen.RiderStatus.route) { popUpTo(navController.graph.id) { inclusive = true }; launchSingleTop = true }
         } else if (route == Screen.Startup.route) {
             navController.navigate(user?.let(::destination) ?: Screen.Access.route) {
@@ -210,7 +206,6 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
         drawerContent = {
             if (workArea) WorkSidebar(
                 route = route,
-                unread = notificationsState.unreadCount,
                 busy = homeState.isUpdatingAvailability || state.isLoading || profileState.isLoading || documentsState.isLoading,
                 onNavigate = { target -> scope.launch {
                     drawerState.close()
@@ -285,11 +280,6 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
                 onLogout = authViewModel::logout,
                 onSupport = { navController.navigate(Screen.Support.route) { launchSingleTop = true } },
                 onPasswordSetup = { authViewModel.clearError(); passwordDialog = true }
-            )
-            notificationsGraph(
-                state = notificationsState,
-                viewModel = notificationsViewModel,
-                onOpenMenu = { scope.launch { drawerState.open() } }
             )
             supportGraph(
                 user = user,

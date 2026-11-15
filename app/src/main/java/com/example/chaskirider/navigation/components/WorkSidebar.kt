@@ -26,7 +26,7 @@ import com.example.chaskirider.R
 import com.example.chaskirider.ui.theme.*
 
 @Composable
-fun WorkSidebar(route: String?, unread: Int, busy: Boolean, onNavigate: (String) -> Unit, onLogout: () -> Unit) {
+fun WorkSidebar(route: String?, busy: Boolean, onNavigate: (String) -> Unit, onLogout: () -> Unit) {
     val width = (LocalConfiguration.current.screenWidthDp * .76f).coerceAtMost(280f).dp
     ModalDrawerSheet(
         modifier = Modifier.width(width),
@@ -89,7 +89,6 @@ fun WorkSidebar(route: String?, unread: Int, busy: Boolean, onNavigate: (String)
             Triple(Screen.Orders.route, R.string.orders_real_menu, Icons.Default.ShoppingCart),
             Triple(Screen.Earnings.route, R.string.text_mis_ganancias, Icons.Default.Star),
             Triple(Screen.Profile.route, R.string.text_perfil, Icons.Default.Person),
-            Triple(Screen.Notifications.route, R.string.text_notificaciones, Icons.Default.Notifications),
             Triple(Screen.Support.route, R.string.text_ayuda_y_soporte, Icons.Default.Info)
         ).forEach { (target, label, icon) ->
             NavigationDrawerItem(
@@ -97,7 +96,6 @@ fun WorkSidebar(route: String?, unread: Int, busy: Boolean, onNavigate: (String)
                 selected = route == target || (target == Screen.Profile.route && route?.startsWith("profile_") == true),
                 onClick = { onNavigate(target) },
                 icon = { Icon(icon, null, Modifier.size(21.dp)) },
-                badge = { if (target == Screen.Notifications.route && unread > 0) Badge(containerColor = Orange) { Text(unread.toString()) } },
                 colors = colors,
                 shape = RoundedCornerShape(14.dp),
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 3.dp).height(52.dp)

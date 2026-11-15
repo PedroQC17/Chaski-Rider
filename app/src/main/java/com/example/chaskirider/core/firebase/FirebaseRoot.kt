@@ -7,7 +7,7 @@ object FirebaseRoot {
     fun riderDoc(uid: String) = "$RIDERS/$uid"
 
     object Callables {
-        const val RIDER_REGISTRATION = "riderRiderOnboarding"
+        const val RIDER_REGISTRATION = "riderRegistration"
         const val DELIVERY_PIN = "deliveryPin"
         const val CUSTOMER_ABSENCE = "customerAbsence"
         const val RIDER_ASSISTANT = "riderAssistant"

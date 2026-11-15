@@ -122,7 +122,8 @@ class DemoOrdersTest {
         override suspend fun load(uid: String) = saved[uid]
         override suspend fun save(uid: String, state: OrderSessionState) { saved[uid] = state }
     }
-    private fun repository() = OrderRepositoryImpl(store, { uid }, { listOf(first, second) }, { now }, { available })
+    private fun repository() = OrderRepositoryImpl(store, { uid }, { listOf(first, second) }, { now }, { available },
+        isRiderAvailable = { available })
     private suspend fun offer(repo: OfferRepository) = repo.execute(OfferAction.OFFER, lat = -12.046, lng = -77.037)
 
     @Test fun catalogCoversLimaWithDistinctPickupAndDelivery() {
@@ -193,6 +194,15 @@ class DemoOrdersTest {
         now += 300_000
         assertNotNull(offer(repo).offer)
     }
+    @Test fun disconnectInProgressRejectsAcceptanceOfANewOffer() = runTest {
+        val repo = repository()
+        val pending = offer(repo)
+        available = false
+        try { repo.execute(OfferAction.ACCEPT, pending.offer!!.id); fail() }
+        catch (error: OfferRequestException) { assertEquals(409, error.status) }
+        assertNull(repo.execute(OfferAction.STATE).batch)
+    }
+
     @Test fun noAvailabilityAndNoGpsDoNotCreateAnOffer() = runTest {
         available = false
         assertNull(offer(repository()).offer)

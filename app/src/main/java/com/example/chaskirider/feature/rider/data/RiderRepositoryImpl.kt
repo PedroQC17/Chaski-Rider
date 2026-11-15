@@ -96,7 +96,16 @@ class RiderRepositoryImpl(
     }
 
     override suspend fun setAvailability(available: Boolean) = firebaseResult(texts) {
-        remote.mutate("availability", mapOf("isAvailable" to available)).also { riders.save(it) }
+        val previous = session.user.value
+        // Al desconectar, el estado local cambia de inmediato para detener búsqueda y aceptación
+        // de ofertas mientras el backend confirma la operación.
+        if (!available && previous != null) session.update(previous.copy(isAvailable = false))
+        try {
+            remote.mutate("availability", mapOf("isAvailable" to available)).also { riders.save(it) }
+        } catch (error: Exception) {
+            if (!available && previous != null && session.user.value?.id == previous.id) session.update(previous)
+            throw error
+        }
     }
 
     override suspend fun createProfilePhotoCapture() = firebaseResult(texts) {

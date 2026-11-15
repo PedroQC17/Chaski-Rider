@@ -107,13 +107,14 @@ object AppContainer {
         localEarningsRepository
     }
 
-    // Repositorio de demostraciÃ³n (Datos simulados locales para test)
+    // Repositorio de demostración (Datos simulados locales para test)
     val demoOfferRepository: OfferRepository by lazy {
         OrderRepositoryImpl(
             store = StoredOrderSessionStore(chaskiDatabase.orders()) {
                 OrderSyncWorker.schedule(applicationContext, it)
             },
             currentUid = { riderSession.user.value?.id },
+            isRiderAvailable = { riderSession.user.value?.isAvailable == true },
             catalog = {
                 kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                     applicationContext.assets.open("demo_orders_lima.json").bufferedReader().use {

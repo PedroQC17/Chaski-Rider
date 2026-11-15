@@ -26,7 +26,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -92,10 +91,10 @@ fun ProfileScreen(
     user: Rider,
     photoUri: android.net.Uri? = null,
     onOpenMenu: () -> Unit = {},
-    onPersonalDataClick: (() -> Unit)? = null,
-    onVehicleClick: (() -> Unit)? = null,
-    onDocumentsClick: (() -> Unit)? = null,
-    onSupportClick: (() -> Unit)? = null,
+    onPersonalDataClick: () -> Unit = {},
+    onVehicleClick: () -> Unit = {},
+    onDocumentsClick: () -> Unit = {},
+    onSupportClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {}
 ) {
     Column(
@@ -141,10 +140,6 @@ fun ProfileScreen(
                 onClick = onDocumentsClick
             )
             HorizontalDivider(color = BorderLight)
-            ProfileMenuRow(
-                icon = { Icon(painterResource(R.drawable.ic_menu_payment), null, tint = TextMuted, modifier = Modifier.size(22.dp)) },
-                label = stringResource(R.string.text_metodos_de_pago)
-            )
             ProfileMenuRow(
                 icon = { Icon(Icons.Default.Info, null, tint = TextMuted, modifier = Modifier.size(22.dp)) },
                 label = stringResource(R.string.text_ayuda_y_soporte),

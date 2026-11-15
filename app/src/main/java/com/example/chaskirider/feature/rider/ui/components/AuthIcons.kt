@@ -16,10 +16,6 @@ fun GoogleLogoIcon(modifier: Modifier = Modifier.size(24.dp)) {
 }
 
 @Composable
-fun AppleLogoIcon(modifier: Modifier = Modifier.size(24.dp)) {
-    androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(com.example.chaskirider.R.drawable.ic_apple), null, modifier)
-}
-@Composable
 fun EyeIcon(modifier: Modifier = Modifier.size(24.dp), color: Color = Color.Gray) {
     Canvas(modifier = modifier) {
         val width = size.width

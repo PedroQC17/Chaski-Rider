@@ -22,7 +22,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.chaskirider.R
-import com.example.chaskirider.feature.rider.ui.components.AppleLogoIcon
 import com.example.chaskirider.feature.rider.ui.components.GoogleLogoIcon
 import com.example.chaskirider.ui.theme.*
 
@@ -63,17 +62,6 @@ fun AccessScreen(
             Text(stringResource(R.string.text_continuar_con_google), fontWeight = FontWeight.SemiBold)
         }
         Spacer(Modifier.height(12.dp))
-        OutlinedButton(onClick = {}, enabled = false, modifier = Modifier.fillMaxWidth().height(56.dp),
-            shape = RoundedCornerShape(14.dp), border = BorderStroke(1.dp, BorderLight),
-            colors = ButtonDefaults.outlinedButtonColors(disabledContentColor = TextMuted,
-                disabledContainerColor = Color(0xFFF7F7F7))) {
-            AppleLogoIcon(Modifier.size(22.dp))
-            Spacer(Modifier.width(12.dp))
-            Text(stringResource(R.string.text_continuar_con_apple))
-        }
-        Spacer(Modifier.height(6.dp))
-        Text(stringResource(R.string.text_apple_no_disponible), fontSize = 11.sp, color = TextMuted)
-        Spacer(Modifier.height(18.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             HorizontalDivider(Modifier.weight(1f), color = BorderLight)
             Text(stringResource(R.string.text_o_usa_tu_correo), fontSize = 12.sp, color = TextMuted)

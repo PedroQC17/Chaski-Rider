@@ -29,6 +29,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -186,7 +187,9 @@ fun ChatDialogContent(
                             Text(
                                 text = "Establecimiento" + if (!state.isMerchantChannelEnabled) " (Lectura)" else "",
                                 fontWeight = FontWeight.SemiBold,
-                                fontSize = 13.sp
+                                fontSize = 13.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     )
@@ -198,7 +201,9 @@ fun ChatDialogContent(
                             Text(
                                 text = "Cliente" + if (!state.isCustomerChannelEnabled) " (Lectura)" else "",
                                 fontWeight = FontWeight.SemiBold,
-                                fontSize = 13.sp
+                                fontSize = 13.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     )

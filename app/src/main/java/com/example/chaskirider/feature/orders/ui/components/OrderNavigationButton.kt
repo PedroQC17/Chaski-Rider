@@ -1,4 +1,4 @@
-﻿package com.example.chaskirider.feature.orders.ui.components
+package com.example.chaskirider.feature.orders.ui.components
 
 import android.content.ActivityNotFoundException
 import android.content.Context
@@ -29,7 +29,7 @@ internal fun OrderNavigationButton(snapshot: OfferSnapshot?, enabled: Boolean) {
     FloatingActionButton(onClick = {
         if (enabled) {
             failed = !openOrderNavigation(context, target)
-            if (failed) android.widget.Toast.makeText(context, "No se pudo abrir la navegaciÃ³n", android.widget.Toast.LENGTH_SHORT).show()
+            if (failed) android.widget.Toast.makeText(context, "No se pudo abrir la navegación", android.widget.Toast.LENGTH_SHORT).show()
         }
     }) {
         Icon(painterResource(R.drawable.ic_navigation), contentDescription = if (snapshot.pickedUp) "Navegar al cliente" else "Navegar al local")

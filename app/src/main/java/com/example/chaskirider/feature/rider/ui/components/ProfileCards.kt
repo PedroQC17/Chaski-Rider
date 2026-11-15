@@ -23,7 +23,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -151,13 +150,12 @@ fun ProfileMenuRow(
     icon: @Composable () -> Unit,
     label: String,
     danger: Boolean = false,
-    onClick: (() -> Unit)? = null
+    onClick: () -> Unit
 ) {
-    val enabled = onClick != null
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = enabled) { onClick?.invoke() }
+            .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -167,17 +165,9 @@ fun ProfileMenuRow(
             text = label,
             fontSize = 15.sp,
             fontWeight = FontWeight.Medium,
-            color = when {
-                danger -> DangerRed
-                !enabled -> TextMuted
-                else -> TextDark
-            },
+            color = if (danger) DangerRed else TextDark,
             modifier = Modifier.weight(1f)
         )
-        if (enabled) {
-            ChevronRightIcon(color = TextMuted)
-        } else {
-            Text(text = stringResource(R.string.text_proximamente), fontSize = 11.sp, color = TextMuted)
-        }
+        ChevronRightIcon(color = TextMuted)
     }
 }

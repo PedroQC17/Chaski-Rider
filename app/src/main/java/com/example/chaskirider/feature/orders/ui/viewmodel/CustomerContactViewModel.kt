@@ -88,7 +88,7 @@ class CustomerContactViewModel(
                 else if (error is com.google.firebase.functions.FirebaseFunctionsException &&
                     error.code == com.google.firebase.functions.FirebaseFunctionsException.Code.FAILED_PRECONDITION)
                     error.message ?: "Sincroniza el pedido y revisa los pasos pendientes."
-                else "No se pudo registrar el paso. Revisa la ubicaciÃ³n, los permisos y la conexiÃ³n telefÃ³nica, y vuelve a intentar.")
+                else "No se pudo registrar el paso. Revisa la ubicación, los permisos y la conexión telefónica, y vuelve a intentar.")
             } }
             finally { if (matches(uid, id)) mutable.update { it.copy(busy = false) } }
         }
@@ -102,7 +102,7 @@ class CustomerContactViewModel(
 
     fun arrive() = perform { uid, id ->
         if (mutable.value.contact != null) return@perform
-        val point = locations.currentLocation().getOrThrow() ?: error("UbicaciÃ³n no disponible")
+        val point = locations.currentLocation().getOrThrow() ?: error("Ubicación no disponible")
         val destination = target ?: return@perform
         OrderPolicy.requireNear(point.latitude, point.longitude, destination)
         service?.arrive(uid, id, point.latitude, point.longitude)

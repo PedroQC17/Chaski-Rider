@@ -31,6 +31,7 @@ class OrderRepositoryImpl(
     private val hasOffer: () -> Boolean = { Random.nextInt(100) < 70 },
     private val verifyPin: suspend (String, String, String) -> Unit = { _, _, _ -> throw OfferRequestException(503) },
     private val resolveAbsence: suspend (String, String) -> Long = { _, _ -> throw OfferRequestException(503) },
+    private val isRiderAvailable: () -> Boolean = { true },
 ) : OfferRepository {
     private val mutex = Mutex()
     override suspend fun execute(
@@ -64,6 +65,7 @@ class OrderRepositoryImpl(
                 }
             }
             OfferAction.ACCEPT -> {
+                if (!isRiderAvailable()) throw OfferRequestException(409)
                 val offer = snapshot.offer ?: throw OfferRequestException(409)
                 if (offer.id != offerId) throw OfferRequestException(409)
                 snapshot.copy(batch = offer.quote, offer = null, acceptedAt = now)
