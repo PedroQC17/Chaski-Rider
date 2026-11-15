@@ -1,11 +1,11 @@
 package com.example.chaskirider.dashboard.viewmodel
 
 import com.example.chaskirider.core.platform.location.GeoPoint
-import com.example.chaskirider.feature.user.domain.RiderUser
+import com.example.chaskirider.feature.rider.domain.Rider
 import com.example.chaskirider.feature.orders.domain.DemandZone
 
 data class HomeUiState(
-    val user: RiderUser? = null,
+    val user: Rider? = null,
     val isUpdatingAvailability: Boolean = false,
     val isLocating: Boolean = false,
     val hasLocationPermission: Boolean = false,

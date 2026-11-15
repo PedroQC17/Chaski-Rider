@@ -1,7 +1,10 @@
 package com.example.chaskirider.platform
-import com.example.chaskirider.feature.orders.data.local.OrderActionEntity
 import com.example.chaskirider.database.openChaskiDatabase
+import com.example.chaskirider.feature.orders.data.local.OrderEntity
+import com.example.chaskirider.feature.orders.data.local.OrderProblemEntity
+import com.example.chaskirider.feature.orders.data.local.toDomain
 import com.example.chaskirider.feature.orders.data.remote.DeliveryPinRemote
+import com.example.chaskirider.feature.orders.data.remote.OrderRoutes
 
 import com.example.chaskirider.feature.orders.domain.OrderStatus
 import android.content.Context
@@ -12,7 +15,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.SetOptions
-import com.google.gson.Gson
+import com.google.firebase.functions.FirebaseFunctionsException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.tasks.await
@@ -28,48 +31,40 @@ class OrderSyncWorker(context: Context, params: WorkerParameters) : CoroutineWor
         try {
             val dao = database.orders()
             var blocked = false
-            for (orderId in dao.pendingOrderIds(uid)) {
-                var stopOrder = false
-                while (!stopOrder) {
+            for (order in dao.pending(uid)) {
+                if (auth.currentUser?.uid != uid) return Result.success()
+                try {
+                    upload(order, dao.problems(uid, order.orderId), uid)
                     if (auth.currentUser?.uid != uid) return Result.success()
-                    val pending = dao.pendingOrderActions(uid, orderId)
-                    if (pending.isEmpty()) break
-                    for (entity in pending) {
-                        if (auth.currentUser?.uid != uid) return Result.success()
-                        try {
-                            upload(entity, uid)
-                            if (auth.currentUser?.uid != uid) return Result.success()
-                            dao.acknowledge(entity)
-                        } catch (_: TimeoutCancellationException) { return Result.retry() }
-                        catch (error: CancellationException) { throw error }
-                        catch (error: com.google.firebase.functions.FirebaseFunctionsException) {
-                            android.util.Log.w("OrderSync", "No se pudo preparar PIN: ${error.code}")
-                            if (error.code !in listOf(com.google.firebase.functions.FirebaseFunctionsException.Code.PERMISSION_DENIED,
-                                com.google.firebase.functions.FirebaseFunctionsException.Code.UNAUTHENTICATED,
-                                com.google.firebase.functions.FirebaseFunctionsException.Code.INVALID_ARGUMENT)) return Result.retry()
-                            blocked = true; stopOrder = true; break
-                        } catch (error: FirebaseFirestoreException) {
-                            android.util.Log.w("OrderSync", "No se pudo sincronizar: ${error.code}")
-                            if (error.code !in listOf(FirebaseFirestoreException.Code.PERMISSION_DENIED,
-                                FirebaseFirestoreException.Code.UNAUTHENTICATED, FirebaseFirestoreException.Code.INVALID_ARGUMENT)) return Result.retry()
-                            blocked = true; stopOrder = true; break
-                        } catch (error: RuntimeException) {
-                            android.util.Log.w("OrderSync", "AcciÃ³n local no vÃ¡lida: ${error.javaClass.simpleName}")
-                            blocked = true; stopOrder = true; break
-                        }
-                    }
+                    dao.confirm(uid, order.orderId, order.revision)
+                } catch (_: TimeoutCancellationException) { return Result.retry() }
+                catch (error: CancellationException) { throw error }
+                catch (error: FirebaseFunctionsException) {
+                    android.util.Log.w("OrderSync", "No se pudo preparar PIN: ${error.code}")
+                    if (error.code !in listOf(FirebaseFunctionsException.Code.PERMISSION_DENIED,
+                        FirebaseFunctionsException.Code.UNAUTHENTICATED,
+                        FirebaseFunctionsException.Code.INVALID_ARGUMENT)) return Result.retry()
+                    blocked = true; break
+                } catch (error: FirebaseFirestoreException) {
+                    android.util.Log.w("OrderSync", "No se pudo sincronizar: ${error.code}")
+                    if (error.code !in listOf(FirebaseFirestoreException.Code.PERMISSION_DENIED,
+                        FirebaseFirestoreException.Code.UNAUTHENTICATED, FirebaseFirestoreException.Code.INVALID_ARGUMENT)) return Result.retry()
+                    blocked = true; break
+                } catch (error: RuntimeException) {
+                    android.util.Log.w("OrderSync", "Pedido local no válido: ${error.javaClass.simpleName}")
+                    blocked = true; break
                 }
             }
             return if (blocked) Result.failure() else Result.success()
         } finally { database.close() }
     }
 
-    private suspend fun upload(entity: OrderActionEntity, uid: String) {
-        val record = Gson().fromJson(entity.content, OrderRecord::class.java)
-        require(record.orderId == entity.orderId && record.riderId == uid)
-        require(record.status in com.example.chaskirider.feature.orders.domain.OrderStatus.entries)
-        val ref = FirebaseFirestore.getInstance().collection("riders").document(uid)
-            .collection("deliveryRecords").document(record.orderId)
+    private suspend fun upload(order: OrderEntity, problems: List<OrderProblemEntity>, uid: String) {
+        val record = order.toDomain(problems)
+        require(record.orderId == order.orderId && record.riderId == uid)
+        require(record.status in OrderStatus.entries)
+        val ref = FirebaseFirestore.getInstance().document(OrderRoutes.order(uid, record.orderId))
+        val actionId = "${record.orderId}_${order.revision}"
         var remotelyCompleted = false
         withTimeout(20_000) {
             FirebaseFirestore.getInstance().runTransaction { tx ->
@@ -78,18 +73,18 @@ class OrderSyncWorker(context: Context, params: WorkerParameters) : CoroutineWor
                     remotelyCompleted = true
                     return@runTransaction
                 }
-                val action = ref.collection("actions").document(entity.actionId)
+                val action = ref.collection("actions").document(actionId)
                 val registeredAction = tx.get(action)
                 val incidents = record.problems.orEmpty().map { problem ->
                     val incidentRef = ref.collection("incidents").document(problem.id)
                     Triple(problem, incidentRef, tx.get(incidentRef).exists())
                 }
-                if ((old.getLong("revision") ?: 0) < entity.revision) {
+                if ((old.getLong("revision") ?: 0) < order.revision) {
                     val dataMap = mutableMapOf<String, Any?>(
                         "orderId" to record.orderId,
                         "riderId" to uid,
                         "status" to record.status.name,
-                        "revision" to entity.revision,
+                        "revision" to order.revision,
                         "merchantName" to record.merchantName,
                         "pickup" to mapOf("latitude" to record.pickup.latitude, "longitude" to record.pickup.longitude),
                         "destination" to mapOf("latitude" to record.destination.latitude, "longitude" to record.destination.longitude),
@@ -111,8 +106,7 @@ class OrderSyncWorker(context: Context, params: WorkerParameters) : CoroutineWor
                     if (record.evidencePhotoUrl != null) dataMap["evidencePhotoUrl"] = record.evidencePhotoUrl
                     if (record.deliveryNote != null) dataMap["deliveryNote"] = record.deliveryNote
                     tx.set(ref, dataMap, SetOptions.merge())
-                    if (record.status in listOf(com.example.chaskirider.feature.orders.domain.OrderStatus.DELIVERED,
-                            com.example.chaskirider.feature.orders.domain.OrderStatus.CANCELLED))
+                    if (record.status in listOf(OrderStatus.DELIVERED, OrderStatus.CANCELLED))
                         tx.delete(ref.collection("tracking").document("current"))
                 }
                 incidents.filterNot { it.third }.forEach { (problem, incidentRef, _) ->
@@ -123,13 +117,14 @@ class OrderSyncWorker(context: Context, params: WorkerParameters) : CoroutineWor
                         "cancelled" to problem.cancelled, "createdAt" to FieldValue.serverTimestamp()))
                 }
                 if (!registeredAction.exists()) tx.set(action, mapOf(
-                    "actionId" to entity.actionId, "orderId" to entity.orderId, "riderId" to uid,
-                    "revision" to entity.revision, "kind" to entity.kind, "status" to record.status.name,
+                    "actionId" to actionId, "orderId" to record.orderId, "riderId" to uid,
+                    "revision" to order.revision, "kind" to record.status.name, "status" to record.status.name,
                     "waitStartedAt" to record.waitStartedAt, "createdAt" to FieldValue.serverTimestamp()))
             }.await()
         }
-        if (FirebaseAuth.getInstance().currentUser?.uid != uid) throw kotlinx.coroutines.CancellationException("La sesiÃ³n cambiÃ³")
-        if (!remotelyCompleted && record.paidByCustomer && record.status !in listOf(com.example.chaskirider.feature.orders.domain.OrderStatus.DELIVERED, com.example.chaskirider.feature.orders.domain.OrderStatus.CANCELLED, com.example.chaskirider.feature.orders.domain.OrderStatus.COMPLETED_UNSUCCESSFUL))
+        if (FirebaseAuth.getInstance().currentUser?.uid != uid) throw CancellationException("La sesión cambió")
+        if (!remotelyCompleted && record.paidByCustomer && record.status !in listOf(
+                OrderStatus.DELIVERED, OrderStatus.CANCELLED, OrderStatus.COMPLETED_UNSUCCESSFUL))
             withTimeout(20_000) { DeliveryPinRemote.prepare(record.orderId) }
     }
 

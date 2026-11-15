@@ -1,5 +1,7 @@
 package com.example.chaskirider.feature.support.data
 
+import com.example.chaskirider.core.firebase.FirebaseRoot
+import com.example.chaskirider.feature.support.data.local.SupportStore
 import com.example.chaskirider.feature.support.data.remote.SupportRemote
 import com.example.chaskirider.feature.support.domain.AssistantReply
 import com.example.chaskirider.feature.support.domain.AssistantRepository
@@ -8,12 +10,26 @@ import com.example.chaskirider.feature.support.domain.SupportRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeout
 
-class SupportRepositoryImpl(private val remote: SupportRemote = SupportRemote()) : SupportRepository {
-    override fun observe(uid: String) = remote.observe(uid)
-    override fun observeMessages(uid: String, ticketId: String) = remote.observeMessages(uid, ticketId)
+class SupportRepositoryImpl(
+    private val remote: SupportRemote = SupportRemote(),
+    private val store: SupportStore? = null
+) : SupportRepository {
+    override fun observe(uid: String) = remote.observe(uid).onEach { tickets ->
+        store?.let { local ->
+            local.saveTickets(uid, tickets)
+            tickets.forEach { local.saveMessages(uid, it.id, it.messages) }
+        }
+    }
+
+    override fun observeMessages(uid: String, ticketId: String) =
+        remote.observeMessages(uid, ticketId).onEach { messages ->
+            store?.saveMessages(uid, ticketId, messages)
+        }
+
     override suspend fun create(uid: String, draft: SupportDraft) = remote.create(uid, draft)
     override suspend fun reply(uid: String, ticketId: String, messageId: String, body: String) =
         remote.reply(uid, ticketId, messageId, body)
@@ -27,7 +43,7 @@ class FirebaseAssistantRepository(private val support: SupportRepository,
         check(FirebaseAuth.getInstance().currentUser?.uid == uid)
         awaitSync(uid, orderId)
         val result = withTimeout(55_000) {
-            FirebaseFunctions.getInstance("us-central1").getHttpsCallable("riderAssistant").call(mapOf(
+            FirebaseFunctions.getInstance(FirebaseRoot.REGION).getHttpsCallable(FirebaseRoot.Callables.RIDER_ASSISTANT).call(mapOf(
                 "action" to if (human) "human" else "send", "orderId" to orderId, "messageId" to messageId, "body" to body)).await().data as Map<*, *>
         }
         check(FirebaseAuth.getInstance().currentUser?.uid == uid)

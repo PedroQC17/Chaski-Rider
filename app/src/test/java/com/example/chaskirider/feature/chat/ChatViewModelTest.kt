@@ -1,8 +1,8 @@
 package com.example.chaskirider.feature.chat
 import com.example.chaskirider.feature.chat.domain.*
-import com.example.chaskirider.feature.user.domain.RiderUser
+import com.example.chaskirider.feature.rider.domain.Rider
 import com.example.chaskirider.feature.orders.domain.*
-import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.rider.domain.RiderSession
 import com.example.chaskirider.feature.chat.ui.viewmodel.ChatViewModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -14,7 +14,7 @@ import org.junit.Test
 
 class ChatViewModelTest {
     private val dispatcher = StandardTestDispatcher()
-    private val session = object : RiderSession { override val user = MutableStateFlow<RiderUser?>(RiderUser(id = "alice")) }
+    private val session = object : RiderSession { override val user = MutableStateFlow<Rider?>(Rider(id = "alice")) }
     private val saved = mutableMapOf<String, ChatDraft>()
     private val drafts = object : ChatDraftStore {
         override suspend fun load(key: String) = saved[key]
@@ -49,7 +49,7 @@ class ChatViewModelTest {
         vm.updateInputText("Voy hacia tu dirección"); runCurrent()
         val restored = model(); runCurrent()
         assertEquals("Estoy en la entrada", restored.uiState.value.inputText)
-        session.user.value = RiderUser(id = "bob"); runCurrent()
+        session.user.value = Rider(id = "bob"); runCurrent()
         assertTrue(restored.uiState.value.messages.isEmpty())
         assertFalse(restored.uiState.value.isOpen)
         restored.syncOrderState(snapshot()); restored.openChat(); runCurrent()
@@ -89,7 +89,7 @@ class ChatViewModelTest {
         val vm = model(); runCurrent()
         vm.updateInputText("Mensaje de Alice"); runCurrent()
         gate = CompletableDeferred(); vm.sendMessage(); runCurrent()
-        session.user.value = RiderUser(id = "bob"); runCurrent()
+        session.user.value = Rider(id = "bob"); runCurrent()
         gate!!.complete(Unit); runCurrent()
         assertTrue(sent.isEmpty())
         assertEquals("", vm.uiState.value.inputText)

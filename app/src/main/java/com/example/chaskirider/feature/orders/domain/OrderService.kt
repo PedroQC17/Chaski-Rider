@@ -2,8 +2,8 @@ package com.example.chaskirider.feature.orders.domain
 
 import com.example.chaskirider.core.platform.location.LocationRepository
 import com.example.chaskirider.core.platform.location.TrackingPosition
-import com.example.chaskirider.feature.user.domain.RegistrationStatus
-import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.rider.domain.RiderStatus
+import com.example.chaskirider.feature.rider.domain.RiderSession
 
 class OrderSearchEngine(
     private val repository: OfferRepository,
@@ -11,7 +11,7 @@ class OrderSearchEngine(
     private val locations: LocationRepository
 ) {
     fun canSearch(): Boolean = session.user.value?.let {
-        it.isAvailable && it.isEnabled && it.status == RegistrationStatus.APPROVED && it.profilePhotoPath.isNotBlank()
+        it.isAvailable && it.isEnabled && it.status == RiderStatus.APPROVED && it.profilePhotoPath.isNotBlank()
     } == true
 
     suspend fun poll(search: Boolean): OfferSnapshot? {

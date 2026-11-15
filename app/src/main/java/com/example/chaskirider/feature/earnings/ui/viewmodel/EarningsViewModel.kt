@@ -3,7 +3,7 @@ package com.example.chaskirider.feature.earnings.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.chaskirider.feature.earnings.domain.*
-import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.rider.domain.RiderSession
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch

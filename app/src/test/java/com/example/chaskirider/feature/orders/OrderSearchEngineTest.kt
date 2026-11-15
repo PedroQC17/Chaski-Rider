@@ -1,11 +1,11 @@
 package com.example.chaskirider.feature.orders
 import com.example.chaskirider.feature.orders.domain.OrderSearchEngine
 import com.example.chaskirider.core.platform.location.GeoPoint
-import com.example.chaskirider.feature.user.domain.RiderUser
-import com.example.chaskirider.feature.user.domain.RegistrationStatus
+import com.example.chaskirider.feature.rider.domain.Rider
+import com.example.chaskirider.feature.rider.domain.RiderStatus
 import com.example.chaskirider.feature.orders.domain.*
 import com.example.chaskirider.core.platform.location.LocationRepository
-import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.rider.domain.RiderSession
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
@@ -14,7 +14,7 @@ import org.junit.Test
 
 class OrderSearchEngineTest {
     private val session = object : RiderSession {
-        override val user = MutableStateFlow<RiderUser?>(RiderUser(id = "alice", status = RegistrationStatus.APPROVED,
+        override val user = MutableStateFlow<Rider?>(Rider(id = "alice", status = RiderStatus.APPROVED,
             isAvailable = true, profilePhotoPath = "photo"))
     }
     private val calls = mutableListOf<OfferAction>()
@@ -40,7 +40,7 @@ class OrderSearchEngineTest {
     @Test fun disconnectedOrUnapprovedRiderCannotSearch() = runTest {
         val rider = session.user.value!!
         for (user in listOf(null, rider.copy(isAvailable = false), rider.copy(isEnabled = false),
-            rider.copy(status = RegistrationStatus.PENDING_REVIEW), rider.copy(profilePhotoPath = ""))) {
+            rider.copy(status = RiderStatus.PENDING_REVIEW), rider.copy(profilePhotoPath = ""))) {
             session.user.value = user
             assertNull(engine().poll(true))
         }

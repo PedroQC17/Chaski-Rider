@@ -4,11 +4,11 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.example.chaskirider.feature.support.ui.screens.SupportRoute
 import com.example.chaskirider.feature.support.ui.viewmodel.SupportViewModel
-import com.example.chaskirider.feature.user.domain.RiderUser
+import com.example.chaskirider.feature.rider.domain.Rider
 import com.example.chaskirider.navigation.Screen
 
 fun NavGraphBuilder.supportGraph(
-    user: RiderUser?,
+    user: Rider?,
     viewModel: SupportViewModel,
     onBack: () -> Unit,
 ) {

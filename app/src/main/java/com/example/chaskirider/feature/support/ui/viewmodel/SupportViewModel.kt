@@ -4,7 +4,7 @@ import com.example.chaskirider.core.platform.location.LocationRepository
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.chaskirider.feature.orders.domain.OrderProblemReason
-import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.rider.domain.RiderSession
 import com.example.chaskirider.feature.support.domain.SupportCategory
 import com.example.chaskirider.feature.support.domain.SupportTopic
 import com.example.chaskirider.feature.support.domain.SupportOrderContext

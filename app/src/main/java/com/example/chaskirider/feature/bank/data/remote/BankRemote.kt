@@ -1,9 +1,10 @@
 package com.example.chaskirider.feature.bank.data.remote
 
+import com.example.chaskirider.core.firebase.FirebaseRoot
 import com.example.chaskirider.core.firebase.getWithCacheFallback
 import com.example.chaskirider.core.text.TextKey
 import com.example.chaskirider.core.text.TextProvider
-import com.example.chaskirider.feature.bank.domain.BankInfo
+import com.example.chaskirider.feature.bank.domain.BankAccount
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
@@ -13,17 +14,17 @@ class BankRemote(
     private val texts: TextProvider,
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance(),
-    private val functions: FirebaseFunctions = FirebaseFunctions.getInstance("us-central1")
+    private val functions: FirebaseFunctions = FirebaseFunctions.getInstance(FirebaseRoot.REGION)
 ) {
-    suspend fun load(): BankInfo {
+    suspend fun load(): BankAccount {
         val snapshot = riderDocument()
-        val info = snapshot.get("bankInfo", BankInfo::class.java) ?: BankInfo()
+        val info = snapshot.get("bankInfo", BankAccount::class.java) ?: BankAccount()
         return info.copy(bankName = info.bankName.uppercase())
     }
 
-    suspend fun save(bank: BankInfo): BankInfo {
+    suspend fun save(bank: BankAccount): BankAccount {
         requireUid()
-        functions.getHttpsCallable("riderRegistration").call(mapOf(
+        functions.getHttpsCallable(FirebaseRoot.Callables.RIDER_REGISTRATION).call(mapOf(
             "action" to "bank",
             "bankInfo" to mapOf("bankName" to bank.bankName.trim().uppercase(),
                 "holderName" to bank.holderName.trim(),
@@ -35,7 +36,7 @@ class BankRemote(
 
     private suspend fun riderDocument(): com.google.firebase.firestore.DocumentSnapshot {
         val uid = requireUid()
-        return db.collection("riders").document(uid).getWithCacheFallback()
+        return db.document(FirebaseRoot.riderDoc(uid)).getWithCacheFallback()
     }
 
     private fun requireUid(): String =

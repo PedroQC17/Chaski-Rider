@@ -5,15 +5,17 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
-import com.example.chaskirider.feature.orders.data.local.DemoOrderState
+import com.example.chaskirider.feature.orders.data.local.OrderSessionState
 import com.example.chaskirider.database.ChaskiDatabase
 import com.example.chaskirider.database.openChaskiDatabase
-import com.example.chaskirider.feature.orders.data.local.OrderRecordEntity
-import com.example.chaskirider.feature.orders.data.local.RoomDemoOrderStore
+import com.example.chaskirider.feature.orders.data.local.OrderEntity
+import com.example.chaskirider.feature.orders.data.local.toDomain
+import com.example.chaskirider.feature.orders.data.local.toEntity
+import com.example.chaskirider.feature.orders.data.local.StoredOrderSessionStore
 import com.example.chaskirider.feature.earnings.domain.*
-import com.example.chaskirider.feature.user.domain.RiderUser
+import com.example.chaskirider.feature.rider.domain.Rider
 import com.example.chaskirider.feature.orders.domain.*
-import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.rider.domain.RiderSession
 import com.example.chaskirider.feature.earnings.ui.screens.EarningsRoute
 import com.example.chaskirider.feature.earnings.ui.viewmodel.EarningsViewModel
 import com.example.chaskirider.ui.theme.ChaskiRiderTheme
@@ -38,27 +40,26 @@ class EarningsDeviceTest {
         val now = System.currentTimeMillis()
         val accepted = OfferSnapshot(now, false, quote, null, RoutePoint(-12.0, -77.0), merchantName = "Local", acceptedAt = now)
         try {
-            RoomDemoOrderStore(db.orders()).save("alice", DemoOrderState(accepted))
+            StoredOrderSessionStore(db.orders()).save("alice", OrderSessionState(accepted))
             db.close()
             db = openChaskiDatabase(context, name, importLegacy = false)
-            val store = RoomDemoOrderStore(db.orders())
+            val store = StoredOrderSessionStore(db.orders())
             val restored = store.load("alice")!!.snapshot
             val done = restored.copy(arrivedAt = now + 1, pickedUp = true, pickedUpAt = now + 2,
                 isDelivered = true, deliveredAt = now + 3,
                 batch = quote.copy(totalCents = 9999, tipCents = 5000))
-            store.save("alice", DemoOrderState(done))
-            store.save("alice", DemoOrderState(done))
+            store.save("alice", OrderSessionState(done))
+            store.save("alice", OrderSessionState(done))
             val rows = db.orders().observeRecords("alice").first()
             assertEquals(1, rows.size)
-            val record = gson.fromJson(rows.single().content, OrderRecord::class.java)
+            val record = rows.single().toDomain()
             assertEquals(550, EarningsPolicy.record(record)!!.totalCents)
             assertEquals(250, EarningsPolicy.record(record)!!.tipCents)
             assertEquals(3.0, ActivitySummary.from(listOf(EarningsPolicy.record(record)!!)).averageDurationMillis!!, 0.0)
             assertTrue(db.orders().observeRecords("bob").first().isEmpty())
-            assertEquals(2, db.orders().actions("alice", "earnings-test").size)
             db.close()
             db = openChaskiDatabase(context, name, importLegacy = false)
-            assertEquals(550, EarningsPolicy.record(gson.fromJson(db.orders().record("alice", "earnings-test")!!.content, OrderRecord::class.java))!!.totalCents)
+            assertEquals(550, EarningsPolicy.record(db.orders().record("alice", "earnings-test")!!.toDomain())!!.totalCents)
         } finally { db.close(); context.deleteDatabase(name) }
     }
 
@@ -67,17 +68,17 @@ class EarningsDeviceTest {
         val gson = Gson()
         val now = System.currentTimeMillis()
         try {
-            val store = RoomDemoOrderStore(db.orders())
+            val store = StoredOrderSessionStore(db.orders())
             val accepted = OfferSnapshot(now, false, quote, null, RoutePoint(-12.0, -77.0), merchantName = "Local", acceptedAt = now)
-            store.save("alice", DemoOrderState(accepted))
+            store.save("alice", OrderSessionState(accepted))
             val problem = OrderProblem("cancel", "earnings-test", OrderProblemReason.LOCAL_CLOSED, "El local se encuentra cerrado", now + 1, false, true, OrderStatus.ACCEPTED)
-            store.save("alice", DemoOrderState(OfferSnapshot(now + 1, false, null, null, RoutePoint(0.0, 0.0)), problems = listOf(problem)))
-            val record = gson.fromJson(db.orders().record("alice", "earnings-test")!!.content, OrderRecord::class.java)
+            store.save("alice", OrderSessionState(OfferSnapshot(now + 1, false, null, null, RoutePoint(0.0, 0.0)), problems = listOf(problem)))
+            val record = db.orders().record("alice", "earnings-test")!!.toDomain()
             assertEquals(OrderStatus.CANCELLED, record.status)
             assertEquals(0, EarningsPolicy.record(record)!!.totalCents)
             val legacy = record.copy(orderId = "legacy", earningsQuote = null, status = OrderStatus.DELIVERED, deliveredAt = now)
-            db.orders().putRecord(OrderRecordEntity("alice", "legacy", gson.toJson(legacy), 1, false))
-            assertNull(EarningsPolicy.record(gson.fromJson(db.orders().record("alice", "legacy")!!.content, OrderRecord::class.java))!!.totalCents)
+            db.orders().putRecord(legacy.toEntity(1, false))
+            assertNull(EarningsPolicy.record(db.orders().record("alice", "legacy")!!.toDomain())!!.totalCents)
         } finally { db.close() }
     }
 
@@ -86,7 +87,7 @@ class EarningsDeviceTest {
         val record = DeliveryEarningsRecord("one", "Negocio de prueba", now, 300, 250, 550,
             quote = AcceptedEarningsQuote.from(quote))
         val alice = MutableStateFlow(EarningsSnapshot(records = listOf(record)))
-        val session = object : RiderSession { override val user = MutableStateFlow<RiderUser?>(RiderUser(id = "alice")) }
+        val session = object : RiderSession { override val user = MutableStateFlow<Rider?>(Rider(id = "alice")) }
         val repo = object : EarningsRepository { override fun observe(uid: String) = if (uid == "alice") alice else flowOf(EarningsSnapshot()) }
         val model = EarningsViewModel(repo, session)
         compose.setContent { ChaskiRiderTheme { EarningsRoute(model, {}) } }
@@ -95,7 +96,7 @@ class EarningsDeviceTest {
         compose.onNodeWithText("Detalle de ganancias").assertIsDisplayed()
         compose.onNodeWithText("Hasta el local: 1.00 km").assertExists()
         compose.onNodeWithText("Cerrar").performClick()
-        compose.runOnIdle { session.user.value = RiderUser(id = "bob") }
+        compose.runOnIdle { session.user.value = Rider(id = "bob") }
         compose.waitForIdle()
         compose.onNodeWithText("Negocio de prueba").assertDoesNotExist()
         compose.onNodeWithTag("earnings-list").performScrollToNode(hasText("AÃºn no hay pedidos finalizados en estas fechas."))
@@ -106,7 +107,7 @@ class EarningsDeviceTest {
         val now = System.currentTimeMillis()
         val record = DeliveryEarningsRecord("absence", "Cliente ausente de prueba", now, 300, 0, 300,
             quote = AcceptedEarningsQuote.from(quote), unsuccessful = true)
-        val session = object : RiderSession { override val user = MutableStateFlow<RiderUser?>(RiderUser(id = "alice")) }
+        val session = object : RiderSession { override val user = MutableStateFlow<Rider?>(Rider(id = "alice")) }
         val repo = object : EarningsRepository { override fun observe(uid: String) = flowOf(EarningsSnapshot(records = listOf(record))) }
         val model = EarningsViewModel(repo, session)
         val models = androidx.lifecycle.ViewModelStore().apply { put("absence", model) }
@@ -130,7 +131,7 @@ class EarningsDeviceTest {
         org.junit.Assume.assumeNotNull(user)
         val uid = user!!.uid
         val db = Room.inMemoryDatabaseBuilder(context, ChaskiDatabase::class.java).build()
-        val session = object : RiderSession { override val user = MutableStateFlow<RiderUser?>(RiderUser(id = uid)) }
+        val session = object : RiderSession { override val user = MutableStateFlow<Rider?>(Rider(id = uid)) }
         val monday = EarningsCalendar.parseDay("2026-11-02")!!
         val day = 86_400_000L
         val model = EarningsViewModel(com.example.chaskirider.feature.earnings.data.EarningsRepositoryImpl(
@@ -152,7 +153,7 @@ class EarningsDeviceTest {
                 pickedUpAt = null, deliveredAt = null, cancelledAt = monday + 5_000_000)
             runBlocking {
                 for (record in listOf(first, second, cancelled)) db.orders().putRecord(
-                    OrderRecordEntity(uid, record.orderId, Gson().toJson(record), 1, false))
+                    record.toEntity(1, false))
             }
             compose.waitUntil(10_000) { model.uiState.value.activity.delivered == 2 }
             compose.onNodeWithTag("earnings-list").performScrollToNode(hasContentDescription("Entregas exitosas: 2"))
@@ -183,7 +184,7 @@ class EarningsDeviceTest {
 
     @Test fun dateFilterFitsAndAppliesTheSelectedRange() {
         val now = System.currentTimeMillis()
-        val session = object : RiderSession { override val user = MutableStateFlow<RiderUser?>(RiderUser(id = "alice")) }
+        val session = object : RiderSession { override val user = MutableStateFlow<Rider?>(Rider(id = "alice")) }
         val repo = object : EarningsRepository {
             override fun observe(uid: String) = flowOf(EarningsSnapshot(connections = listOf(
                 ConnectionSession(EarningsCalendar.bounds(EarningsDateFilter.TODAY, now).first, now))))

@@ -4,13 +4,10 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.room.Room
-import com.example.chaskirider.database.ChaskiDatabase
 import androidx.test.platform.app.InstrumentationRegistry
-import com.example.chaskirider.database.openChaskiDatabase
-import com.example.chaskirider.feature.support.data.local.RoomSupportDraftStore
-import com.example.chaskirider.feature.user.domain.RiderUser
-import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.support.data.local.StoredSupportDraftStore
+import com.example.chaskirider.feature.rider.domain.Rider
+import com.example.chaskirider.feature.rider.domain.RiderSession
 import com.example.chaskirider.feature.support.domain.SupportTopic
 import com.example.chaskirider.feature.support.domain.SupportOrderContext
 import com.example.chaskirider.feature.support.domain.SupportDraft
@@ -37,32 +34,27 @@ class SupportDeviceTest {
         File(context.getExternalFilesDir(null), name).outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
     }
 
-    @Test fun roomRestoresDraftAndReplyAfterReopenAndIsolatesUsers() = runBlocking {
-        val name = "support-drafts-device-test.db"
-        context.deleteDatabase(name)
-        var db = openChaskiDatabase(context, name, importLegacy = false)
-        try {
-            var store = RoomSupportDraftStore(db.supportDrafts())
-            val order = SupportOrderContext("order-1", "Local", "Recojo", "Destino", true, "problem-1")
-            val draft = SupportDraft("draft-1", SupportTopic.CUSTOMER_UNREACHABLE, "El cliente no responde al contacto", order)
-            store.save("alice", draft)
-            store.save("alice/reply/ticket-1", SupportDraft("message-1", body = "Estoy esperando en el destino"))
-            db.close()
-            db = openChaskiDatabase(context, name, importLegacy = false)
-            store = RoomSupportDraftStore(db.supportDrafts())
-            assertEquals(draft, store.load("alice"))
-            assertEquals("Estoy esperando en el destino", store.load("alice/reply/ticket-1")!!.body)
-            assertNull(store.load("bob"))
-            store.clear("alice", "different-id")
-            assertNotNull(store.load("alice"))
-            store.clear("alice", "draft-1")
-            assertNull(store.load("alice"))
-        } finally { db.close(); context.deleteDatabase(name) }
+    @Test fun storedDraftAndReplySurviveRecreationAndIsolateUsers() = runBlocking {
+        context.getSharedPreferences("support_drafts", 0).edit().clear().commit()
+        val order = SupportOrderContext("order-1", "Local", "Recojo", "Destino", true, "problem-1")
+        val draft = SupportDraft("draft-1", SupportTopic.CUSTOMER_UNREACHABLE, "El cliente no responde al contacto", order)
+        StoredSupportDraftStore(context).apply {
+            save("alice", draft)
+            save("alice/reply/ticket-1", SupportDraft("message-1", body = "Estoy esperando en el destino"))
+        }
+        StoredSupportDraftStore(context).apply {
+            assertEquals(draft, load("alice"))
+            assertEquals("Estoy esperando en el destino", load("alice/reply/ticket-1")!!.body)
+            assertNull(load("bob"))
+            clear("alice", "different-id")
+            assertNotNull(load("alice"))
+            clear("alice", "draft-1")
+            assertNull(load("alice"))
+        }
     }
 
     @Test fun riderCanCreateTicketReadSupportReplyAndSeeClosedState() {
-        val db = Room.inMemoryDatabaseBuilder(context, ChaskiDatabase::class.java).build()
-        val session = object : RiderSession { override val user = MutableStateFlow<RiderUser?>(RiderUser(id = "support-device-test")) }
+        val session = object : RiderSession { override val user = MutableStateFlow<Rider?>(Rider(id = "support-device-test")) }
         val tickets = MutableStateFlow<List<SupportTicket>>(emptyList())
         val messages = MutableStateFlow<List<SupportMessage>>(emptyList())
         val repository = object : SupportRepository {
@@ -77,7 +69,7 @@ class SupportDeviceTest {
                 messages.value += SupportMessage(messageId, SupportSender.RIDER, body, System.currentTimeMillis())
             }
         }
-        val vm = SupportViewModel(repository, RoomSupportDraftStore(db.supportDrafts()), session)
+        val vm = SupportViewModel(repository, StoredSupportDraftStore(context), session)
         try {
             compose.setContent { ChaskiRiderTheme { SupportRoute(vm, {}) } }
             compose.waitUntil(15_000) { !vm.uiState.value.loading }
@@ -99,6 +91,6 @@ class SupportDeviceTest {
             tickets.value = tickets.value.map { it.copy(status = SupportTicketStatus.CLOSED) }
             compose.onNodeWithText("Este ticket está cerrado. Puedes abrir otro desde Ayuda si necesitas asistencia.").performScrollTo().assertIsDisplayed()
             compose.onNodeWithText("Enviar mensaje").assertDoesNotExist()
-        } finally { session.user.value = null; compose.waitForIdle(); db.close() }
+        } finally { session.user.value = null; compose.waitForIdle() }
     }
 }

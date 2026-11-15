@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.chaskirider.feature.chat.domain.*
-import com.example.chaskirider.feature.user.domain.RiderUser
-import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.rider.domain.Rider
+import com.example.chaskirider.feature.rider.domain.RiderSession
 import com.example.chaskirider.feature.support.domain.SupportMessage
 import com.example.chaskirider.feature.support.domain.SupportTicket
 import com.example.chaskirider.feature.support.domain.AssistantReply
@@ -21,7 +21,7 @@ import org.junit.Assert.*
 class AssistantViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val holder = ViewModelStore()
-    private val session = object : RiderSession { override val user = MutableStateFlow<RiderUser?>(RiderUser(id = "alice")) }
+    private val session = object : RiderSession { override val user = MutableStateFlow<Rider?>(Rider(id = "alice")) }
     private val saved = mutableMapOf<String, ChatDraft>()
     private var fail = false
     private var allowed = false
@@ -62,7 +62,7 @@ class AssistantViewModelTest {
         vm.changeBody("Mi borrador");runCurrent()
         vm.bind("two");runCurrent();assertEquals("",vm.uiState.value.draft?.body)
         vm.bind("one");runCurrent();assertEquals("Mi borrador",vm.uiState.value.draft?.body)
-        session.user.value = RiderUser(id = "bob");runCurrent()
+        session.user.value = Rider(id = "bob");runCurrent()
         assertEquals("",vm.uiState.value.draft?.body)
         assertEquals("Mi borrador",saved["assistant:alice:one"]?.body)
     }

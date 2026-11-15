@@ -1,130 +1,233 @@
 package com.example.chaskirider.feature.orders.data.local
 
-import com.example.chaskirider.feature.orders.domain.OrderProblem
-import androidx.room.Database
 import androidx.room.Dao
 import androidx.room.Entity
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
-import androidx.room.RoomDatabase
-import androidx.room.Upsert
 import androidx.room.Transaction
-import androidx.room.migration.Migration
-import androidx.sqlite.db.SupportSQLiteDatabase
-import com.example.chaskirider.feature.orders.domain.OrderRecord
-import com.example.chaskirider.feature.orders.domain.OrderStatus
-import com.example.chaskirider.feature.orders.domain.OfferSnapshot
-import com.google.gson.Gson
-import androidx.room.*
+import androidx.room.Upsert
+import com.example.chaskirider.core.platform.location.LocationUtils
+import com.example.chaskirider.feature.orders.domain.AcceptedEarningsQuote
 import com.example.chaskirider.feature.orders.domain.CustomerContact
 import com.example.chaskirider.feature.orders.domain.CustomerContactStore
-import com.example.chaskirider.core.platform.location.LocationUtils
+import com.example.chaskirider.feature.orders.domain.OfferSnapshot
+import com.example.chaskirider.feature.orders.domain.OrderProblem
+import com.example.chaskirider.feature.orders.domain.OrderProblemReason
+import com.example.chaskirider.feature.orders.domain.OrderRecord
+import com.example.chaskirider.feature.orders.domain.OrderStatus
 import com.example.chaskirider.feature.orders.domain.RoutePoint
+import com.google.gson.Gson
+import kotlinx.coroutines.flow.Flow
 
-data class DemoOrderState(val snapshot: OfferSnapshot, val recent: Map<String, Long> = emptyMap(),
-    val problems: List<com.example.chaskirider.feature.orders.domain.OrderProblem>? = emptyList(),
-    val catalogRouteId: String? = null)
-interface DemoOrderStore {
-    suspend fun load(uid: String): DemoOrderState?
-    suspend fun save(uid: String, state: DemoOrderState)
+data class OrderSessionState(
+    val snapshot: OfferSnapshot,
+    val recent: Map<String, Long> = emptyMap(),
+    val problems: List<OrderProblem>? = emptyList(),
+    val catalogRouteId: String? = null
+)
+
+interface OrderSessionStore {
+    suspend fun load(uid: String): OrderSessionState?
+    suspend fun save(uid: String, state: OrderSessionState)
 }
-@Entity(tableName = "demo_orders")
-data class DemoOrderEntity(@PrimaryKey val uid: String, val state: String)
-@Entity(tableName = "order_records", primaryKeys = ["uid", "orderId"])
-data class OrderRecordEntity(val uid: String, val orderId: String, val content: String,
-    val revision: Long, val pending: Boolean)
-@Entity(tableName = "order_actions", primaryKeys = ["uid", "actionId"])
-data class OrderActionEntity(val uid: String, val actionId: String, val orderId: String,
-    val revision: Long, val content: String, val kind: String, val pending: Boolean)
+
+@Entity(tableName = "orders", primaryKeys = ["riderId", "orderId"])
+data class OrderEntity(
+    val riderId: String,
+    val orderId: String,
+    val status: String,
+    val merchantName: String,
+    val pickupLatitude: Double,
+    val pickupLongitude: Double,
+    val destinationLatitude: Double,
+    val destinationLongitude: Double,
+    val acceptedAt: Long? = null,
+    val arrivedAt: Long? = null,
+    val pickedUpAt: Long? = null,
+    val deliveredAt: Long? = null,
+    val cancelledAt: Long? = null,
+    val waitStartedAt: Long? = null,
+    val evidencePhotoUrl: String? = null,
+    val deliveryNote: String? = null,
+    val paidByCustomer: Boolean = false,
+    val earningsApproachMeters: Int? = null,
+    val earningsDeliveryMeters: Int? = null,
+    val earningsChaskiCents: Int? = null,
+    val earningsTipCents: Int? = null,
+    val earningsTotalCents: Int? = null,
+    val earningsPricingVersion: String? = null,
+    val earningsDistanceSource: String? = null,
+    val completedAt: Long? = null,
+    val completionReason: String? = null,
+    val revision: Long,
+    val pending: Boolean
+)
+
+@Entity(tableName = "order_problems", primaryKeys = ["id"])
+data class OrderProblemEntity(
+    val id: String,
+    val riderId: String,
+    val orderId: String,
+    val category: String,
+    val detail: String,
+    val occurredAt: Long,
+    val pickedUp: Boolean,
+    val cancelled: Boolean,
+    val orderStatus: String?
+)
+
+fun OrderRecord.toEntity(revision: Long, pending: Boolean) = OrderEntity(
+    riderId = riderId,
+    orderId = orderId,
+    status = status.name,
+    merchantName = merchantName,
+    pickupLatitude = pickup.latitude,
+    pickupLongitude = pickup.longitude,
+    destinationLatitude = destination.latitude,
+    destinationLongitude = destination.longitude,
+    acceptedAt = acceptedAt,
+    arrivedAt = arrivedAt,
+    pickedUpAt = pickedUpAt,
+    deliveredAt = deliveredAt,
+    cancelledAt = cancelledAt,
+    waitStartedAt = waitStartedAt,
+    evidencePhotoUrl = evidencePhotoUrl,
+    deliveryNote = deliveryNote,
+    paidByCustomer = paidByCustomer,
+    earningsApproachMeters = earningsQuote?.approachMeters,
+    earningsDeliveryMeters = earningsQuote?.deliveryMeters,
+    earningsChaskiCents = earningsQuote?.chaskiCents,
+    earningsTipCents = earningsQuote?.tipCents,
+    earningsTotalCents = earningsQuote?.totalCents,
+    earningsPricingVersion = earningsQuote?.pricingVersion,
+    earningsDistanceSource = earningsQuote?.distanceSource,
+    completedAt = completedAt,
+    completionReason = completionReason,
+    revision = revision,
+    pending = pending
+)
+
+fun OrderEntity.toDomain(problems: List<OrderProblemEntity> = emptyList()) = OrderRecord(
+    orderId = orderId,
+    riderId = riderId,
+    status = OrderStatus.entries.firstOrNull { it.name == status } ?: OrderStatus.ACCEPTED,
+    merchantName = merchantName,
+    pickup = RoutePoint(pickupLatitude, pickupLongitude),
+    destination = RoutePoint(destinationLatitude, destinationLongitude),
+    acceptedAt = acceptedAt,
+    arrivedAt = arrivedAt,
+    pickedUpAt = pickedUpAt,
+    deliveredAt = deliveredAt,
+    cancelledAt = cancelledAt,
+    problems = problems.map { it.toDomain() },
+    waitStartedAt = waitStartedAt,
+    evidencePhotoUrl = evidencePhotoUrl,
+    deliveryNote = deliveryNote,
+    paidByCustomer = paidByCustomer,
+    earningsQuote = if (earningsApproachMeters != null && earningsDeliveryMeters != null &&
+        earningsChaskiCents != null && earningsTipCents != null && earningsTotalCents != null &&
+        earningsPricingVersion != null && earningsDistanceSource != null)
+        AcceptedEarningsQuote(earningsApproachMeters, earningsDeliveryMeters, earningsChaskiCents,
+            earningsTipCents, earningsTotalCents, earningsPricingVersion, earningsDistanceSource) else null,
+    completedAt = completedAt,
+    completionReason = completionReason
+)
+
+fun OrderProblem.toEntity(riderId: String) = OrderProblemEntity(
+    id = id,
+    riderId = riderId,
+    orderId = orderId,
+    category = reason.name,
+    detail = detail,
+    occurredAt = createdAt,
+    pickedUp = pickedUp,
+    cancelled = cancelled,
+    orderStatus = orderStatus?.name
+)
+
+fun OrderProblemEntity.toDomain() = OrderProblem(
+    id = id,
+    orderId = orderId,
+    reason = OrderProblemReason.entries.firstOrNull { it.name == category } ?: OrderProblemReason.OTHER,
+    detail = detail,
+    createdAt = occurredAt,
+    pickedUp = pickedUp,
+    cancelled = cancelled,
+    orderStatus = orderStatus?.let { name -> OrderStatus.entries.firstOrNull { it.name == name } }
+)
+
 @Dao
-interface DemoOrderDao {
-    @Query("SELECT * FROM demo_orders WHERE uid = :uid")
-    suspend fun load(uid: String): DemoOrderEntity?
-    @Upsert suspend fun save(entity: DemoOrderEntity)
-    @Query("SELECT * FROM order_records WHERE uid = :uid AND orderId = :orderId")
-    suspend fun record(uid: String, orderId: String): OrderRecordEntity?
-    @Query("SELECT * FROM order_records WHERE uid = :uid AND orderId = :orderId")
-    fun observeRecord(uid: String, orderId: String): kotlinx.coroutines.flow.Flow<OrderRecordEntity?>
-    @Query("SELECT * FROM order_records WHERE uid = :uid")
-    fun observeRecords(uid: String): kotlinx.coroutines.flow.Flow<List<OrderRecordEntity>>
-    @Query("SELECT * FROM order_records WHERE uid = :uid AND pending = 1 ORDER BY revision LIMIT 50")
-    suspend fun pending(uid: String): List<OrderRecordEntity>
-    @Query("UPDATE order_records SET pending = 0 WHERE uid = :uid AND orderId = :orderId AND revision = :revision")
-    suspend fun confirm(uid: String, orderId: String, revision: Long)
-    @Upsert suspend fun putRecord(entity: OrderRecordEntity)
-    @androidx.room.Insert(onConflict = androidx.room.OnConflictStrategy.IGNORE)
-    suspend fun insertAction(entity: OrderActionEntity)
-    @Query("SELECT * FROM order_actions WHERE uid = :uid AND pending = 1 ORDER BY orderId, revision LIMIT 50")
-    suspend fun pendingActions(uid: String): List<OrderActionEntity>
-    @Query("SELECT COUNT(*) FROM order_actions WHERE uid = :uid AND pending = 1")
-    fun observePendingCount(uid: String): kotlinx.coroutines.flow.Flow<Int>
-    @Query("SELECT DISTINCT orderId FROM order_actions WHERE uid = :uid AND pending = 1 ORDER BY orderId")
-    suspend fun pendingOrderIds(uid: String): List<String>
-    @Query("SELECT * FROM order_actions WHERE uid = :uid AND orderId = :orderId AND pending = 1 ORDER BY revision LIMIT 50")
-    suspend fun pendingOrderActions(uid: String, orderId: String): List<OrderActionEntity>
-    @Query("SELECT * FROM order_actions WHERE uid = :uid AND orderId = :orderId ORDER BY revision")
-    suspend fun actions(uid: String, orderId: String): List<OrderActionEntity>
-    @Query("UPDATE order_actions SET pending = 0 WHERE uid = :uid AND actionId = :actionId")
-    suspend fun confirmAction(uid: String, actionId: String)
+interface OrdersDao {
+    @Query("SELECT * FROM orders WHERE riderId = :riderId AND orderId = :orderId")
+    suspend fun record(riderId: String, orderId: String): OrderEntity?
+
+    @Query("SELECT * FROM orders WHERE riderId = :riderId AND orderId = :orderId")
+    fun observeRecord(riderId: String, orderId: String): Flow<OrderEntity?>
+
+    @Query("SELECT * FROM orders WHERE riderId = :riderId")
+    fun observeRecords(riderId: String): Flow<List<OrderEntity>>
+
+    @Query("SELECT * FROM order_problems WHERE riderId = :riderId AND orderId = :orderId")
+    suspend fun problems(riderId: String, orderId: String): List<OrderProblemEntity>
+
+    @Upsert
+    suspend fun saveProblems(entities: List<OrderProblemEntity>)
+
+    @Query("DELETE FROM order_problems WHERE riderId = :riderId AND orderId = :orderId")
+    suspend fun clearProblems(riderId: String, orderId: String)
+
+    @Query("SELECT * FROM orders WHERE riderId = :riderId AND pending = 1 ORDER BY revision LIMIT 50")
+    suspend fun pending(riderId: String): List<OrderEntity>
+
+    @Query("SELECT COUNT(*) FROM orders WHERE riderId = :riderId AND pending = 1")
+    fun observePendingCount(riderId: String): Flow<Int>
+
+    @Query("UPDATE orders SET pending = 0 WHERE riderId = :riderId AND orderId = :orderId AND revision = :revision")
+    suspend fun confirm(riderId: String, orderId: String, revision: Long)
+
+    @Upsert
+    suspend fun putRecord(entity: OrderEntity)
+
     @Transaction
-    suspend fun acknowledge(entity: OrderActionEntity) {
-        confirmAction(entity.uid, entity.actionId)
-        confirm(entity.uid, entity.orderId, entity.revision)
+    suspend fun saveOrder(order: OrderRecord, revision: Long, pending: Boolean) {
+        putRecord(order.toEntity(revision, pending))
+        clearProblems(order.riderId, order.orderId)
+        val problems = order.problems.orEmpty().map { it.toEntity(order.riderId) }
+        if (problems.isNotEmpty()) saveProblems(problems)
     }
-    @Transaction
-    suspend fun saveRecord(entity: OrderRecordEntity) {
-        val old = record(entity.uid, entity.orderId)
-        putRecord(entity)
-        if (entity.pending && (old == null || old.revision != entity.revision)) {
-            val gson = Gson()
-            val next = gson.fromJson(entity.content, OrderRecord::class.java)
-            val previous = old?.let { gson.fromJson(it.content, OrderRecord::class.java) }
-            val kind = when {
-                previous == null -> "RESTORE_SNAPSHOT"
-                next.status != previous.status -> next.status.name
-                next.waitStartedAt != previous.waitStartedAt -> "WAIT_STARTED"
-                next.problems.orEmpty() != previous.problems.orEmpty() -> "INCIDENT"
-                else -> "STATE_UPDATED"
-            }
-            insertAction(OrderActionEntity(entity.uid, "${entity.orderId}_${entity.revision}", entity.orderId,
-                entity.revision, entity.content, if (previous == null && entity.revision == 1L && next.status == OrderStatus.ACCEPTED)
-                    "ACCEPTED" else kind, true))
-        }
-    }
-    @Transaction
-    suspend fun saveWithRecord(entity: DemoOrderEntity, orderId: String?, content: String?): Boolean {
-        save(entity)
-        if (orderId != null && content != null) {
-            val old = record(entity.uid, orderId)
-            val normalized = if (old == null) content else {
-                val gson = Gson()
-                val previous = gson.fromJson(old.content, OrderRecord::class.java)
-                val next = gson.fromJson(content, OrderRecord::class.java)
-                gson.toJson(next.copy(earningsQuote = previous.earningsQuote))
-            }
-            if (old?.content != normalized) {
-                saveRecord(OrderRecordEntity(entity.uid, orderId, normalized, (old?.revision ?: 0) + 1, true))
-                return true
-            }
-        }
-        return false
-    }
+
+    suspend fun saveRecord(order: OrderRecord, revision: Long, pending: Boolean) =
+        saveOrder(order, revision, pending)
 }
-class RoomDemoOrderStore(private val dao: DemoOrderDao, private val scheduleSync: (String) -> Unit = {}) : DemoOrderStore {
-    private val gson = Gson()
-    override suspend fun load(uid: String) = dao.load(uid)?.let { gson.fromJson(it.state, DemoOrderState::class.java) }
-    override suspend fun save(uid: String, state: DemoOrderState) {
-        var record = OrderRecord.from(uid, state.snapshot)
-        if (record == null) {
-            val previous = load(uid)?.snapshot
-            val previousRecord = previous?.let { OrderRecord.from(uid, it) }
+
+class StoredOrderSessionStore(
+    private val dao: OrdersDao,
+    private val scheduleSync: (String) -> Unit = {},
+) : OrderSessionStore {
+    private val sessions = mutableMapOf<String, OrderSessionState>()
+
+    override suspend fun load(uid: String): OrderSessionState? = sessions[uid]
+
+    override suspend fun save(uid: String, state: OrderSessionState) {
+        val previous = sessions[uid]
+        sessions[uid] = state
+        var order = OrderRecord.from(uid, state.snapshot)
+        if (order == null) {
+            val previousRecord = previous?.snapshot?.let { OrderRecord.from(uid, it) }
             val cancelled = state.problems.orEmpty().lastOrNull { it.cancelled && it.orderId == previousRecord?.orderId }
-            if (previousRecord != null && cancelled != null) record = previousRecord.copy(
+            if (previousRecord != null && cancelled != null) order = previousRecord.copy(
                 status = OrderStatus.CANCELLED, cancelledAt = cancelled.createdAt)
         }
-        record = record?.copy(problems = state.problems.orEmpty().filter { it.orderId == record?.orderId })
-        val changed = dao.saveWithRecord(DemoOrderEntity(uid, gson.toJson(state)), record?.orderId, record?.let { gson.toJson(it) })
-        try { if (changed) scheduleSync(uid) } catch (error: RuntimeException) {
+        order = order?.copy(problems = state.problems.orEmpty().filter { it.orderId == order?.orderId }) ?: return
+        val old = dao.record(uid, order.orderId)
+        val oldRecord = old?.toDomain(dao.problems(uid, order.orderId))
+        val normalized = if (oldRecord == null) order else order.copy(earningsQuote = order.earningsQuote ?: oldRecord.earningsQuote)
+        if (oldRecord == normalized) return
+        val revision = (old?.revision ?: 0) + 1
+        dao.saveOrder(normalized, revision, true)
+        try { scheduleSync(uid) } catch (error: RuntimeException) {
             android.util.Log.w("OrderSync", "El registro sigue pendiente en Room", error)
         }
     }
@@ -134,23 +237,57 @@ class RoomDemoOrderStore(private val dao: DemoOrderDao, private val scheduleSync
 fun openOrderDatabase(context: android.content.Context, name: String = "chaski.db"): com.example.chaskirider.database.ChaskiDatabase =
     com.example.chaskirider.database.openChaskiDatabase(context, name)
 
-@Entity(tableName = "customer_contact", primaryKeys = ["uid", "orderId"])
-data class CustomerContactEntity(val uid: String, val orderId: String, val content: String)
+@Entity(tableName = "order_contacts", primaryKeys = ["riderId", "orderId"])
+data class OrderContactEntity(
+    val riderId: String,
+    val orderId: String,
+    val arrivedAt: Long,
+    val firstCallAt: Long?,
+    val firstCallElapsed: Long?,
+    val boot: Int?,
+    val secondCallAt: Long?,
+    val reminderSeen: Boolean,
+    val phone: String?,
+    val serverRegistered: Boolean
+)
 
 @Dao
-interface CustomerContactDao {
-    @Query("SELECT * FROM customer_contact WHERE uid = :uid AND orderId = :orderId")
-    suspend fun load(uid: String, orderId: String): CustomerContactEntity?
-    @Upsert suspend fun save(value: CustomerContactEntity)
+interface OrderContactDao {
+    @Query("SELECT * FROM order_contacts WHERE riderId = :riderId AND orderId = :orderId")
+    suspend fun load(riderId: String, orderId: String): OrderContactEntity?
+    @Upsert suspend fun save(value: OrderContactEntity)
 }
 
-class RoomCustomerContactStore(private val dao: CustomerContactDao) : CustomerContactStore {
-    private val gson = Gson()
+class RoomCustomerContactStore(private val dao: OrderContactDao) : CustomerContactStore {
     override suspend fun load(uid: String, orderId: String): CustomerContact? =
-        dao.load(uid, orderId)?.let { gson.fromJson(it.content, CustomerContact::class.java) }
+        dao.load(uid, orderId)?.toDomain()
     override suspend fun save(uid: String, orderId: String, contact: CustomerContact) =
-        dao.save(CustomerContactEntity(uid, orderId, gson.toJson(contact)))
+        dao.save(contact.toEntity(uid, orderId))
 }
+
+private fun OrderContactEntity.toDomain() = CustomerContact(
+    arrivedAt = arrivedAt,
+    firstCallAt = firstCallAt,
+    firstCallElapsed = firstCallElapsed,
+    boot = boot,
+    secondCallAt = secondCallAt,
+    reminderSeen = reminderSeen,
+    phone = phone,
+    serverRegistered = serverRegistered
+)
+
+private fun CustomerContact.toEntity(riderId: String, orderId: String) = OrderContactEntity(
+    riderId = riderId,
+    orderId = orderId,
+    arrivedAt = arrivedAt,
+    firstCallAt = firstCallAt,
+    firstCallElapsed = firstCallElapsed,
+    boot = boot,
+    secondCallAt = secondCallAt,
+    reminderSeen = reminderSeen,
+    phone = phone,
+    serverRegistered = serverRegistered
+)
 
 data class DemoOrder(
     val id: String, val merchantName: String, val pickupZone: String, val pickupAddress: String,

@@ -3,8 +3,8 @@ import com.example.chaskirider.feature.earnings.domain.ActivitySummary
 import com.example.chaskirider.feature.earnings.domain.EarningsPolicy
 import com.example.chaskirider.feature.orders.data.local.DemoOrder
 import com.example.chaskirider.feature.orders.data.local.DemoOrderCatalog
-import com.example.chaskirider.feature.orders.data.local.DemoOrderState
-import com.example.chaskirider.feature.orders.data.local.DemoOrderStore
+import com.example.chaskirider.feature.orders.data.local.OrderSessionState
+import com.example.chaskirider.feature.orders.data.local.OrderSessionStore
 import com.example.chaskirider.feature.orders.data.OrderRepositoryImpl
 import com.example.chaskirider.feature.orders.domain.*
 import kotlinx.coroutines.test.runTest
@@ -117,10 +117,10 @@ class DemoOrdersTest {
     private var now = 1_000_000L
     private var uid: String? = "alice"
     private var available = true
-    private val saved = mutableMapOf<String, DemoOrderState>()
-    private val store = object : DemoOrderStore {
+    private val saved = mutableMapOf<String, OrderSessionState>()
+    private val store = object : OrderSessionStore {
         override suspend fun load(uid: String) = saved[uid]
-        override suspend fun save(uid: String, state: DemoOrderState) { saved[uid] = state }
+        override suspend fun save(uid: String, state: OrderSessionState) { saved[uid] = state }
     }
     private fun repository() = OrderRepositoryImpl(store, { uid }, { listOf(first, second) }, { now }, { available })
     private suspend fun offer(repo: OfferRepository) = repo.execute(OfferAction.OFFER, lat = -12.046, lng = -77.037)
@@ -221,9 +221,9 @@ class DemoOrdersTest {
         assertEquals(0, repository().execute(OfferAction.STATE).waitingCompensationCents)
     }
     @Test fun failedSaveDoesNotConfirmAnAction() = runTest {
-        val badStore = object : DemoOrderStore {
+        val badStore = object : OrderSessionStore {
             override suspend fun load(uid: String) = saved[uid]
-            override suspend fun save(uid: String, state: DemoOrderState) { error("disk full") }
+            override suspend fun save(uid: String, state: OrderSessionState) { error("disk full") }
         }
         val repo = repository(); val pending = offer(repo)
         val broken = OrderRepositoryImpl(badStore, { uid }, { listOf(first) }, { now }, { true })
@@ -306,9 +306,9 @@ class DemoOrdersTest {
     @Test fun failedCancellationSaveKeepsAcceptedOrderAndHistoryUnchanged() = runTest {
         val repo = repository(); val pending = offer(repo)
         val accepted = repo.execute(OfferAction.ACCEPT, pending.offer!!.id)
-        val badStore = object : DemoOrderStore {
+        val badStore = object : OrderSessionStore {
             override suspend fun load(uid: String) = saved[uid]
-            override suspend fun save(uid: String, state: DemoOrderState) { error("disk full") }
+            override suspend fun save(uid: String, state: OrderSessionState) { error("disk full") }
         }
         val broken = OrderRepositoryImpl(badStore, { uid }, { listOf(first) }, { now }, { true })
         try { broken.reportProblem(OrderProblemReason.LOCAL_CLOSED, "El local tiene las puertas cerradas", true); fail() }

@@ -1,6 +1,7 @@
 package com.example.chaskirider.feature.documents.data.remote
 
 import android.net.Uri
+import com.example.chaskirider.core.firebase.FirebaseRoot
 import com.example.chaskirider.core.firebase.getWithCacheFallback
 import com.example.chaskirider.core.text.TextKey
 import com.example.chaskirider.core.text.TextProvider
@@ -20,28 +21,28 @@ class DocumentRemote(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance(),
     private val storage: FirebaseStorage = FirebaseStorage.getInstance(),
-    private val functions: FirebaseFunctions = FirebaseFunctions.getInstance("us-central1"),
+    private val functions: FirebaseFunctions = FirebaseFunctions.getInstance(FirebaseRoot.REGION),
     private val online: () -> Boolean = { true }
 ) {
     suspend fun upload(uri: Uri, docType: String, mimeType: String, path: String) {
         val uid = requireUid()
         val metadata = StorageMetadata.Builder().setContentType(mimeType).build()
         storage.reference.child(path).putFile(uri, metadata).await()
-        functions.getHttpsCallable("riderRegistration")
+        functions.getHttpsCallable(FirebaseRoot.Callables.RIDER_REGISTRATION)
             .call(mapOf("action" to "document", "docType" to docType, "path" to path)).await()
         check(auth.currentUser?.uid == uid) { texts.get(TextKey.TEXT_LA_SESION_CAMBIO_VUELVE_A_INGRESAR) }
     }
 
     suspend fun path(docType: String): String {
         val uid = requireUid()
-        return db.collection("riders").document(uid)
+        return db.document(FirebaseRoot.riderDoc(uid))
             .getWithCacheFallback(online())
             .getString(DocumentPolicy.field(docType)).orEmpty()
     }
 
     suspend fun load(): DocumentSnapshot {
         val uid = requireUid()
-        val document = db.collection("riders").document(uid).getWithCacheFallback(online())
+        val document = db.document(FirebaseRoot.riderDoc(uid)).getWithCacheFallback(online())
         val paths = DocumentPolicy.types.associateWith { document.getString(DocumentPolicy.field(it)).orEmpty() }
         val reviews = (document.get("documentReviews") as? Map<*, *>).orEmpty()
             .mapNotNull { (key, value) ->

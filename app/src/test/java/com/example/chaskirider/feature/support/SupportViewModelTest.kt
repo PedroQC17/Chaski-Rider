@@ -2,9 +2,9 @@ package com.example.chaskirider.feature.support
 import com.example.chaskirider.core.platform.location.GeoPoint
 import com.example.chaskirider.core.platform.location.LocationRepository
 import com.example.chaskirider.feature.orders.domain.OrderStatus
-import com.example.chaskirider.feature.user.domain.RiderUser
+import com.example.chaskirider.feature.rider.domain.Rider
 import com.example.chaskirider.feature.orders.domain.OrderProblemReason
-import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.rider.domain.RiderSession
 import com.example.chaskirider.feature.support.domain.SupportCategory
 import com.example.chaskirider.feature.support.domain.SupportTopic
 import com.example.chaskirider.feature.support.domain.SupportOrderContext
@@ -28,7 +28,7 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class SupportViewModelTest {
     private val dispatcher = StandardTestDispatcher()
-    private val session = object : RiderSession { override val user = MutableStateFlow<RiderUser?>(RiderUser(id = "alice")) }
+    private val session = object : RiderSession { override val user = MutableStateFlow<Rider?>(Rider(id = "alice")) }
     private val saved = mutableMapOf<String, SupportDraft>()
     private val tickets = MutableStateFlow<List<SupportTicket>>(emptyList())
     private var failSave = false
@@ -116,10 +116,10 @@ class SupportViewModelTest {
         val restored = SupportViewModel(repository, store, session); runCurrent()
         assertEquals(vm.uiState.value.draft, restored.uiState.value.draft)
         assertTrue(restored.uiState.value.formOpen)
-        session.user.value = RiderUser(id = "bob"); runCurrent()
+        session.user.value = Rider(id = "bob"); runCurrent()
         assertEquals("", vm.uiState.value.draft!!.body)
         assertTrue(vm.uiState.value.tickets.isEmpty())
-        session.user.value = RiderUser(id = "alice"); runCurrent()
+        session.user.value = Rider(id = "alice"); runCurrent()
         assertEquals("Mi ubicación no se actualiza en el mapa", vm.uiState.value.draft!!.body)
     }
 
@@ -164,7 +164,7 @@ class SupportViewModelTest {
     @Test fun accountSwitchCancelsPendingTicketCreation() = runTest(dispatcher) {
         val vm = SupportViewModel(repository, store, session); runCurrent(); form(vm); runCurrent()
         createGate = CompletableDeferred(); vm.createTicket(); runCurrent()
-        session.user.value = RiderUser(id = "bob"); runCurrent()
+        session.user.value = Rider(id = "bob"); runCurrent()
         createGate!!.complete(Unit); runCurrent()
         assertTrue(created.isEmpty())
         assertEquals("", vm.uiState.value.draft!!.body)

@@ -1,7 +1,7 @@
 package com.example.chaskirider.feature.earnings
 import com.example.chaskirider.feature.earnings.domain.*
-import com.example.chaskirider.feature.user.domain.RiderUser
-import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.rider.domain.Rider
+import com.example.chaskirider.feature.rider.domain.RiderSession
 import com.example.chaskirider.feature.earnings.ui.viewmodel.EarningsViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -74,7 +74,7 @@ class ActivitySummaryTest {
         assertTrue(ActivityChart.points(records, end, start).isEmpty())
     }
     @Test fun modelChangesAllMetricsAndChartTogetherAndDeduplicatedRoomSnapshotDoesNotAccumulate() = runTest(dispatcher) {
-        val session = object : RiderSession { override val user = MutableStateFlow<RiderUser?>(RiderUser(id = "alice")) }
+        val session = object : RiderSession { override val user = MutableStateFlow<Rider?>(Rider(id = "alice")) }
         val feed = MutableStateFlow(EarningsSnapshot())
         val repository = object : EarningsRepository { override fun observe(uid: String) = feed }
         val now = monday + day + 12 * 3_600_000

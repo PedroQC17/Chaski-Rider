@@ -1,15 +1,18 @@
 package com.example.chaskirider.feature.earnings.data
 
+import com.example.chaskirider.feature.earnings.data.local.EarningsStore
 import com.example.chaskirider.feature.earnings.data.remote.EarningsRemote
 import com.example.chaskirider.feature.earnings.domain.*
 import kotlinx.coroutines.flow.*
 
 class EarningsRepositoryImpl(
     private val orders: EarningsOrderSource,
-    private val remote: EarningsRemote = EarningsRemote()
+    private val remote: EarningsRemote = EarningsRemote(),
+    private val store: EarningsStore? = null
 ) : EarningsRepository {
     override fun observe(uid: String): Flow<EarningsSnapshot> =
         combine(orders.observe(uid), remote.payments(uid), remote.connections(uid)) { rows, feed, connection ->
+            store?.let { runCatching { it.save(uid, feed.records, connection.sessions) } }
             var invalid = false
             val records = rows.mapNotNull { row ->
                 val order = row.order

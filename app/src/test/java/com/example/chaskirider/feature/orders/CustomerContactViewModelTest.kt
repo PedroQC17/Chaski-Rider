@@ -4,10 +4,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.chaskirider.core.platform.location.GeoPoint
-import com.example.chaskirider.feature.user.domain.RiderUser
+import com.example.chaskirider.feature.rider.domain.Rider
 import com.example.chaskirider.feature.orders.domain.*
 import com.example.chaskirider.core.platform.location.LocationRepository
-import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.rider.domain.RiderSession
 import com.example.chaskirider.feature.orders.domain.CustomerContact
 import com.example.chaskirider.feature.orders.domain.CustomerContactStore
 import com.example.chaskirider.feature.orders.domain.PhoneCallState
@@ -24,7 +24,7 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class CustomerContactViewModelTest {
     private val dispatcher = StandardTestDispatcher()
-    private val session = object : RiderSession { override val user = MutableStateFlow<RiderUser?>(RiderUser(id = "alice")) }
+    private val session = object : RiderSession { override val user = MutableStateFlow<Rider?>(Rider(id = "alice")) }
     private val records = mutableMapOf<Pair<String, String>, CustomerContact>()
     private val store = object : CustomerContactStore {
         override suspend fun load(uid: String, orderId: String) = records[uid to orderId]
@@ -84,7 +84,7 @@ class CustomerContactViewModelTest {
         assertNotNull(restored.uiState.value.contact?.secondCallAt)
         restored.bind(snapshot("other")); runCurrent()
         assertNull(restored.uiState.value.contact)
-        session.user.value = RiderUser(id = "bob"); runCurrent()
+        session.user.value = Rider(id = "bob"); runCurrent()
         restored.bind(snapshot()); runCurrent()
         assertNull(restored.uiState.value.contact)
     }

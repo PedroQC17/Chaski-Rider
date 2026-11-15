@@ -1,13 +1,13 @@
 package com.example.chaskirider.dashboard
 import com.example.chaskirider.core.platform.location.GeoPoint
-import com.example.chaskirider.feature.user.domain.RiderUser
-import com.example.chaskirider.feature.bank.domain.BankInfo
-import com.example.chaskirider.feature.vehicle.domain.VehicleType
+import com.example.chaskirider.feature.rider.domain.Rider
+import com.example.chaskirider.feature.bank.domain.BankAccount
+import com.example.chaskirider.feature.rider.domain.VehicleType
 import com.example.chaskirider.feature.orders.domain.*
 import com.example.chaskirider.core.platform.location.LocationRepository
-import com.example.chaskirider.feature.user.domain.RiderSession
-import com.example.chaskirider.feature.user.domain.RiderUserRepository
-import com.example.chaskirider.feature.user.FakeRiderUserRepository
+import com.example.chaskirider.feature.rider.domain.RiderSession
+import com.example.chaskirider.feature.rider.domain.RiderRepository
+import com.example.chaskirider.feature.rider.FakeRiderRepository
 import com.example.chaskirider.core.text.*
 import com.example.chaskirider.dashboard.viewmodel.HomeViewModel
 import kotlinx.coroutines.*
@@ -20,7 +20,7 @@ import org.junit.Assert.*
 class HomeViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val session = object : RiderSession {
-        override val user = MutableStateFlow<RiderUser?>(RiderUser(id = "alice", isAvailable = true))
+        override val user = MutableStateFlow<Rider?>(Rider(id = "alice", isAvailable = true))
     }
     private var zoneGate: CompletableDeferred<OfferSnapshot>? = null
     private var locationGate: CompletableDeferred<GeoPoint?>? = null
@@ -42,7 +42,7 @@ class HomeViewModelTest {
             return Result.success(if (gate == null) GeoPoint(-12.0, -77.0) else withContext(NonCancellable) { gate.await() })
         }
     }
-    private val users = object : FakeRiderUserRepository() {
+    private val users = object : FakeRiderRepository() {
         override suspend fun setAvailability(available: Boolean) = Result.success(session.user.value!!.copy(isAvailable = available))
     }
     private val texts = object : TextProvider {
@@ -59,7 +59,7 @@ class HomeViewModelTest {
         val gate = CompletableDeferred<OfferSnapshot>()
         zoneGate = gate; vm.refreshZones(); runCurrent()
         zoneGate = null
-        session.user.value = RiderUser(id = "bob", isAvailable = true)
+        session.user.value = Rider(id = "bob", isAvailable = true)
         runCurrent()
         assertNull(vm.uiState.value.location)
         assertEquals("bob", vm.uiState.value.demandZones.single().id)
@@ -67,7 +67,7 @@ class HomeViewModelTest {
         assertEquals("bob", vm.uiState.value.demandZones.single().id)
         session.user.value = null; runCurrent()
         assertTrue(vm.uiState.value.demandZones.isEmpty()); assertFalse(vm.uiState.value.zonesLoaded)
-        session.user.value = RiderUser(id = "alice"); runCurrent()
+        session.user.value = Rider(id = "alice"); runCurrent()
         assertEquals("alice", requests.last())
         assertEquals("alice", vm.uiState.value.demandZones.single().id)
     }

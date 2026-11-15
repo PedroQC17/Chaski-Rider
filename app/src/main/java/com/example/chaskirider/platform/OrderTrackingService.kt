@@ -1,6 +1,7 @@
 package com.example.chaskirider.platform
 import com.example.chaskirider.database.ChaskiDatabase
 import com.example.chaskirider.database.openChaskiDatabase
+import com.example.chaskirider.feature.orders.data.local.toDomain
 import com.example.chaskirider.feature.orders.data.remote.FirebaseOrderTracking
 
 import android.Manifest
@@ -21,7 +22,6 @@ import com.example.chaskirider.feature.orders.domain.OrderRecord
 import com.example.chaskirider.feature.orders.domain.OrderStatus
 import com.example.chaskirider.feature.orders.domain.OrderTracking
 import com.google.firebase.auth.FirebaseAuth
-import com.google.gson.Gson
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
 
@@ -60,17 +60,16 @@ class OrderTrackingService : Service() {
         auth.removeAuthStateListener(authListener)
         auth.addAuthStateListener(authListener)
         val db = database ?: openChaskiDatabase(this).also { database = it }
-        val gson = Gson()
         val source = TrackingLocationSource(this)
         val remote = FirebaseOrderTracking(owner, orderId)
         suspend fun current(): OrderRecord? {
             if (auth.currentUser?.uid != owner) return null
-            return db.orders().record(owner, orderId)?.let { gson.fromJson(it.content, OrderRecord::class.java) }
+            return db.orders().record(owner, orderId)?.toDomain()
         }
         val tracking = OrderTracking(owner, orderId, ::current, source::current, remote::publish)
         job = scope.launch {
             db.orders().observeRecord(owner, orderId).collectLatest { entity ->
-                val record = entity?.let { gson.fromJson(it.content, OrderRecord::class.java) }
+                val record = entity?.toDomain()
                 if (record?.status != OrderStatus.ON_THE_WAY || record.riderId != owner || record.pickedUpAt == null) {
                     stopSelf(); return@collectLatest
                 }

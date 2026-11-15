@@ -2,14 +2,12 @@ package com.example.chaskirider.feature.support
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
 import com.example.chaskirider.feature.support.data.SupportRepositoryImpl
-import com.example.chaskirider.database.ChaskiDatabase
-import com.example.chaskirider.feature.support.data.local.RoomSupportDraftStore
-import com.example.chaskirider.feature.user.domain.RiderUser
+import com.example.chaskirider.feature.support.data.local.StoredSupportDraftStore
+import com.example.chaskirider.feature.rider.domain.Rider
 import com.example.chaskirider.feature.orders.domain.*
-import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.rider.domain.RiderSession
 import com.example.chaskirider.feature.support.domain.SupportOrderContext
 import com.example.chaskirider.feature.support.domain.SupportTicketStatus
 import com.example.chaskirider.feature.support.domain.SupportSender
@@ -37,9 +35,8 @@ class SupportFirebaseDeviceTest {
         val user = FirebaseAuth.getInstance().currentUser
         assumeNotNull(user)
         val uid = user!!.uid
-        val database = Room.inMemoryDatabaseBuilder(context, ChaskiDatabase::class.java).build()
-        val session = object : RiderSession { override val user = MutableStateFlow<RiderUser?>(RiderUser(id = uid)) }
-        val vm = SupportViewModel(SupportRepositoryImpl(), RoomSupportDraftStore(database.supportDrafts()), session)
+        val session = object : RiderSession { override val user = MutableStateFlow<Rider?>(Rider(id = uid)) }
+        val vm = SupportViewModel(SupportRepositoryImpl(), StoredSupportDraftStore(context), session)
         val report = File(context.getExternalFilesDir(null), "support-verification.json")
         try {
             compose.setContent { ChaskiRiderTheme { SupportRoute(vm, {}) } }
@@ -68,6 +65,6 @@ class SupportFirebaseDeviceTest {
             }
             assertEquals(OrderStatus.ON_THE_WAY, vm.uiState.value.tickets.first { it.id == id }.order!!.orderStatus)
             report.writeText("""{"uid":"$uid","ticketId":"$id","result":"PASSED"}""")
-        } finally { session.user.value = null; compose.waitForIdle(); database.close() }
+        } finally { session.user.value = null; compose.waitForIdle() }
     }
 }

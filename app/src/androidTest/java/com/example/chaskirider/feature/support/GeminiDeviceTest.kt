@@ -12,8 +12,8 @@ import com.example.chaskirider.feature.chat.data.local.*
 import com.example.chaskirider.database.ChaskiDatabase
 import com.example.chaskirider.feature.support.data.SupportRepositoryImpl
 import com.example.chaskirider.feature.support.data.FirebaseAssistantRepository
-import com.example.chaskirider.feature.user.domain.RiderUser
-import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.rider.domain.Rider
+import com.example.chaskirider.feature.rider.domain.RiderSession
 import com.example.chaskirider.feature.support.domain.SupportSender
 import com.example.chaskirider.feature.support.ui.screens.AssistantDialog
 import com.example.chaskirider.feature.support.ui.viewmodel.AssistantViewModel
@@ -49,9 +49,9 @@ class GeminiDeviceTest {
             "updatedAt" to FieldValue.serverTimestamp())).await()
         val repository = FirebaseAssistantRepository(SupportRepositoryImpl())
         val database = Room.inMemoryDatabaseBuilder(context, ChaskiDatabase::class.java).build()
-        val drafts = RoomChatDraftStore(database.chatDrafts())
+        val drafts = RoomChatMessageStore(database.chatMessages())
         val holder = ViewModelStore()
-        val session = object : RiderSession { override val user = MutableStateFlow<RiderUser?>(RiderUser(id = owner)) }
+        val session = object : RiderSession { override val user = MutableStateFlow<Rider?>(Rider(id = owner)) }
         lateinit var model: AssistantViewModel
         try {
             compose.runOnIdle {

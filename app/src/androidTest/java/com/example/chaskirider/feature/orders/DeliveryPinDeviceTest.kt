@@ -2,7 +2,7 @@ package com.example.chaskirider.feature.orders
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.work.*
 import com.example.chaskirider.feature.orders.data.remote.DeliveryPinRemote
-import com.example.chaskirider.feature.orders.data.local.OrderRecordEntity
+import com.example.chaskirider.feature.orders.data.local.OrderEntity
 import com.example.chaskirider.feature.orders.data.local.openOrderDatabase
 import com.example.chaskirider.platform.OrderSyncWorker
 import com.example.chaskirider.feature.orders.domain.*
@@ -39,7 +39,7 @@ class DeliveryPinDeviceTest {
         input.delete()
         report.writeText("""{"uid":"$uid","orderId":"$id","phase":"STARTED"}""")
         suspend fun sync(value: OrderRecord, revision: Long) {
-            database.orders().saveRecord(OrderRecordEntity(uid, id, Gson().toJson(value), revision, true))
+            database.orders().saveRecord(value, revision, true)
             manager.enqueueUniqueWork(name, ExistingWorkPolicy.REPLACE,
                 OneTimeWorkRequestBuilder<OrderSyncWorker>().setInputData(workDataOf("uid" to uid)).build()).result.get(10, TimeUnit.SECONDS)
             withTimeout(90_000) { while (database.orders().record(uid,id)!!.pending) delay(250) }
@@ -64,7 +64,7 @@ class DeliveryPinDeviceTest {
             input.delete()
             manager.cancelUniqueWork(name).result.get(10, TimeUnit.SECONDS)
             database.openHelper.writableDatabase.execSQL("DELETE FROM order_actions WHERE uid = ? AND orderId = ?", arrayOf(uid, id))
-            database.openHelper.writableDatabase.execSQL("DELETE FROM order_records WHERE uid = ? AND orderId = ?", arrayOf(uid, id))
+            database.openHelper.writableDatabase.execSQL("DELETE FROM orders WHERE riderId = ? AND orderId = ?", arrayOf(uid, id))
             database.close()
         }
     }

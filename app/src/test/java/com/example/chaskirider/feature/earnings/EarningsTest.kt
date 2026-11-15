@@ -1,8 +1,8 @@
 package com.example.chaskirider.feature.earnings
 import com.example.chaskirider.feature.earnings.domain.*
 import com.example.chaskirider.feature.orders.domain.*
-import com.example.chaskirider.feature.user.domain.RiderUser
-import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.rider.domain.Rider
+import com.example.chaskirider.feature.rider.domain.RiderSession
 import com.example.chaskirider.feature.earnings.ui.viewmodel.EarningsViewModel
 import com.example.chaskirider.feature.earnings.data.local.SettlementParser
 import com.google.firebase.Timestamp
@@ -96,7 +96,7 @@ class EarningsTest {
         assertNull(SettlementParser.parse("2026-11-02", data + ("amountCents" to -1L), end + 1))
     }
     @Test fun modelUpdatesReactivelyClearsAccountsAndUsesVisibleTotals() = runTest(dispatcher) {
-        val session = object : RiderSession { override val user = MutableStateFlow<RiderUser?>(RiderUser(id = "alice")) }
+        val session = object : RiderSession { override val user = MutableStateFlow<Rider?>(Rider(id = "alice")) }
         val alice = MutableStateFlow(EarningsSnapshot())
         val bob = MutableStateFlow(EarningsSnapshot())
         val repository = object : EarningsRepository { override fun observe(uid: String) = if (uid == "alice") alice else bob }
@@ -105,13 +105,13 @@ class EarningsTest {
         alice.value = EarningsSnapshot(records = listOf(EarningsPolicy.record(order())!!, EarningsPolicy.record(order("cancelled", OrderStatus.CANCELLED))!!))
         runCurrent(); assertEquals(608L, model.uiState.value.grandTotalCents)
         model.selectOrder(model.uiState.value.records.first())
-        session.user.value = RiderUser(id = "bob")
+        session.user.value = Rider(id = "bob")
         runCurrent(); assertTrue(model.uiState.value.records.isEmpty()); assertNull(model.uiState.value.selectedOrder)
         session.user.value = null
         runCurrent(); assertEquals(0L, model.uiState.value.grandTotalCents)
     }
     @Test fun repositoryFailureLeavesRetryableStateRatherThanSpinner() = runTest(dispatcher) {
-        val session = object : RiderSession { override val user = MutableStateFlow<RiderUser?>(RiderUser(id = "alice")) }
+        val session = object : RiderSession { override val user = MutableStateFlow<Rider?>(Rider(id = "alice")) }
         var broken = true
         val repository = object : EarningsRepository {
             override fun observe(uid: String): Flow<EarningsSnapshot> = flow { if (broken) error("offline") else emit(EarningsSnapshot()) }

@@ -1,6 +1,5 @@
 package com.example.chaskirider.platform
-import com.example.chaskirider.feature.notifications.data.local.NotificationsLocal
-
+import com.example.chaskirider.di.AppContainer
 import com.example.chaskirider.feature.notifications.domain.ChaskiNotification
 import android.Manifest
 import android.app.NotificationChannel
@@ -33,7 +32,7 @@ class ChaskiFirebaseMessagingService : FirebaseMessagingService() {
             ?: remoteMessage.data["body"]
             ?: remoteMessage.data["message"]
             ?: return
-        NotificationsLocal.add(ChaskiNotification(title = title, body = body))
+        AppContainer.notificationsRepository.add(ChaskiNotification(title = title, body = body))
         showNotification(title, body)
     }
 

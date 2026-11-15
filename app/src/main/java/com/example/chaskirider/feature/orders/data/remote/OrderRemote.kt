@@ -1,11 +1,12 @@
 package com.example.chaskirider.feature.orders.data.remote
 
 import com.example.chaskirider.feature.orders.domain.OfferRequestException
+import com.example.chaskirider.core.firebase.FirebaseRoot
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.functions.FirebaseFunctionsException
 import kotlinx.coroutines.tasks.await
-import com.example.chaskirider.feature.orders.data.local.DemoOrderDao
+import com.example.chaskirider.feature.orders.data.local.OrdersDao
 import com.example.chaskirider.feature.orders.domain.ContactCheckpoint
 import com.example.chaskirider.feature.orders.domain.CustomerAbsenceService
 import kotlinx.coroutines.flow.first
@@ -16,14 +17,14 @@ import com.google.firebase.firestore.FieldValue
 
 object DeliveryPinRemote {
     suspend fun prepare(orderId: String) {
-        FirebaseFunctions.getInstance("us-central1").getHttpsCallable("deliveryPin")
+        FirebaseFunctions.getInstance(FirebaseRoot.REGION).getHttpsCallable(FirebaseRoot.Callables.DELIVERY_PIN)
             .call(mapOf("action" to "prepare", "orderId" to orderId)).await()
     }
     suspend fun verify(uid: String, orderId: String, pin: String) {
         if (FirebaseAuth.getInstance().currentUser?.uid != uid) throw OfferRequestException(401)
         try {
             val response = kotlinx.coroutines.withTimeout(15_000) {
-                FirebaseFunctions.getInstance("us-central1").getHttpsCallable("deliveryPin")
+                FirebaseFunctions.getInstance(FirebaseRoot.REGION).getHttpsCallable(FirebaseRoot.Callables.DELIVERY_PIN)
                     .call(mapOf("action" to "verify", "orderId" to orderId, "pin" to pin)).await().data as Map<*, *>
             }
             if (response["verified"] != true) throw OfferRequestException(428)
@@ -41,7 +42,7 @@ object DeliveryPinRemote {
     }
 }
 
-class FirebaseCustomerAbsence(private val dao: DemoOrderDao, private val schedule: (String) -> Unit) : CustomerAbsenceService {
+class FirebaseCustomerAbsence(private val dao: OrdersDao, private val schedule: (String) -> Unit) : CustomerAbsenceService {
     suspend fun awaitSync(uid: String, orderId: String) {
         check(FirebaseAuth.getInstance().currentUser?.uid == uid) { "La sesión cambió" }
         if (dao.record(uid, orderId)?.pending != false) {
@@ -53,7 +54,7 @@ class FirebaseCustomerAbsence(private val dao: DemoOrderDao, private val schedul
     private suspend fun request(uid: String, orderId: String, action: String, extra: Map<String, Any> = emptyMap()): Map<*, *> {
         awaitSync(uid, orderId)
         val result = withTimeout(30_000) {
-            FirebaseFunctions.getInstance("us-central1").getHttpsCallable("customerAbsence")
+            FirebaseFunctions.getInstance(FirebaseRoot.REGION).getHttpsCallable(FirebaseRoot.Callables.CUSTOMER_ABSENCE)
                 .call(mapOf("action" to action, "orderId" to orderId) + extra).await().data as Map<*, *>
         }
         check(FirebaseAuth.getInstance().currentUser?.uid == uid)
@@ -75,13 +76,13 @@ class FirebaseOrderTracking(private val uid: String, private val orderId: String
         val auth = FirebaseAuth.getInstance()
         if (auth.currentUser?.uid != uid || !position.isRecent(System.currentTimeMillis())) return@withTimeout false
         val db = FirebaseFirestore.getInstance()
-        val order = db.collection("riders").document(uid).collection("deliveryRecords").document(orderId)
+        val order = db.document(OrderRoutes.order(uid, orderId))
         db.runTransaction { tx ->
             val record = tx.get(order)
             if (auth.currentUser?.uid != uid || record.getString("status") != "ON_THE_WAY" ||
                 !position.isRecent(System.currentTimeMillis())) false
             else {
-                val target = order.collection("tracking").document("current")
+                val target = db.document(OrderRoutes.tracking(uid, orderId))
                 val previous = tx.get(target)
                 if ((previous.getLong("recordedAt") ?: 0) >= position.recordedAt) return@runTransaction true
                 tx.set(target, mapOf(

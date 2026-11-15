@@ -13,15 +13,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import com.example.chaskirider.feature.user.domain.RiderUser
-import com.example.chaskirider.feature.user.domain.RegistrationStatus
-import com.example.chaskirider.feature.user.domain.PendingDocumentCapture
-import com.example.chaskirider.feature.user.domain.RiderUserService
+import com.example.chaskirider.feature.rider.domain.Rider
+import com.example.chaskirider.feature.rider.domain.RiderStatus
+import com.example.chaskirider.feature.rider.domain.PendingDocumentCapture
+import com.example.chaskirider.feature.rider.domain.RiderOnboardingService
 import com.example.chaskirider.feature.documents.domain.DocumentFile
 import com.example.chaskirider.feature.documents.domain.DocumentUploadState
 import com.example.chaskirider.feature.documents.domain.DocumentRepository
-import com.example.chaskirider.feature.user.domain.RiderSession
-import com.example.chaskirider.feature.user.domain.RegistrationDraftRepository
+import com.example.chaskirider.feature.rider.domain.RiderSession
+import com.example.chaskirider.feature.rider.domain.RiderOnboardingDraftRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 
@@ -29,7 +29,7 @@ class DocumentsViewModel(
     private val texts: TextProvider,
     private val repository: DocumentRepository, session: RiderSession,
     private val previews: com.example.chaskirider.feature.documents.domain.DocumentPreviewRepository,
-    private val drafts: RegistrationDraftRepository) : ViewModel() {
+    private val drafts: RiderOnboardingDraftRepository) : ViewModel() {
     private var uploadJob: Job? = null
     private var captureJob: Job? = null
     private var pendingCapture: Uri? = null
@@ -40,9 +40,9 @@ class DocumentsViewModel(
     private val _uiState = MutableStateFlow(DocumentsUiState())
     val uiState = _uiState.asStateFlow()
     init { viewModelScope.launch { session.user.collect { acceptUser(it) } } }
-    private fun acceptUser(user: RiderUser?) {
+    private fun acceptUser(user: Rider?) {
         val wasEditable = editable
-        editable = user?.isEnabled == true && user.status in listOf(RegistrationStatus.INCOMPLETE, RegistrationStatus.NEEDS_CORRECTION)
+        editable = user?.isEnabled == true && user.status in listOf(RiderStatus.INCOMPLETE, RiderStatus.NEEDS_CORRECTION)
         if (sessionUid != user?.id) {
             previewJob?.cancel(); uploadJob?.cancel(); captureJob?.cancel()
             pendingCapture = null

@@ -1,5 +1,6 @@
 package com.example.chaskirider.feature.earnings.data.remote
 
+import com.example.chaskirider.core.firebase.FirebaseRoot
 import com.example.chaskirider.feature.earnings.data.local.SettlementParser
 import com.example.chaskirider.feature.earnings.domain.ConnectionSession
 import com.example.chaskirider.feature.earnings.domain.SettlementRecord
@@ -13,7 +14,7 @@ data class Connections(val sessions: List<ConnectionSession> = emptyList(), val 
 
 class EarningsRemote(private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()) {
     fun payments(uid: String): Flow<Payments> = callbackFlow {
-        val listener = firestore.collection("riders").document(uid).collection("settlements")
+        val listener = firestore.collection(EarningsRoutes.settlements(uid))
             .addSnapshotListener(MetadataChanges.INCLUDE) { snapshot, error ->
                 if (error != null) {
                     trySend(Payments(warning = "No se pudieron actualizar los pagos."))
@@ -37,13 +38,13 @@ class EarningsRemote(private val firestore: FirebaseFirestore = FirebaseFirestor
 
     fun connections(uid: String): Flow<Connections> {
         val profile = callbackFlow {
-            val listener = firestore.document("riders/$uid").addSnapshotListener { doc, error ->
+            val listener = firestore.document(FirebaseRoot.riderDoc(uid)).addSnapshotListener { doc, error ->
                 trySend(if (error != null) null else doc?.getLong("connectionStartedAt"))
             }
             awaitClose { listener.remove() }
         }
         val history = callbackFlow {
-            val listener = firestore.collection("riders/$uid/connectionSessions").addSnapshotListener { snapshot, error ->
+            val listener = firestore.collection(EarningsRoutes.connectionSessions(uid)).addSnapshotListener { snapshot, error ->
                 val sessions = snapshot?.documents.orEmpty().mapNotNull { doc ->
                     val start = doc.getLong("startedAt")
                     val end = doc.getLong("endedAt")

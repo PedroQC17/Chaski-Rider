@@ -14,7 +14,7 @@ class SupportRemote(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
-    private fun tickets(uid: String) = db.collection("riders").document(uid).collection("supportTickets")
+    private fun tickets(uid: String) = db.collection(SupportRoutes.tickets(uid))
     private fun requireUser(uid: String) { check(auth.currentUser?.uid == uid) { "La sesión cambió" } }
 
     fun observe(uid: String) = callbackFlow {
@@ -32,7 +32,7 @@ class SupportRemote(
 
     fun observeMessages(uid: String, ticketId: String) = callbackFlow {
         requireUser(uid)
-        val listener = tickets(uid).document(ticketId).collection("messages").orderBy("createdAt")
+        val listener = db.collection(SupportRoutes.messages(uid, ticketId)).orderBy("createdAt")
             .addSnapshotListener(MetadataChanges.INCLUDE) { snapshot, error ->
                 if (error != null) close(error)
                 else if (snapshot != null && auth.currentUser?.uid == uid) {
@@ -68,7 +68,7 @@ class SupportRemote(
             if (existing.exists()) {
                 check(existing.getString("status") == "OPEN") { "El caso acaba de cerrarse. Vuelve a intentarlo." }
                 if (existing.getString("body") != draft.body.trim()) {
-                    val message = ref.collection("messages").document(draft.id)
+                    val message = db.document("${SupportRoutes.messages(uid, ref.id)}/${draft.id}")
                     if (!transaction.get(message).exists()) transaction.set(message, mapOf(
                         "sender" to "RIDER", "body" to draft.body.trim(), "createdAt" to FieldValue.serverTimestamp()))
                 }
@@ -84,7 +84,7 @@ class SupportRemote(
         requireUser(uid)
         require(SupportValidation.validReply(body))
         val parent = tickets(uid).document(ticketId)
-        val message = parent.collection("messages").document(messageId)
+        val message = db.document("${SupportRoutes.messages(uid, ticketId)}/$messageId")
         db.runTransaction { transaction ->
             val ticket = transaction.get(parent)
             val existing = transaction.get(message)

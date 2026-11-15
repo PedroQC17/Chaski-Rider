@@ -8,18 +8,19 @@ import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
 import com.example.chaskirider.feature.orders.data.local.DemoOrderCatalog
-import com.example.chaskirider.feature.orders.data.local.DemoOrderState
+import com.example.chaskirider.feature.orders.data.local.OrderSessionState
 import com.example.chaskirider.database.ChaskiDatabase
 import com.example.chaskirider.database.openChaskiDatabase
-import com.example.chaskirider.feature.orders.data.local.OrderRecordEntity
-import com.example.chaskirider.feature.orders.data.local.RoomDemoOrderStore
+import com.example.chaskirider.feature.orders.data.local.OrderEntity
+import com.example.chaskirider.feature.orders.data.local.toDomain
+import com.example.chaskirider.feature.orders.data.local.StoredOrderSessionStore
 import com.example.chaskirider.feature.orders.data.OrderRepositoryImpl
 import com.example.chaskirider.core.platform.location.GeoPoint
-import com.example.chaskirider.feature.user.domain.RiderUser
-import com.example.chaskirider.feature.user.domain.RegistrationStatus
+import com.example.chaskirider.feature.rider.domain.Rider
+import com.example.chaskirider.feature.rider.domain.RiderStatus
 import com.example.chaskirider.feature.orders.domain.*
 import com.example.chaskirider.core.platform.location.LocationRepository
-import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.rider.domain.RiderSession
 import com.example.chaskirider.feature.orders.ui.routes.OrdersRoute
 import com.example.chaskirider.feature.orders.ui.viewmodel.OrdersViewModel
 import com.example.chaskirider.feature.orders.ui.components.orderNavigationIntent
@@ -34,63 +35,30 @@ import org.junit.Test
 import java.io.File
 
 class DemoOrdersDeviceTest {
-    @Test fun offlineActionsSurviveReopenAndOldAcknowledgementKeepsNewerStatePending() = runBlocking {
-        val name = "actions-restore-test.db"
-        context.deleteDatabase(name)
-        var db = openChaskiDatabase(context, name, importLegacy = false)
-        try {
-            var dao = db.orders()
-            val gson = com.google.gson.Gson()
-            val point = RoutePoint(-12.0, -77.0)
-            val first = OrderRecord("order", "alice", OrderStatus.ACCEPTED, "Local", point, point, 1000, null, null, null)
-            dao.saveRecord(OrderRecordEntity("alice", "order", gson.toJson(first), 1, true))
-            val arrival = first.copy(status = OrderStatus.AT_MERCHANT, arrivedAt = 2000)
-            dao.saveRecord(OrderRecordEntity("alice", "order", gson.toJson(arrival), 2, true))
-            dao.saveRecord(OrderRecordEntity("alice", "order", gson.toJson(arrival.copy(waitStartedAt = 3000)), 3, true))
-            db.close()
-            db = openChaskiDatabase(context, name, importLegacy = false)
-            dao = db.orders()
-            val pending = dao.pendingActions("alice")
-            assertEquals(listOf("ACCEPTED", "AT_MERCHANT", "WAIT_STARTED"), pending.map { it.kind })
-            assertEquals(3, pending.map { it.actionId }.distinct().size)
-            assertTrue(dao.pendingActions("bob").isEmpty())
-            dao.acknowledge(pending.first())
-            assertTrue(dao.record("alice", "order")!!.pending)
-            dao.acknowledge(pending.first())
-            assertEquals(2, dao.pendingActions("alice").size)
-            pending.drop(1).forEach { dao.acknowledge(it) }
-            assertFalse(dao.record("alice", "order")!!.pending)
-            assertEquals(3, dao.actions("alice", "order").size)
-        } finally { db.close(); context.deleteDatabase(name) }
-    }
-
-    @Test fun orderOutboxPreservesNewerChangesAndCompletedHistory() = runBlocking {
+    @Test fun orderSessionMirrorsOrderAndKeepsCancellationHistory() = runBlocking {
         val database = Room.inMemoryDatabaseBuilder(context, ChaskiDatabase::class.java).build()
         try {
             val dao = database.orders()
-            val repo = OrderRepositoryImpl(RoomDemoOrderStore(dao), { "alice" }, { catalog() }, hasOffer = { true })
+            val repo = OrderRepositoryImpl(StoredOrderSessionStore(dao), { "alice" }, { catalog() }, hasOffer = { true })
             val offer = repo.execute(OfferAction.OFFER, lat = -12.046, lng = -77.037)
             val accepted = repo.execute(OfferAction.ACCEPT, offer.offer!!.id)
             val id = accepted.batch!!.stops.single().orderId
-            val first = dao.pending("alice").single()
+            val first = dao.record("alice", id)!!
             assertEquals(1L, first.revision)
-            repo.execute(OfferAction.STATE)
-            assertEquals(1L, dao.pending("alice").single().revision)
+            assertTrue(first.pending)
+            assertEquals(OrderStatus.ACCEPTED.name, first.status)
             repo.execute(OfferAction.ARRIVE_MERCHANT, lat = offer.merchant.latitude, lng = offer.merchant.longitude)
-            dao.confirm("alice", id, first.revision)
-            assertEquals(2L, dao.pending("alice").single().revision)
+            assertEquals(2L, dao.record("alice", id)!!.revision)
+            dao.confirm("alice", id, 2L)
+            assertFalse(dao.record("alice", id)!!.pending)
             repo.reportProblem(OrderProblemReason.LOCAL_CLOSED, "El negocio no puede entregar el pedido", true)
-            val cancelled = dao.pending("alice").single()
-            assertEquals(OrderStatus.CANCELLED, com.google.gson.Gson().fromJson(cancelled.content, OrderRecord::class.java).status)
-            val incident = com.google.gson.Gson().fromJson(cancelled.content, OrderRecord::class.java).problems!!.single()
-            assertEquals(OrderStatus.AT_MERCHANT, incident.orderStatus)
-            assertEquals(OrderProblemReason.LOCAL_CLOSED, incident.reason)
+            val cancelled = dao.record("alice", id)!!
+            assertEquals(OrderStatus.CANCELLED.name, cancelled.status)
+            val incident = dao.problems("alice", id).single()
+            assertEquals(OrderProblemReason.LOCAL_CLOSED.name, incident.category)
             assertTrue(incident.cancelled)
             repo.execute(OfferAction.RESET)
-            assertNotNull(dao.record("alice", id))
-            assertTrue(dao.pending("bob").isEmpty())
-            dao.confirm("alice", id, cancelled.revision)
-            assertTrue(dao.pending("alice").isEmpty())
+            assertNull(repo.execute(OfferAction.STATE).batch)
         } finally { database.close() }
     }
 
@@ -110,14 +78,14 @@ class DemoOrdersDeviceTest {
         var database = openChaskiDatabase(context, name, importLegacy = false)
         try {
             var uid = "alice"
-            var repo = OrderRepositoryImpl(RoomDemoOrderStore(database.orders()), { uid }, { catalog() }, hasOffer = { true })
+            var repo = OrderRepositoryImpl(StoredOrderSessionStore(database.orders()), { uid }, { catalog() }, hasOffer = { true })
             val offer = repo.execute(OfferAction.OFFER, lat = -12.046, lng = -77.037)
             assertNotNull(offer.offer)
             repo.execute(OfferAction.ACCEPT, offer.offer!!.id)
             val picked = repo.execute(OfferAction.ARRIVE_MERCHANT, lat = offer.merchant.latitude, lng = offer.merchant.longitude)
             database.close()
             database = openChaskiDatabase(context, name, importLegacy = false)
-            repo = OrderRepositoryImpl(RoomDemoOrderStore(database.orders()), { uid }, { catalog() }, hasOffer = { true })
+            repo = OrderRepositoryImpl(StoredOrderSessionStore(database.orders()), { uid }, { catalog() }, hasOffer = { true })
             val restored = repo.execute(OfferAction.STATE)
             assertEquals(picked.batch, restored.batch)
             assertEquals(picked.merchant, restored.merchant)
@@ -130,14 +98,14 @@ class DemoOrdersDeviceTest {
     @Test fun riderCanAcceptPickupAndDeliverSameSimulatedOrder() {
         val database = Room.inMemoryDatabaseBuilder(context, ChaskiDatabase::class.java).build()
         val session = object : RiderSession {
-            override val user = MutableStateFlow<RiderUser?>(RiderUser(id = "device-rider", status = RegistrationStatus.APPROVED,
+            override val user = MutableStateFlow<Rider?>(Rider(id = "device-rider", status = RiderStatus.APPROVED,
                 isAvailable = true, profilePhotoPath = "photo"))
         }
         var gps = GeoPoint(-12.046, -77.037)
         val locations = object : LocationRepository {
             override suspend fun currentLocation(): Result<GeoPoint?> = Result.success(gps)
         }
-        val repo = OrderRepositoryImpl(RoomDemoOrderStore(database.orders()), { session.user.value?.id }, { catalog() }, hasOffer = { true })
+        val repo = OrderRepositoryImpl(StoredOrderSessionStore(database.orders()), { session.user.value?.id }, { catalog() }, hasOffer = { true })
         val vm = OrdersViewModel(repo, session, locations = locations, automaticSearch = false)
         try {
             val chat = ChatViewModel(object : OrderChatRepository {

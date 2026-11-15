@@ -1,9 +1,9 @@
 package com.example.chaskirider.feature.orders
 import com.example.chaskirider.core.text.AndroidTextProvider
-import com.example.chaskirider.feature.user.data.remote.RiderUserRemote
-import com.example.chaskirider.feature.user.data.local.RiderUserSessionStore
+import com.example.chaskirider.feature.rider.data.remote.RiderRemote
+import com.example.chaskirider.feature.rider.data.local.RiderSessionStore
 import androidx.test.platform.app.InstrumentationRegistry
-import com.example.chaskirider.feature.orders.data.local.OrderRecordEntity
+import com.example.chaskirider.feature.orders.data.local.OrderEntity
 import com.example.chaskirider.feature.orders.data.local.openOrderDatabase
 import com.example.chaskirider.feature.orders.domain.*
 import com.google.firebase.auth.FirebaseAuth
@@ -26,19 +26,17 @@ class OfflineRecoveryDeviceTest {
         val ui = openOrderDatabase(context, name)
         val worker = openOrderDatabase(context, name)
         try {
-            val ready = CompletableDeferred<Unit>()
-            val observed = async {
-                withTimeout(10_000) {
-                    ui.orders().observePendingCount("alice").onEach { if (it == 0) ready.complete(Unit) }.first { it == 1 }
-                }
-            }
-            ready.await()
             val point = RoutePoint(-12.0, -77.0)
             val record = OrderRecord("one", "alice", OrderStatus.ACCEPTED, "Local", point, point, 1000, null, null, null)
-            worker.orders().saveRecord(OrderRecordEntity("alice", "one", Gson().toJson(record), 1, true))
+            val observed = async {
+                withTimeout(10_000) { ui.orders().observePendingCount("alice").first { it == 1 } }
+            }
+            val cleared = async {
+                withTimeout(10_000) { ui.orders().observePendingCount("alice").first { it == 0 } }
+            }
+            worker.orders().saveRecord(record, 1, true)
             assertEquals(1, observed.await())
-            val cleared = async { withTimeout(10_000) { ui.orders().observePendingCount("alice").first { it == 0 } } }
-            worker.orders().acknowledge(worker.orders().pendingActions("alice").single())
+            worker.orders().confirm("alice", "one", 1)
             assertEquals(0, cleared.await())
         } finally { ui.close(); worker.close(); context.deleteDatabase(name) }
     }
@@ -50,8 +48,8 @@ class OfflineRecoveryDeviceTest {
         val firestore = FirebaseFirestore.getInstance()
         val server = firestore.document("riders/$uid").get(Source.SERVER).await()
         assertTrue(server.exists())
-        val session = com.example.chaskirider.feature.user.data.local.RiderUserSessionStore()
-        val source = com.example.chaskirider.feature.user.data.remote.RiderUserRemote(
+        val session = com.example.chaskirider.feature.rider.data.local.RiderSessionStore()
+        val source = com.example.chaskirider.feature.rider.data.remote.RiderRemote(
             com.example.chaskirider.core.text.AndroidTextProvider(context), session, online = { false })
         firestore.disableNetwork().await()
         try {

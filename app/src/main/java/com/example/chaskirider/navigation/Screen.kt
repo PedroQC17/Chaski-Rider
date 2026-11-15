@@ -1,6 +1,6 @@
 package com.example.chaskirider.navigation
 
-import com.example.chaskirider.feature.user.domain.RegistrationStatus
+import com.example.chaskirider.feature.rider.domain.RiderStatus
 
 sealed class Screen(val route: String) {
     object Startup : Screen("startup")
@@ -9,7 +9,7 @@ sealed class Screen(val route: String) {
     object OnboardingStep1 : Screen("onboarding_step_1")
     object OnboardingStep2 : Screen("onboarding_step_2")
     object OnboardingStep3 : Screen("onboarding_step_3")
-    object RegistrationStatus : Screen("registration_status")
+    object RiderStatus : Screen("registration_status")
     object ProfilePhoto : Screen("profile_photo")
     object Home : Screen("home")
     object Orders : Screen("orders")

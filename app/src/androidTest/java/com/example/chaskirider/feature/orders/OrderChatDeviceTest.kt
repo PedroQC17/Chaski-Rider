@@ -11,13 +11,13 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.work.*
 import com.example.chaskirider.feature.chat.data.local.*
 import com.example.chaskirider.database.openChaskiDatabase
-import com.example.chaskirider.feature.orders.data.local.OrderRecordEntity
+import com.example.chaskirider.feature.orders.data.local.OrderEntity
 import com.example.chaskirider.feature.orders.data.local.openOrderDatabase
 import com.example.chaskirider.platform.OrderSyncWorker
 import com.example.chaskirider.feature.chat.domain.*
-import com.example.chaskirider.feature.user.domain.RiderUser
+import com.example.chaskirider.feature.rider.domain.Rider
 import com.example.chaskirider.feature.orders.domain.*
-import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.rider.domain.RiderSession
 import com.example.chaskirider.feature.chat.ui.components.ChatDialog
 import com.example.chaskirider.feature.chat.ui.viewmodel.ChatViewModel
 import com.example.chaskirider.ui.theme.ChaskiRiderTheme
@@ -46,12 +46,12 @@ class OrderChatDeviceTest {
         var database = openChaskiDatabase(context, name, importLegacy = false)
         val first = ChatDraft("message", "Mensaje pendiente")
         try {
-            var store = RoomChatDraftStore(database.chatDrafts())
+            var store = RoomChatMessageStore(database.chatMessages())
             store.save("alice/order/MERCHANT", first)
             store.save("alice/order/CUSTOMER", ChatDraft("customer", "Otro canal"))
             database.close()
             database = openChaskiDatabase(context, name, importLegacy = false)
-            store = RoomChatDraftStore(database.chatDrafts())
+            store = RoomChatMessageStore(database.chatMessages())
             assertEquals(first, store.load("alice/order/MERCHANT"))
             assertNull(store.load("bob/order/MERCHANT"))
             val edited = first.copy(body = "Texto editado más reciente")
@@ -72,9 +72,9 @@ class OrderChatDeviceTest {
         val draftName = "chat-device-test.db"
         context.deleteDatabase(draftName)
         val draftDb = openChaskiDatabase(context, draftName, importLegacy = false)
-        val drafts = RoomChatDraftStore(draftDb.chatDrafts())
+        val drafts = RoomChatMessageStore(draftDb.chatMessages())
         val repo = ChatRepositoryImpl()
-        val session = object : RiderSession { override val user = MutableStateFlow<RiderUser?>(RiderUser(id = uid)) }
+        val session = object : RiderSession { override val user = MutableStateFlow<Rider?>(Rider(id = uid)) }
         var vm = ChatViewModel(repo, drafts, session)
         var displayed by mutableStateOf(vm)
         val now = System.currentTimeMillis()
@@ -87,7 +87,7 @@ class OrderChatDeviceTest {
         val remote = FirebaseFirestore.getInstance().collection("riders").document(uid).collection("deliveryRecords").document(id)
         val report = File(context.getExternalFilesDir(null), "chat-verification.json")
         suspend fun sync(value: OrderRecord, revision: Long) {
-            orders.orders().saveRecord(OrderRecordEntity(uid, id, Gson().toJson(value), revision, true))
+            orders.orders().saveRecord(value, revision, true)
             manager.enqueueUniqueWork(name, ExistingWorkPolicy.REPLACE,
                 OneTimeWorkRequestBuilder<OrderSyncWorker>().setInputData(workDataOf("uid" to uid)).build())
                 .result.get(10, TimeUnit.SECONDS)

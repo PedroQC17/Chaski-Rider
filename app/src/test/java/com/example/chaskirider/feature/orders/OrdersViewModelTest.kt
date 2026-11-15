@@ -1,11 +1,11 @@
 package com.example.chaskirider.feature.orders
 import com.example.chaskirider.R
 import com.example.chaskirider.core.platform.location.GeoPoint
-import com.example.chaskirider.feature.user.domain.RiderUser
-import com.example.chaskirider.feature.user.domain.RegistrationStatus
+import com.example.chaskirider.feature.rider.domain.Rider
+import com.example.chaskirider.feature.rider.domain.RiderStatus
 import com.example.chaskirider.feature.orders.domain.*
 import com.example.chaskirider.core.platform.location.LocationRepository
-import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.rider.domain.RiderSession
 import com.example.chaskirider.feature.orders.ui.viewmodel.OrdersViewModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -20,7 +20,7 @@ import org.junit.Test
 class OrdersViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val session = object : RiderSession {
-        override val user = MutableStateFlow<RiderUser?>(RiderUser(id = "alice", status = RegistrationStatus.APPROVED,
+        override val user = MutableStateFlow<Rider?>(Rider(id = "alice", status = RiderStatus.APPROVED,
             isAvailable = true, profilePhotoPath = "photo"))
     }
     private val empty = OfferSnapshot(1000, false, null, null, RoutePoint(0.0, 0.0))
@@ -171,7 +171,7 @@ class OrdersViewModelTest {
         vm.retrySync(); assertTrue(retries.isEmpty())
         alice.value = OrderSyncState(pendingActions = 2, needsAttention = true)
         runCurrent(); vm.retrySync(); assertEquals(listOf("alice"), retries)
-        session.user.value = RiderUser(id = "bob", status = RegistrationStatus.APPROVED, profilePhotoPath = "photo")
+        session.user.value = Rider(id = "bob", status = RiderStatus.APPROVED, profilePhotoPath = "photo")
         runCurrent(); assertEquals(0, vm.uiState.value.sync.pendingActions)
         assertFalse(vm.uiState.value.sync.needsAttention)
     }
@@ -210,7 +210,7 @@ class OrdersViewModelTest {
         result = result.copy(batch = quote.copy(stops = listOf(quote.stops.single().copy(orderId = "order-two"))))
         vm.refresh(); runCurrent(); assertNull(vm.uiState.value.deliveryNote)
         vm.updateDeliveryNote("Nota del segundo pedido")
-        session.user.value = RiderUser(id = "bob", status = RegistrationStatus.APPROVED, profilePhotoPath = "photo")
+        session.user.value = Rider(id = "bob", status = RiderStatus.APPROVED, profilePhotoPath = "photo")
         runCurrent(); assertNull(vm.uiState.value.deliveryNote)
         assertNull(saved.get<String>("delivery_note"))
         assertNull(saved.get<String>("delivery_draft_uid"))

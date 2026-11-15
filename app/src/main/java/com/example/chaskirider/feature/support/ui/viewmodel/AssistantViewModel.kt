@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.chaskirider.feature.chat.domain.ChatDraft
 import com.example.chaskirider.feature.chat.domain.ChatDraftStore
-import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.rider.domain.RiderSession
 import com.example.chaskirider.feature.support.domain.SupportTicketStatus
 import com.example.chaskirider.feature.support.domain.SupportMessage
 import com.example.chaskirider.feature.support.domain.AssistantRepository

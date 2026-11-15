@@ -5,7 +5,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.work.*
 import com.example.chaskirider.core.platform.location.TrackingPosition
-import com.example.chaskirider.feature.orders.data.local.OrderRecordEntity
+import com.example.chaskirider.feature.orders.data.local.OrderEntity
 import com.example.chaskirider.feature.orders.data.local.openOrderDatabase
 import com.example.chaskirider.feature.orders.data.remote.FirebaseOrderTracking
 import com.example.chaskirider.platform.OrderSyncWorker
@@ -47,7 +47,7 @@ class OrderTrackingDeviceTest {
         val record = OrderRecord(id, uid, OrderStatus.ACCEPTED, "Prueba tecnica de seguimiento",
             RoutePoint(-12.046, -77.037), RoutePoint(-12.055, -77.030), now, null, null, null)
         suspend fun sync(record: OrderRecord, revision: Long) {
-            dao.saveRecord(OrderRecordEntity(uid, id, Gson().toJson(record), revision, true))
+            dao.saveRecord(record, revision, true)
             manager.enqueueUniqueWork(name, ExistingWorkPolicy.REPLACE,
                 OneTimeWorkRequestBuilder<OrderSyncWorker>().setInputData(workDataOf("uid" to uid)).build())
                 .result.get(10, TimeUnit.SECONDS)

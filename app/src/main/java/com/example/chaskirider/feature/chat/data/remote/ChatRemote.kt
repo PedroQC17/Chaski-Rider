@@ -12,11 +12,10 @@ class ChatRemote(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
-    private fun order(uid: String, orderId: String) = db.collection("riders").document(uid)
-        .collection("deliveryRecords").document(orderId)
+    private fun order(uid: String, orderId: String) = db.document(ChatRoutes.order(uid, orderId))
 
-    private fun messages(uid: String, orderId: String, channel: ChatChannel) = order(uid, orderId)
-        .collection("chats").document(channel.name).collection("messages")
+    private fun messages(uid: String, orderId: String, channel: ChatChannel) =
+        db.collection(ChatRoutes.messages(uid, orderId, channel.name))
 
     fun observe(uid: String, orderId: String, channel: ChatChannel) = callbackFlow {
         check(auth.currentUser?.uid == uid)

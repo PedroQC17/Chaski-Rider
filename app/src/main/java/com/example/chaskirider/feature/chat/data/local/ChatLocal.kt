@@ -1,21 +1,64 @@
 package com.example.chaskirider.feature.chat.data.local
 
-import androidx.room.*
-import com.example.chaskirider.feature.chat.domain.*
+import androidx.room.Dao
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import androidx.room.Query
+import androidx.room.Upsert
+import com.example.chaskirider.feature.chat.domain.ChatDraft
+import com.example.chaskirider.feature.chat.domain.ChatDraftStore
+import com.example.chaskirider.feature.chat.domain.ChatSenderRole
 
-@Entity(tableName = "chat_drafts")
-data class ChatDraftEntity(@PrimaryKey val key: String, val messageId: String, val body: String)
+enum class ChatMessageStatus { PENDING, SENT, FAILED }
+
+@Entity(tableName = "chat_messages", primaryKeys = ["id"])
+data class ChatMessageEntity(
+    val id: String,
+    val riderId: String,
+    val orderId: String,
+    val channel: String,
+    val senderRole: String,
+    val text: String,
+    val createdAt: Long,
+    val status: String
+)
+
 @Dao
-interface ChatDraftDao {
-    @Query("SELECT * FROM chat_drafts WHERE `key` = :key")
-    suspend fun load(key: String): ChatDraftEntity?
-    @Upsert suspend fun save(draft: ChatDraftEntity)
-    @Query("DELETE FROM chat_drafts WHERE `key` = :key AND messageId = :id AND body = :body")
-    suspend fun delete(key: String, id: String, body: String)
+interface ChatMessageDao {
+    @Query("SELECT * FROM chat_messages WHERE riderId = :riderId AND orderId = :orderId AND channel = :channel AND status = 'PENDING' LIMIT 1")
+    suspend fun pending(riderId: String, orderId: String, channel: String): ChatMessageEntity?
+
+    @Upsert
+    suspend fun save(message: ChatMessageEntity)
+
+    @Query("DELETE FROM chat_messages WHERE id = :id AND text = :text")
+    suspend fun delete(id: String, text: String)
 }
 
-class RoomChatDraftStore(private val dao: ChatDraftDao) : ChatDraftStore {
-    override suspend fun load(key: String) = dao.load(key)?.let { ChatDraft(it.messageId, it.body) }
-    override suspend fun save(key: String, draft: ChatDraft) = dao.save(ChatDraftEntity(key, draft.id, draft.body))
-    override suspend fun clear(key: String, draft: ChatDraft) = dao.delete(key, draft.id, draft.body)
+class RoomChatMessageStore(private val dao: ChatMessageDao) : ChatDraftStore {
+    override suspend fun load(key: String): ChatDraft? {
+        val target = parse(key) ?: return null
+        return dao.pending(target.first, target.second, target.third)?.let { ChatDraft(it.id, it.text) }
+    }
+
+    override suspend fun save(key: String, draft: ChatDraft) {
+        val target = parse(key) ?: return
+        dao.save(ChatMessageEntity(
+            id = draft.id,
+            riderId = target.first,
+            orderId = target.second,
+            channel = target.third,
+            senderRole = ChatSenderRole.RIDER.name,
+            text = draft.body,
+            createdAt = System.currentTimeMillis(),
+            status = ChatMessageStatus.PENDING.name
+        ))
+    }
+
+    override suspend fun clear(key: String, draft: ChatDraft) = dao.delete(draft.id, draft.body)
+
+    private fun parse(key: String): Triple<String, String, String>? {
+        val parts = key.split("/")
+        return if (parts.size >= 3) Triple(parts[0], parts[1], parts[2]) else null
+    }
 }

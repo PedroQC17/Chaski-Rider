@@ -11,10 +11,10 @@ import com.example.chaskirider.database.ChaskiDatabase
 import com.example.chaskirider.database.openChaskiDatabase
 import com.example.chaskirider.feature.orders.data.local.RoomCustomerContactStore
 import com.example.chaskirider.core.platform.location.GeoPoint
-import com.example.chaskirider.feature.user.domain.RiderUser
+import com.example.chaskirider.feature.rider.domain.Rider
 import com.example.chaskirider.feature.orders.domain.*
 import com.example.chaskirider.core.platform.location.LocationRepository
-import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.rider.domain.RiderSession
 import com.example.chaskirider.feature.orders.domain.CustomerContact
 import com.example.chaskirider.feature.orders.ui.screens.CustomerContactDialog
 import com.example.chaskirider.feature.orders.ui.viewmodel.CustomerContactViewModel
@@ -36,10 +36,10 @@ class CustomerContactDeviceTest {
         val record = CustomerContact(1000, 2000, 3000, 1, 182000, true, "000000000")
         var database = open()
         try {
-            RoomCustomerContactStore(database.contacts()).save("alice", "order", record)
+            RoomCustomerContactStore(database.orderContacts()).save("alice", "order", record)
             database.close()
             database = open()
-            val store = RoomCustomerContactStore(database.contacts())
+            val store = RoomCustomerContactStore(database.orderContacts())
             assertEquals(record, store.load("alice", "order"))
             assertNull(store.load("bob", "order"))
             assertNull(store.load("alice", "other"))
@@ -48,10 +48,10 @@ class CustomerContactDeviceTest {
 
     @Test fun reminderAcknowledgementPersistsAndSupportUnlocksAfterTenMinutes() = runBlocking {
         val database = Room.inMemoryDatabaseBuilder(context, ChaskiDatabase::class.java).build()
-        val store = RoomCustomerContactStore(database.contacts())
+        val store = RoomCustomerContactStore(database.orderContacts())
         val holder = ViewModelStore()
         val time = AtomicLong(481000)
-        val session = object : RiderSession { override val user = MutableStateFlow<RiderUser?>(RiderUser(id = "alice")) }
+        val session = object : RiderSession { override val user = MutableStateFlow<Rider?>(Rider(id = "alice")) }
         val locations = object : LocationRepository { override suspend fun currentLocation() = Result.success<GeoPoint?>(null) }
         var opened = false
         try {

@@ -25,20 +25,20 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
 import com.example.chaskirider.R
 import com.example.chaskirider.di.AppContainer
-import com.example.chaskirider.feature.user.domain.RiderUser
-import com.example.chaskirider.feature.user.domain.RiderUserService
-import com.example.chaskirider.feature.user.domain.RegistrationStatus
-import com.example.chaskirider.feature.user.ui.platform.GoogleSignInClient
-import com.example.chaskirider.feature.user.ui.screens.PasswordSetupDialog
-import com.example.chaskirider.feature.user.ui.screens.SessionLoadingScreen
-import com.example.chaskirider.feature.user.ui.viewmodel.AuthViewModel
-import com.example.chaskirider.feature.user.ui.viewmodel.ProfilePhotoViewModel
-import com.example.chaskirider.feature.user.ui.viewmodel.RegistrationReviewViewModel
-import com.example.chaskirider.feature.user.ui.viewmodel.RegistrationViewModel
-import com.example.chaskirider.feature.user.ui.viewmodel.RiderProfileViewModel
-import com.example.chaskirider.feature.user.ui.navigation.authGraph
-import com.example.chaskirider.feature.user.ui.navigation.onboardingGraph
-import com.example.chaskirider.feature.user.ui.navigation.profileGraph
+import com.example.chaskirider.feature.rider.domain.Rider
+import com.example.chaskirider.feature.rider.domain.RiderOnboardingService
+import com.example.chaskirider.feature.rider.domain.RiderStatus
+import com.example.chaskirider.feature.rider.ui.platform.GoogleSignInClient
+import com.example.chaskirider.feature.rider.ui.screens.PasswordSetupDialog
+import com.example.chaskirider.feature.rider.ui.screens.SessionLoadingScreen
+import com.example.chaskirider.feature.rider.ui.viewmodel.AuthViewModel
+import com.example.chaskirider.feature.rider.ui.viewmodel.ProfilePhotoViewModel
+import com.example.chaskirider.feature.rider.ui.viewmodel.RiderOnboardingReviewViewModel
+import com.example.chaskirider.feature.rider.ui.viewmodel.RiderOnboardingViewModel
+import com.example.chaskirider.feature.rider.ui.viewmodel.RiderProfileViewModel
+import com.example.chaskirider.feature.rider.ui.navigation.authGraph
+import com.example.chaskirider.feature.rider.ui.navigation.onboardingGraph
+import com.example.chaskirider.feature.rider.ui.navigation.profileGraph
 import com.example.chaskirider.dashboard.viewmodel.HomeViewModel
 import com.example.chaskirider.dashboard.navigation.homeGraph
 import com.example.chaskirider.feature.notifications.ui.viewmodel.NotificationsViewModel
@@ -67,12 +67,12 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
     val drawerState = rememberDrawerState(DrawerValue.Closed)
 
     val profileViewModel: RiderProfileViewModel = viewModel { RiderProfileViewModel(AppContainer.riderSession) }
-    val personalViewModel: RegistrationViewModel = viewModel { RegistrationViewModel(
+    val personalViewModel: RiderOnboardingViewModel = viewModel { RiderOnboardingViewModel(
         AppContainer.riderUserRepository, AppContainer.bankRepository, AppContainer.vehicleRepository,
         AppContainer.documentRepository, AppContainer.riderSession, AppContainer.textProvider,
         AppContainer.registrationDraftRepository) }
     val personalState by personalViewModel.uiState.collectAsStateWithLifecycle()
-    val reviewViewModel: RegistrationReviewViewModel = viewModel { RegistrationReviewViewModel(
+    val reviewViewModel: RiderOnboardingReviewViewModel = viewModel { RiderOnboardingReviewViewModel(
         AppContainer.riderUserRepository, AppContainer.documentRepository, AppContainer.riderSession,
         AppContainer.textProvider) }
     val reviewState by reviewViewModel.uiState.collectAsStateWithLifecycle()
@@ -115,20 +115,20 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
     val photoViewModel: ProfilePhotoViewModel = viewModel { ProfilePhotoViewModel(AppContainer.riderUserRepository,
         AppContainer.riderSession, AppContainer.textProvider, createSavedStateHandle()) }
     val photoState by photoViewModel.uiState.collectAsStateWithLifecycle()
-    val needsPhoto = user?.status == RegistrationStatus.APPROVED && user.isEnabled && user.profilePhotoPath.isBlank()
+    val needsPhoto = user?.status == RiderStatus.APPROVED && user.isEnabled && user.profilePhotoPath.isBlank()
 
     LaunchedEffect(state.initialized, user?.id, user?.status, user?.isEnabled, user?.profilePhotoPath, route) {
         if (needsPhoto && route != Screen.ProfilePhoto.route) {
             navController.navigate(Screen.ProfilePhoto.route) { popUpTo(navController.graph.id) { inclusive = true }; launchSingleTop = true }
         } else if (user != null && route == Screen.ProfilePhoto.route && !needsPhoto) {
             navController.navigate(destination(user)) { popUpTo(navController.graph.id) { inclusive = true }; launchSingleTop = true }
-        } else if (user != null && (!user.isEnabled || user.status !in listOf(RegistrationStatus.INCOMPLETE, RegistrationStatus.NEEDS_CORRECTION)) && route?.startsWith("onboarding_") == true) {
+        } else if (user != null && (!user.isEnabled || user.status !in listOf(RiderStatus.INCOMPLETE, RiderStatus.NEEDS_CORRECTION)) && route?.startsWith("onboarding_") == true) {
             navController.navigate(destination(user)) { popUpTo(navController.graph.id) { inclusive = true }; launchSingleTop = true }
-        } else if (user != null && (user.status != RegistrationStatus.APPROVED || !user.isEnabled) && route in listOf(
+        } else if (user != null && (user.status != RiderStatus.APPROVED || !user.isEnabled) && route in listOf(
                 Screen.Home.route, Screen.Orders.route, Screen.Profile.route,
                 Screen.ProfilePersonalData.route, Screen.ProfileVehicle.route, Screen.ProfileDocuments.route,
                 Screen.Notifications.route, Screen.Earnings.route)) {
-            navController.navigate(Screen.RegistrationStatus.route) { popUpTo(navController.graph.id) { inclusive = true }; launchSingleTop = true }
+            navController.navigate(Screen.RiderStatus.route) { popUpTo(navController.graph.id) { inclusive = true }; launchSingleTop = true }
         } else if (route == Screen.Startup.route) {
             navController.navigate(user?.let(::destination) ?: Screen.Access.route) {
                 popUpTo(Screen.Startup.route) { inclusive = true }; launchSingleTop = true
@@ -140,7 +140,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
         }
     }
 
-    val workArea = user?.status == RegistrationStatus.APPROVED && user.isEnabled && !needsPhoto
+    val workArea = user?.status == RiderStatus.APPROVED && user.isEnabled && !needsPhoto
     // HU04: las ofertas (notificación de tiempo y navegación) solo existen conectado.
     val offersActive = workArea && user?.isAvailable == true
     val demoOrdersViewModel: OrdersViewModel = viewModel(key = "demo_orders") {
@@ -346,16 +346,16 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
         onSave = authViewModel::linkPassword, onDismiss = { passwordDialog = false; authViewModel.clearError() })
 }
 
-private fun destination(user: RiderUser): String = if (!user.isEnabled) Screen.RegistrationStatus.route else when (user.status) {
-    RegistrationStatus.INCOMPLETE -> when (RiderUserService.nextStep(user)) {
+private fun destination(user: Rider): String = if (!user.isEnabled) Screen.RiderStatus.route else when (user.status) {
+    RiderStatus.INCOMPLETE -> when (RiderOnboardingService.nextStep(user)) {
         1 -> Screen.OnboardingStep1.route
         2 -> Screen.OnboardingStep2.route
         else -> Screen.OnboardingStep3.route
     }
-    RegistrationStatus.APPROVED -> when {
-        !user.isEnabled -> Screen.RegistrationStatus.route
+    RiderStatus.APPROVED -> when {
+        !user.isEnabled -> Screen.RiderStatus.route
         user.profilePhotoPath.isBlank() -> Screen.ProfilePhoto.route
         else -> Screen.Home.route
     }
-    else -> Screen.RegistrationStatus.route
+    else -> Screen.RiderStatus.route
 }

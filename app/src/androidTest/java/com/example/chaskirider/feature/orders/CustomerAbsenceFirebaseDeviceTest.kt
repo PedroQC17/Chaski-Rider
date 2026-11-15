@@ -1,9 +1,9 @@
 package com.example.chaskirider.feature.orders
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.work.*
-import com.example.chaskirider.feature.orders.data.local.DemoOrderState
-import com.example.chaskirider.feature.orders.data.local.OrderRecordEntity
-import com.example.chaskirider.feature.orders.data.local.RoomDemoOrderStore
+import com.example.chaskirider.feature.orders.data.local.OrderSessionState
+import com.example.chaskirider.feature.orders.data.local.OrderEntity
+import com.example.chaskirider.feature.orders.data.local.StoredOrderSessionStore
 import com.example.chaskirider.feature.orders.data.local.openOrderDatabase
 import com.example.chaskirider.feature.orders.data.OrderRepositoryImpl
 import com.example.chaskirider.platform.OrderSyncWorker
@@ -45,7 +45,7 @@ class CustomerAbsenceFirebaseDeviceTest {
         val remote=FirebaseFirestore.getInstance().document("riders/$owner/deliveryRecords/$id")
         try {
             input.delete()
-            RoomDemoOrderStore(database.orders()).save(owner,DemoOrderState(snapshot))
+            StoredOrderSessionStore(database.orders()).save(owner,OrderSessionState(snapshot))
             database.orders().confirm(owner,id,1)
             remote.set(mapOf("orderId" to id,"riderId" to owner,"status" to "ON_THE_WAY","revision" to 1,
                 "merchantName" to snapshot.merchantName,"pickup" to mapOf("latitude" to point.latitude,"longitude" to point.longitude),
@@ -67,7 +67,7 @@ class CustomerAbsenceFirebaseDeviceTest {
                     "El cliente sigue ausente. Ya registrÃ© las llamadas y cumplÃ­ la espera. Revisa los requisitos del servidor para finalizar.",false)
                 assertEquals("GEMINI",answer.mode);assertTrue(answer.canResolve);assertFalse(answer.needsHuman)
             }
-            val repo=OrderRepositoryImpl(RoomDemoOrderStore(database.orders()),{owner},{emptyList()},resolveAbsence=service::resolve)
+            val repo=OrderRepositoryImpl(StoredOrderSessionStore(database.orders()),{owner},{emptyList()},resolveAbsence=service::resolve)
             val completed=repo.resolveCustomerAbsence(id)
             assertTrue(completed.isCompleted);assertFalse(completed.isDelivered);assertNull(completed.deliveredAt)
             assertEquals(completed,repo.resolveCustomerAbsence(id))
@@ -86,7 +86,7 @@ class CustomerAbsenceFirebaseDeviceTest {
             val manager=WorkManager.getInstance(context)
             val workName="verify-absence-sync-$id"
             try {
-                mainDatabase.orders().saveRecord(OrderRecordEntity(owner,id,com.google.gson.Gson().toJson(record),2,true))
+                mainDatabase.orders().saveRecord(record,2,true)
                 manager.enqueueUniqueWork(workName,ExistingWorkPolicy.REPLACE,
                     OneTimeWorkRequestBuilder<OrderSyncWorker>().setInputData(workDataOf("uid" to owner)).build())
                     .result.get(10,TimeUnit.SECONDS)
@@ -96,11 +96,11 @@ class CustomerAbsenceFirebaseDeviceTest {
             } finally {
                 manager.cancelUniqueWork(workName).result.get(10,TimeUnit.SECONDS)
                 mainDatabase.openHelper.writableDatabase.execSQL("DELETE FROM order_actions WHERE uid = ? AND orderId = ?",arrayOf(owner,id))
-                mainDatabase.openHelper.writableDatabase.execSQL("DELETE FROM order_records WHERE uid = ? AND orderId = ?",arrayOf(owner,id))
+                mainDatabase.openHelper.writableDatabase.execSQL("DELETE FROM orders WHERE riderId = ? AND orderId = ?",arrayOf(owner,id))
                 mainDatabase.close()
             }
             database.close();database=openOrderDatabase(context,name)
-            val restored=OrderRepositoryImpl(RoomDemoOrderStore(database.orders()),{owner},{emptyList()})
+            val restored=OrderRepositoryImpl(StoredOrderSessionStore(database.orders()),{owner},{emptyList()})
             assertTrue(restored.execute(OfferAction.STATE).isCompleted)
             restored.execute(OfferAction.RESET)
             assertNull(restored.execute(OfferAction.STATE).batch)

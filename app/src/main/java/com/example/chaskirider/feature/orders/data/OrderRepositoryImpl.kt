@@ -2,8 +2,8 @@ package com.example.chaskirider.feature.orders.data
 
 import com.example.chaskirider.feature.orders.data.local.DemoOrder
 import com.example.chaskirider.feature.orders.data.local.DemoOrderCatalog
-import com.example.chaskirider.feature.orders.data.local.DemoOrderState
-import com.example.chaskirider.feature.orders.data.local.DemoOrderStore
+import com.example.chaskirider.feature.orders.data.local.OrderSessionState
+import com.example.chaskirider.feature.orders.data.local.OrderSessionStore
 import com.example.chaskirider.core.platform.location.LocationUtils
 import com.example.chaskirider.feature.orders.domain.*
 import kotlinx.coroutines.sync.Mutex
@@ -11,7 +11,7 @@ import kotlinx.coroutines.sync.withLock
 import java.util.UUID
 import kotlin.math.roundToInt
 import kotlin.random.Random
-import com.example.chaskirider.feature.orders.data.local.DemoOrderDao
+import com.example.chaskirider.feature.orders.data.local.OrdersDao
 import com.example.chaskirider.platform.OrderSyncWorker
 import com.example.chaskirider.core.network.DeviceConnectivity
 import android.content.Context
@@ -24,7 +24,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 class OrderRepositoryImpl(
-    private val store: DemoOrderStore,
+    private val store: OrderSessionStore,
     private val currentUid: () -> String?,
     private val catalog: suspend () -> List<DemoOrder>,
     private val clock: () -> Long = System::currentTimeMillis,
@@ -44,7 +44,7 @@ class OrderRepositoryImpl(
     ): OfferSnapshot = mutex.withLock {
         val uid = currentUid() ?: throw OfferRequestException(401)
         val now = clock()
-        val saved = store.load(uid) ?: DemoOrderState(empty(now))
+        val saved = store.load(uid) ?: OrderSessionState(empty(now))
         var snapshot = saved.snapshot.copy(serverTime = now)
         var routeId = saved.catalogRouteId
         val recent = saved.recent.filterValues { now - it < 5 * 60_000 }.toMutableMap()
@@ -110,7 +110,7 @@ class OrderRepositoryImpl(
             }
         }
         snapshot = snapshot.copy(waitingCompensationCents = 0)
-        store.save(uid, DemoOrderState(snapshot, recent, saved.problems.orEmpty(), routeId))
+        store.save(uid, OrderSessionState(snapshot, recent, saved.problems.orEmpty(), routeId))
         snapshot
     }
     override suspend fun reportProblem(reason: OrderProblemReason, detail: String, cancel: Boolean): OfferSnapshot = mutex.withLock {
@@ -172,7 +172,7 @@ class OrderRepositoryImpl(
 
 class OrderSyncRepositoryImpl(
     private val context: Context,
-    private val dao: DemoOrderDao,
+    private val dao: OrdersDao,
     private val connectivity: DeviceConnectivity
 ) : OrderSyncRepository {
     override fun observe(uid: String) = combine(dao.observePendingCount(uid),

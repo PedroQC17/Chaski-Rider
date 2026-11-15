@@ -2,14 +2,14 @@ package com.example.chaskirider.dashboard.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.chaskirider.feature.user.domain.RiderUserPolicy
-import com.example.chaskirider.feature.user.domain.RiderUserService
+import com.example.chaskirider.feature.rider.domain.RiderPolicy
+import com.example.chaskirider.feature.rider.domain.RiderOnboardingService
 import com.example.chaskirider.feature.orders.domain.DemandZone
 import com.example.chaskirider.feature.orders.domain.OfferAction
 import com.example.chaskirider.feature.orders.domain.OfferRepository
 import com.example.chaskirider.core.platform.location.LocationRepository
-import com.example.chaskirider.feature.user.domain.RiderUserRepository
-import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.rider.domain.RiderRepository
+import com.example.chaskirider.feature.rider.domain.RiderSession
 import com.example.chaskirider.core.text.TextKey
 import com.example.chaskirider.core.text.TextProvider
 import kotlinx.coroutines.Job
@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class HomeViewModel(
-    private val profiles: RiderUserRepository,
+    private val profiles: RiderRepository,
     private val locations: LocationRepository,
     private val texts: TextProvider,
     private val offers: OfferRepository,
@@ -94,7 +94,7 @@ class HomeViewModel(
     fun setAvailability(available: Boolean) {
         if (state.value.isUpdatingAvailability) return
         val user = state.value.user ?: return
-        RiderUserPolicy.availabilityError(user, available)?.let { reportError(texts.get(it)); return }
+        RiderPolicy.availabilityError(user, available)?.let { reportError(texts.get(it)); return }
         if (available && !state.value.hasLocationPermission) {
             reportError(texts.get(TextKey.HOME_LOCATION_PERMISSION_REQUIRED)); return
         }

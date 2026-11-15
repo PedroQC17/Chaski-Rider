@@ -7,8 +7,9 @@ import com.example.chaskirider.core.text.TextKey
 import android.content.Context
 import android.net.Uri
 import com.example.chaskirider.core.platform.FileProviderUris
-import com.example.chaskirider.feature.user.domain.RiderUserService
+import com.example.chaskirider.feature.rider.domain.RiderOnboardingService
 import com.example.chaskirider.feature.documents.data.remote.DocumentRemote
+import com.example.chaskirider.feature.documents.data.remote.DocumentRoutes
 import com.google.firebase.auth.*
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.Dispatchers
@@ -23,10 +24,16 @@ class RiderDocumentDataSource(
     private val context: Context,
     private val remote: DocumentRemote,
     private val refreshUser: suspend () -> Unit,
+    private val store: DocumentStore,
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val storage: FirebaseStorage = FirebaseStorage.getInstance()
 ) {
-    suspend fun load() = firebaseResult(texts) { remote.load() }
+    suspend fun load(): Result<com.example.chaskirider.feature.documents.domain.DocumentSnapshot> {
+        val uid = auth.currentUser?.uid
+        return firebaseResult(texts) { remote.load() }.onSuccess { snapshot ->
+            uid?.let { runCatching { store.save(it, snapshot) } }
+        }
+    }
 
     // Private durable file: cache eviction must not discard an unconfirmed registration capture.
     suspend fun createCapture() = firebaseResult(texts) {
@@ -84,16 +91,18 @@ class RiderDocumentDataSource(
         }
         try {
 
-            val path = "riders/$uid/documents/$docType/${UUID.randomUUID()}"
+            val path = DocumentRoutes.file(uid, docType, UUID.randomUUID().toString())
             remote.upload(Uri.fromFile(temp), docType, requireNotNull(mime), path)
             refreshUser()
+            load()
+            Unit
         } finally { temp.delete() }
     }
 
     suspend fun getDocument(docType: String) = firebaseResult(texts) {
         val uid = auth.currentUser?.uid ?: error(texts.get(TextKey.TEXT_NO_HAY_UNA_SESION_ACTIVA))
         val path = remote.path(docType)
-        require(path.startsWith("riders/$uid/documents/$docType/")) { texts.get(TextKey.TEXT_VUELVE_A_SUBIR_ESTE_DOCUMENTO_PARA_CONSULTARLO) }
+        require(path.startsWith(DocumentRoutes.filePrefix(uid, docType))) { texts.get(TextKey.TEXT_VUELVE_A_SUBIR_ESTE_DOCUMENTO_PARA_CONSULTARLO) }
         val ref = storage.reference.child(path)
         val metadata = ref.metadata.await()
         val extension = when (metadata.contentType) { "application/pdf" -> ".pdf"; "image/png" -> ".png"; else -> ".jpg" }

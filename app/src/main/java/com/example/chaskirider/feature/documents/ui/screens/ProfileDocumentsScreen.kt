@@ -1,6 +1,6 @@
 package com.example.chaskirider.feature.documents.ui.screens
 
-import com.example.chaskirider.feature.vehicle.domain.VehiclePolicy
+import com.example.chaskirider.feature.rider.domain.VehiclePolicy
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
@@ -12,9 +12,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.chaskirider.R
-import com.example.chaskirider.feature.vehicle.domain.VehicleType
-import com.example.chaskirider.feature.user.ui.components.ChevronRightIcon
-import com.example.chaskirider.feature.user.ui.components.*
+import com.example.chaskirider.feature.rider.domain.VehicleType
+import com.example.chaskirider.feature.rider.ui.components.ChevronRightIcon
+import com.example.chaskirider.feature.rider.ui.components.*
 import com.example.chaskirider.ui.theme.*
 
 @Composable

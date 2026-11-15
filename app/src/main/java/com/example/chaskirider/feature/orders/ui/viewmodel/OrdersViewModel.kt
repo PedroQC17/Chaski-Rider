@@ -9,10 +9,10 @@ import androidx.lifecycle.viewModelScope
 import com.example.chaskirider.R
 import com.example.chaskirider.di.AppContainer
 import com.example.chaskirider.core.platform.location.GeoPoint
-import com.example.chaskirider.feature.user.domain.RegistrationStatus
+import com.example.chaskirider.feature.rider.domain.RiderStatus
 import com.example.chaskirider.feature.orders.domain.*
 import com.example.chaskirider.core.platform.location.LocationRepository
-import com.example.chaskirider.feature.user.domain.RiderSession
+import com.example.chaskirider.feature.rider.domain.RiderSession
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
@@ -59,7 +59,7 @@ class OrdersViewModel(
         }
         viewModelScope.launch {
             session.user.collect { user ->
-                if (user?.id != uid || user == null || user.status != RegistrationStatus.APPROVED || !user.isEnabled) {
+                if (user?.id != uid || user == null || user.status != RiderStatus.APPROVED || !user.isEnabled) {
                     draft.clear()
                     uid = user?.id
                     request?.cancel(); ticker?.cancel(); search?.cancel()
@@ -85,7 +85,7 @@ class OrdersViewModel(
     }
 
     private fun canWork(): Boolean = session.user.value?.let {
-        it.id == uid && it.status == RegistrationStatus.APPROVED && it.isEnabled && it.profilePhotoPath.isNotBlank()
+        it.id == uid && it.status == RiderStatus.APPROVED && it.isEnabled && it.profilePhotoPath.isNotBlank()
     } == true
 
     private fun syncSearch() {
