@@ -57,9 +57,7 @@ class EarningsViewModel(
             val (from, until) = EarningsCalendar.bounds(state.selectedFilter, now, state.range)
             val records = snapshot.records.filter { it.completedAt >= from && it.completedAt < until && it.completedAt <= now }
             state.copy(records = records, settlements = snapshot.settlements, warning = snapshot.warning,
-                chartPoints = ActivityChart.points(records, from, until),
-                connection = ConnectionSummary.from(snapshot.connections, from, until, now),
-                connectionWarning = snapshot.connectionWarning,
+                dashboard = EarningsService.build(records, snapshot.connections, from, until, now),
                 selectedOrder = state.selectedOrder?.let { selected -> records.find { it.orderId == selected.orderId } }, isLoading = false)
         }
     }

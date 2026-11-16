@@ -1,4 +1,4 @@
-package com.example.chaskirider.feature.earnings.ui.screens
+ package com.example.chaskirider.feature.earnings.ui.screens
 
 import com.example.chaskirider.feature.earnings.ui.viewmodel.EarningsViewModel
 import androidx.compose.foundation.clickable
@@ -20,8 +20,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.example.chaskirider.feature.earnings.domain.*
-import com.example.chaskirider.feature.earnings.ui.components.EarningsChartCard
-import com.example.chaskirider.feature.earnings.ui.components.ActivitySummaryCard
+import com.example.chaskirider.feature.earnings.ui.components.ActivityDashboard
+import com.example.chaskirider.feature.earnings.ui.components.ConnectionDashboard
+import com.example.chaskirider.feature.earnings.ui.components.EarningsBarDashboard
+import com.example.chaskirider.feature.earnings.ui.components.IncomeSplitDashboard
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -91,8 +93,12 @@ fun EarningsRoute(viewModel: EarningsViewModel, onMenu: () -> Unit) {
                             }
                         }
                     }
-                    item { ActivitySummaryCard(state.activity, state.connection, state.connectionWarning) }
-                    item { EarningsChartCard(state.chartPoints) }
+                    state.dashboard?.let { dashboard ->
+                        item { EarningsBarDashboard(dashboard.earnings) }
+                        item { IncomeSplitDashboard(dashboard.income) }
+                        item { ActivityDashboard(dashboard.activity) }
+                        item { ConnectionDashboard(dashboard.connection) }
+                    }
                     item { Text("Historial de pedidos (${state.records.size})", fontWeight = FontWeight.Bold) }
                     if (state.records.isEmpty() && !state.isLoading) item { Text("Aún no hay pedidos finalizados en estas fechas.") }
                     items(state.records, key = { it.orderId }) { record ->

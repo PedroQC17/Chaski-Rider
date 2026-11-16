@@ -99,8 +99,9 @@ class EarningsDeviceTest {
         compose.runOnIdle { session.user.value = Rider(id = "bob") }
         compose.waitForIdle()
         compose.onNodeWithText("Negocio de prueba").assertDoesNotExist()
-        compose.onNodeWithTag("earnings-list").performScrollToNode(hasText("AÃºn no hay pedidos finalizados en estas fechas."))
-        compose.onNodeWithText("AÃºn no hay pedidos finalizados en estas fechas.").assertIsDisplayed()
+        compose.waitUntil(5_000) { !model.uiState.value.isLoading }
+        compose.onNodeWithTag("earnings-list").performScrollToNode(hasText("Aún no hay pedidos finalizados en estas fechas."))
+        compose.onNodeWithText("Aún no hay pedidos finalizados en estas fechas.").assertIsDisplayed()
     }
 
     @Test fun unsuccessfulCompletionShowsItsResultAndPreservedEarnings() {
@@ -159,8 +160,8 @@ class EarningsDeviceTest {
             compose.onNodeWithTag("earnings-list").performScrollToNode(hasContentDescription("Entregas exitosas: 2"))
             compose.onNodeWithContentDescription("Entregas exitosas: 2").assertIsDisplayed()
             compose.onNodeWithContentDescription("Pedidos cancelados: 1").assertIsDisplayed()
-            compose.onNodeWithTag("earnings-list").performScrollToNode(hasContentDescription("Promedio diario de conexiÃ³n: Sin conexiones"))
-            compose.onNodeWithContentDescription("Promedio diario de conexiÃ³n: Sin conexiones").assertIsDisplayed()
+            compose.onNodeWithTag("earnings-list").performScrollToNode(hasText("Tiempo conectado por día"))
+            compose.onNodeWithText("Tiempo conectado por día").assertIsDisplayed()
             assertEquals(1100L, model.uiState.value.grandTotalCents)
             assertEquals(7, model.uiState.value.chartPoints.size)
             compose.onNodeWithTag("earnings-list").performScrollToNode(hasText("Hoy"))
@@ -168,8 +169,8 @@ class EarningsDeviceTest {
             compose.onNodeWithTag("earnings-list").performScrollToNode(hasContentDescription("Entregas exitosas: 1"))
             compose.onNodeWithContentDescription("Entregas exitosas: 1").assertIsDisplayed()
             compose.onNodeWithContentDescription("Pedidos cancelados: 0").assertIsDisplayed()
-            compose.onNodeWithTag("earnings-list").performScrollToNode(hasContentDescription("Promedio diario de conexiÃ³n: Sin conexiones"))
-            compose.onNodeWithContentDescription("Promedio diario de conexiÃ³n: Sin conexiones").assertIsDisplayed()
+            compose.onNodeWithTag("earnings-list").performScrollToNode(hasText("Tiempo conectado por día"))
+            compose.onNodeWithText("Tiempo conectado por día").assertIsDisplayed()
             assertEquals(550L, model.uiState.value.grandTotalCents)
             assertEquals(1, model.uiState.value.chartPoints.size)
             compose.onNodeWithTag("earnings-list").performScrollToNode(hasText("Esta semana"))
