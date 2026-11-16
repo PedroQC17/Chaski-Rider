@@ -22,14 +22,19 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.chaskirider.feature.earnings.domain.ActivityChartPoint
+import com.example.chaskirider.ui.theme.BorderLight
 import com.example.chaskirider.ui.theme.Orange
-import com.github.tehras.charts.bar.BarChart
-import com.github.tehras.charts.bar.BarChartData
-import com.github.tehras.charts.bar.renderer.label.SimpleValueDrawer
+import com.example.chaskirider.ui.theme.TextMuted
+import com.github.tehras.charts.line.LineChart
+import com.github.tehras.charts.line.LineChartData
+import com.github.tehras.charts.line.renderer.line.SolidLineDrawer
+import com.github.tehras.charts.line.renderer.point.FilledCircularPointDrawer
+import com.github.tehras.charts.line.renderer.xaxis.SimpleXAxisDrawer
+import com.github.tehras.charts.line.renderer.yaxis.SimpleYAxisDrawer
 import java.util.Locale
 
 @Composable
-fun EarningsBarDashboard(points: List<ActivityChartPoint>) {
+fun EarningsLineDashboard(points: List<ActivityChartPoint>) {
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceVariant,
@@ -53,33 +58,35 @@ fun EarningsBarDashboard(points: List<ActivityChartPoint>) {
                                     if (page.size == 1) page.first().label else "${page.first().label} — ${page.last().label}",
                                     style = MaterialTheme.typography.labelMedium
                                 )
-                                if (page.all { it.amountCents == 0L }) {
-                                    Text(
+                                when {
+                                    page.all { it.amountCents == 0L } -> Text(
                                         "Sin ganancias registradas en estas fechas",
                                         Modifier.heightIn(min = 80.dp),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
-                                } else {
-                                    val bars = page.map { point ->
-                                        BarChartData.Bar(
-                                            value = point.amountCents / 100f,
-                                            color = Orange,
-                                            label = point.label
-                                        )
-                                    }
-                                    BarChart(
-                                        barChartData = BarChartData(bars),
+                                    page.size == 1 -> Text(
+                                        "${page.first().label}: ${money(page.first().amountCents)}",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    else -> LineChart(
+                                        linesChartData = listOf(
+                                            LineChartData(
+                                                points = page.map { LineChartData.Point(it.amountCents / 100f, it.label) },
+                                                startAtZero = true,
+                                                lineDrawer = SolidLineDrawer(color = Orange)
+                                            )
+                                        ),
+                                        labels = page.map { it.label },
                                         modifier = Modifier.fillMaxWidth().height(160.dp).semantics {
                                             contentDescription = page.joinToString("; ") {
-                                                "${it.label}: " + String.format(
-                                                    Locale.forLanguageTag("es-PE"),
-                                                    "S/ %.2f",
-                                                    it.amountCents / 100.0
-                                                )
+                                                "${it.label}: ${money(it.amountCents)}"
                                             }
                                         },
-                                        labelDrawer = SimpleValueDrawer(drawLocation = SimpleValueDrawer.DrawLocation.XAxis)
+                                        pointDrawer = FilledCircularPointDrawer(color = Orange),
+                                        xAxisDrawer = SimpleXAxisDrawer(labelTextColor = TextMuted, axisLineColor = BorderLight),
+                                        yAxisDrawer = SimpleYAxisDrawer()
                                     )
                                 }
                             }
@@ -91,3 +98,6 @@ fun EarningsBarDashboard(points: List<ActivityChartPoint>) {
         }
     }
 }
+
+private fun money(cents: Long): String =
+    String.format(Locale.forLanguageTag("es-PE"), "S/ %.2f", cents / 100.0)

@@ -22,7 +22,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.example.chaskirider.feature.earnings.domain.*
 import com.example.chaskirider.feature.earnings.ui.components.ActivityDashboard
 import com.example.chaskirider.feature.earnings.ui.components.ConnectionDashboard
-import com.example.chaskirider.feature.earnings.ui.components.EarningsBarDashboard
+import com.example.chaskirider.feature.earnings.ui.components.EarningsLineDashboard
 import com.example.chaskirider.feature.earnings.ui.components.IncomeSplitDashboard
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -94,7 +94,7 @@ fun EarningsRoute(viewModel: EarningsViewModel, onMenu: () -> Unit) {
                         }
                     }
                     state.dashboard?.let { dashboard ->
-                        item { EarningsBarDashboard(dashboard.earnings) }
+                        item { EarningsLineDashboard(dashboard.earnings) }
                         item { IncomeSplitDashboard(dashboard.income) }
                         item { ActivityDashboard(dashboard.activity) }
                         item { ConnectionDashboard(dashboard.connection) }
