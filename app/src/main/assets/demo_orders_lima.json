@@ -3140,14 +3140,14 @@
       "latitude": -12.05058,
       "longitude": -76.994355
     },
-    "deliveryZone": "San Juan De Lurigancho",
-    "deliveryAddress": "Urb. Parcelación Rustica Zarate, Mz B, Lt 23.",
+    "deliveryZone": "El Agustino",
+    "deliveryAddress": "Cerca de Plaza Vea Magnolias (prueba)",
     "delivery": {
-      "latitude": -12.016429,
-      "longitude": -76.992869
+      "latitude": -12.0502,
+      "longitude": -76.9941
     },
     "tipCents": 0,
-    "paidByCustomer": true
+    "paidByCustomer": false
   },
   {
     "id": "PV-102-7",
@@ -3158,11 +3158,11 @@
       "latitude": -12.05058,
       "longitude": -76.994355
     },
-    "deliveryZone": "Rímac",
-    "deliveryAddress": "Jr. Marañon 601-683 Rimac",
+    "deliveryZone": "El Agustino",
+    "deliveryAddress": "Cerca de Plaza Vea Magnolias (prueba)",
     "delivery": {
-      "latitude": -12.041535,
-      "longitude": -77.022048
+      "latitude": -12.0507,
+      "longitude": -76.9940
     },
     "tipCents": 100,
     "paidByCustomer": false
@@ -3176,14 +3176,14 @@
       "latitude": -12.05058,
       "longitude": -76.994355
     },
-    "deliveryZone": "La Victoria",
-    "deliveryAddress": "Urb. San Pablo S/N Mz A 301 Altura de la Cuadra 24 de la Av. MEXICO",
+    "deliveryZone": "El Agustino",
+    "deliveryAddress": "Cerca de Plaza Vea Magnolias (prueba)",
     "delivery": {
-      "latitude": -12.0654513,
-      "longitude": -77.0035549
+      "latitude": -12.0500,
+      "longitude": -76.9940
     },
     "tipCents": 200,
-    "paidByCustomer": true
+    "paidByCustomer": false
   },
   {
     "id": "PV-103-5",
