@@ -11,16 +11,26 @@ class EarningsRepositoryImpl(
     private val store: EarningsStore? = null
 ) : EarningsRepository {
     override fun observe(uid: String): Flow<EarningsSnapshot> =
-        combine(orders.observe(uid), remote.payments(uid), remote.connections(uid)) { rows, feed, connection ->
+        combine(
+            orders.observe(uid),
+            remote.orders(uid),
+            remote.payments(uid),
+            remote.connections(uid)
+        ) { rows, remoteOrders, feed, connection ->
             store?.let { runCatching { it.save(uid, feed.records, connection.sessions) } }
             var invalid = false
-            val records = rows.mapNotNull { row ->
+            val localOrders = rows.mapNotNull { row ->
                 val order = row.order
                 if (order == null || order.riderId != uid || order.orderId != row.orderId) {
                     invalid = true
                     null
-                } else EarningsPolicy.record(order)
-            }.sortedByDescending { it.completedAt }
+                } else order
+            }
+            val records = (localOrders + remoteOrders)
+                .associateBy { it.orderId }
+                .values
+                .mapNotNull { EarningsPolicy.record(it) }
+                .sortedByDescending { it.completedAt }
             val paid = feed.records.filter { payment ->
                 val known = records.filter { it.orderId in payment.orderIds }
                 val matches = known.all { !it.cancelled && EarningsCalendar.weekStart(it.completedAt) == payment.periodStart } &&
