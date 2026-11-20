@@ -72,26 +72,35 @@ fun WorkMap(state: HomeUiState, bottomInset: androidx.compose.ui.unit.Dp,
                 title = stringResource(R.string.orders_rider), icon = riderIcon,
                 anchor = androidx.compose.ui.geometry.Offset(0.5f, 0.5f), zIndex = 1f)
         }
-        // HU05: capa de zonas de demanda; al tocar una zona se selecciona.
-        state.demandZones.forEach { zone ->
-            val selected = state.selectedZone?.id == zone.id
-            val color = demandLevelColor(zone.level)
-            Circle(
-                center = LatLng(zone.latitude, zone.longitude),
-                radius = zone.radiusMeters.toDouble(),
-                strokeColor = color,
-                fillColor = color.copy(alpha = if (selected) 0.35f else 0.15f),
-                strokeWidth = if (selected) 5f else 3f,
-                clickable = true,
-                onClick = { onZoneTap(zone); true }
-            )
+        if (state.user?.isAvailable == true) {
+            state.demandZones.forEach { zone ->
+                val current = demandColor(zone.level, forecast = false)
+                val forecast = demandColor(zone.forecastLevel, forecast = true)
+                val fill = current ?: forecast ?: return@forEach
+                if (zone.radiusMeters <= 0) return@forEach
+                val dy = zone.radiusMeters / 111_320.0
+                val dx = dy / kotlin.math.cos(Math.toRadians(zone.latitude))
+                Polygon(
+                    points = listOf(
+                        LatLng(zone.latitude + dy, zone.longitude),
+                        LatLng(zone.latitude, zone.longitude + dx),
+                        LatLng(zone.latitude - dy, zone.longitude),
+                        LatLng(zone.latitude, zone.longitude - dx)
+                    ),
+                    fillColor = fill.copy(alpha = 0.55f),
+                    strokeColor = forecast ?: fill,
+                    strokeWidth = if (state.selectedZone?.id == zone.id) 7f else 4f,
+                    clickable = true,
+                    onClick = { onZoneTap(zone) }
+                )
+            }
         }
     }
 }
 
-private fun demandLevelColor(level: String) = when (level) {
-    "HIGH" -> Color(0xFFE53935)
-    "MEDIUM" -> Color(0xFFFB8C00)
-    "LOW" -> Color(0xFF43A047)
-    else -> Color(0xFF4285F4)
+private fun demandColor(level: String?, forecast: Boolean): Color? = when (level) {
+    "HIGH" -> if (forecast) Color(0xFF1243A3) else Color(0xFFB11226)
+    "MEDIUM" -> if (forecast) Color(0xFF4285D5) else Color(0xFFE35353)
+    "LOW" -> if (forecast) Color(0xFF94C4F3) else Color(0xFFF6AAAA)
+    else -> null
 }

@@ -9,9 +9,10 @@ import com.example.chaskirider.navigation.Screen
 fun NavGraphBuilder.homeGraph(
     workArea: Boolean,
     viewModel: HomeViewModel,
+    showDemand: Boolean,
     onOpenMenu: () -> Unit,
 ) {
     composable(Screen.Home.route) {
-        if (workArea) HomeRoute(viewModel, onOpenMenu = onOpenMenu)
+        if (workArea) HomeRoute(viewModel, showDemand = showDemand, onOpenMenu = onOpenMenu)
     }
 }

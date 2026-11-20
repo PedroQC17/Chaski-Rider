@@ -58,9 +58,10 @@ import kotlinx.coroutines.flow.collect
 fun AppNavigation(navController: NavHostController = rememberNavController(), authViewModel: AuthViewModel = viewModel { AuthViewModel(AppContainer.textProvider, AppContainer.riderUserRepository, AppContainer.riderSession) }) {
 
     val state by authViewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
     val homeViewModel: HomeViewModel = viewModel { HomeViewModel(AppContainer.riderUserRepository,
         AppContainer.locationRepository, AppContainer.textProvider, AppContainer.offerRepository,
-        AppContainer.riderSession) }
+        AppContainer.riderSession, com.example.chaskirider.platform.DemoDemandForecast(context.applicationContext.assets)::zones) }
     val homeState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
 
@@ -78,7 +79,6 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
     val documentsViewModel: DocumentsViewModel = viewModel { DocumentsViewModel(AppContainer.textProvider, AppContainer.documentRepository, AppContainer.riderSession, AppContainer.documentPreviewRepository,
         AppContainer.registrationDraftRepository) }
     val documentsState by documentsViewModel.uiState.collectAsStateWithLifecycle()
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val google = remember { GoogleSignInClient() }
     var googleBusy by remember { mutableStateOf(false) }
@@ -144,6 +144,9 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
             synchronization = AppContainer.orderSyncRepository)
     }
     val ordersState by demoOrdersViewModel.uiState.collectAsStateWithLifecycle()
+    val orderSnapshot = ordersState.snapshot
+    val showDemand = offersActive && orderSnapshot != null && orderSnapshot.offer == null &&
+        (orderSnapshot.batch == null || orderSnapshot.isCompleted)
     val trackingOrderId = ordersState.snapshot?.batch?.stops?.singleOrNull()?.orderId
     val shouldTrack = workArea && ordersState.snapshot?.pickedUp == true && ordersState.snapshot?.isCompleted != true
     androidx.lifecycle.compose.LifecycleStartEffect(user?.id, trackingOrderId, shouldTrack) {
@@ -199,6 +202,14 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
         val snapshot = ordersState.snapshot
         if (workArea && route == Screen.Home.route && ((snapshot?.offer != null && offersActive) || (snapshot?.batch != null && !snapshot.isCompleted))) {
             navController.navigate(Screen.Orders.route) { launchSingleTop = true }
+        }
+    }
+    LaunchedEffect(route, showDemand, orderSnapshot?.batch) {
+        if (route == Screen.Orders.route && showDemand && orderSnapshot?.batch == null) {
+            navController.navigate(Screen.Home.route) {
+                popUpTo(Screen.Orders.route) { inclusive = true }
+                launchSingleTop = true
+            }
         }
     }
     LaunchedEffect(workArea) { if (!workArea) drawerState.close() }
@@ -267,6 +278,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
             homeGraph(
                 workArea = workArea,
                 viewModel = homeViewModel,
+                showDemand = showDemand,
                 onOpenMenu = { scope.launch { drawerState.open() } }
             )
             profileGraph(

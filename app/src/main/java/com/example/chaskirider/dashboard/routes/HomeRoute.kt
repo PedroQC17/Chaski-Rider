@@ -12,13 +12,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.chaskirider.R
 
 @Composable
-fun HomeRoute(viewModel: HomeViewModel, onOpenMenu: () -> Unit) {
+fun HomeRoute(viewModel: HomeViewModel, showDemand: Boolean, onOpenMenu: () -> Unit) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -57,7 +58,11 @@ fun HomeRoute(viewModel: HomeViewModel, onOpenMenu: () -> Unit) {
         connectAfterPermission = connect
         permissions.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
     }
-    HomeScreen(state = state, onOpenMenu = onOpenMenu,
+    LaunchedEffect(showDemand, lifecycleOwner) {
+        if (showDemand) lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { viewModel.observeForecast() }
+    }
+    val visibleState = if (showDemand) state else state.copy(demandZones = emptyList(), selectedZone = null)
+    HomeScreen(state = visibleState, onOpenMenu = onOpenMenu,
         onToggleAvailability = {
             if (state.user?.isAvailable == true) viewModel.setAvailability(false)
             else if (state.hasLocationPermission) viewModel.setAvailability(true)
