@@ -61,7 +61,8 @@ fun HomeRoute(viewModel: HomeViewModel, showDemand: Boolean, onOpenMenu: () -> U
     LaunchedEffect(showDemand, lifecycleOwner) {
         if (showDemand) lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { viewModel.observeForecast() }
     }
-    val visibleState = if (showDemand) state else state.copy(demandZones = emptyList(), selectedZone = null)
+    val visibleState = if (showDemand) state else state.copy(
+        demandZones = emptyList(), selectedZone = null, recommendation = null, forecastLoaded = false)
     HomeScreen(state = visibleState, onOpenMenu = onOpenMenu,
         onToggleAvailability = {
             if (state.user?.isAvailable == true) viewModel.setAvailability(false)

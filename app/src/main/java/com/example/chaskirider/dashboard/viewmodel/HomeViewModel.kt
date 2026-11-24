@@ -52,8 +52,14 @@ class HomeViewModel(
     suspend fun observeForecast() {
         while (true) {
             val hour = System.currentTimeMillis() / 3_600_000L
-            val zones = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { forecast(hour) }
-            state.update { it.updateZones(forecast = zones) }
+            val zones = try {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { forecast(hour) }
+            } catch (error: kotlinx.coroutines.CancellationException) {
+                throw error
+            } catch (_: Exception) {
+                emptyList()
+            }
+            state.update { it.updateZones(forecast = zones).copy(forecastLoaded = true) }
             kotlinx.coroutines.delay(((hour + 1) * 3_600_000L - System.currentTimeMillis()).coerceAtLeast(1))
         }
     }

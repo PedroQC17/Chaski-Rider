@@ -145,8 +145,8 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
     }
     val ordersState by demoOrdersViewModel.uiState.collectAsStateWithLifecycle()
     val orderSnapshot = ordersState.snapshot
-    val showDemand = offersActive && orderSnapshot != null && orderSnapshot.offer == null &&
-        (orderSnapshot.batch == null || orderSnapshot.isCompleted)
+    val showDemand = workArea && orderSnapshot?.offer == null &&
+        (orderSnapshot == null || orderSnapshot.batch == null || orderSnapshot.isCompleted)
     val trackingOrderId = ordersState.snapshot?.batch?.stops?.singleOrNull()?.orderId
     val shouldTrack = workArea && ordersState.snapshot?.pickedUp == true && ordersState.snapshot?.isCompleted != true
     androidx.lifecycle.compose.LifecycleStartEffect(user?.id, trackingOrderId, shouldTrack) {

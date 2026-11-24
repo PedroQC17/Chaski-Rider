@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.example.chaskirider.R
 import com.example.chaskirider.feature.orders.domain.DemandZone
 import com.example.chaskirider.dashboard.components.ConnectionPanel
+import com.example.chaskirider.dashboard.components.DemandRecommendationCard
 import com.example.chaskirider.dashboard.components.WorkMap
 import com.example.chaskirider.ui.theme.ChaskiRiderTheme
 import java.text.SimpleDateFormat
@@ -51,6 +52,10 @@ fun HomeScreen(state: HomeUiState, onOpenMenu: () -> Unit,
         }
         Column(Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(16.dp).widthIn(max = 480.dp),
             horizontalAlignment = Alignment.End) {
+            if (state.forecastLoaded) {
+                DemandRecommendationCard(state.recommendation)
+                Spacer(Modifier.height(8.dp))
+            }
             state.selectedZone?.takeIf { state.user?.isAvailable == true }?.let { zone ->
                 Surface(shape = RoundedCornerShape(12.dp), shadowElevation = 3.dp, modifier = Modifier.fillMaxWidth()) {
                     Row(Modifier.padding(horizontal = 12.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
