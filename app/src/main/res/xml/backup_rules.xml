@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<full-backup-content>
-    <exclude domain="database" path="chaski.db" />
-    <exclude domain="database" path="chaski.db-wal" />
-    <exclude domain="database" path="chaski.db-shm" />
-    <exclude domain="file" path="registration_documents/" />
-</full-backup-content>

@@ -13,6 +13,14 @@ val localConfig = Properties().apply {
 }
 val mapsApiKey = providers.environmentVariable("MAPS_API_KEY").orNull
     ?: localConfig.getProperty("MAPS_API_KEY", "")
+val releaseStoreFile = providers.environmentVariable("RELEASE_STORE_FILE").orNull
+    ?: localConfig.getProperty("RELEASE_STORE_FILE", "")
+val releaseStorePassword = providers.environmentVariable("RELEASE_STORE_PASSWORD").orNull
+    ?: localConfig.getProperty("RELEASE_STORE_PASSWORD", "")
+val releaseKeyAlias = providers.environmentVariable("RELEASE_KEY_ALIAS").orNull
+    ?: localConfig.getProperty("RELEASE_KEY_ALIAS", "")
+val releaseKeyPassword = providers.environmentVariable("RELEASE_KEY_PASSWORD").orNull
+    ?: localConfig.getProperty("RELEASE_KEY_PASSWORD", "")
 
 android {
     namespace = "com.example.chaskirider"
@@ -32,9 +40,22 @@ android {
 
     }
 
+    signingConfigs {
+        if (releaseStoreFile.isNotBlank() && releaseStorePassword.isNotBlank() &&
+            releaseKeyAlias.isNotBlank() && releaseKeyPassword.isNotBlank()) {
+            create("release") {
+                storeFile = file(releaseStoreFile)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.findByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

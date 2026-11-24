@@ -92,23 +92,15 @@ internal fun ExpandedOrderContent(
                 }
             }
 
-            if (offer != null) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(stringResource(R.string.orders_new_offer), fontWeight = FontWeight.Bold)
-                    Text(stringResource(R.string.orders_seconds, state.secondsLeft), color = MaterialTheme.colorScheme.primary)
-                }
-                LinearProgressIndicator(progress = { (state.secondsLeft / 45f).coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth())
-            } else {
-                val title = when {
-                    snapshot?.completedUnsuccessfullyAt != null -> "Completado · Entrega no exitosa"
-                    snapshot?.isDelivered == true -> "Entrega completada con éxito"
-                    snapshot?.pickedUp == true -> " En camino al cliente"
-                    snapshot?.arrivedAt != null -> " En establecimiento"
-                    quote != null -> stringResource(R.string.orders_accepted)
-                    else -> stringResource(R.string.orders_empty)
-                }
-                Text(title, fontWeight = FontWeight.Bold)
+            val title = when {
+                snapshot?.completedUnsuccessfullyAt != null -> "Completado · Entrega no exitosa"
+                snapshot?.isDelivered == true -> "Entrega completada con éxito"
+                snapshot?.pickedUp == true -> " En camino al cliente"
+                snapshot?.arrivedAt != null -> " En establecimiento"
+                quote != null -> stringResource(R.string.orders_accepted)
+                else -> stringResource(R.string.orders_empty)
             }
+            Text(title, fontWeight = FontWeight.Bold)
 
             snapshot?.problem?.let { problem ->
                 Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = RoundedCornerShape(12.dp)) {
@@ -126,21 +118,17 @@ internal fun ExpandedOrderContent(
             quote?.let {
                 OrderQuoteCard(
                     quote = it,
-                    additional = offer != null && snapshot?.batch != null,
+                    additional = false,
                     merchantName = snapshot?.merchantName,
                     merchantZone = snapshot?.merchantZone,
                     merchantAddress = snapshot?.merchantAddress,
-                    offerReason = offer?.reason,
-                    reasonMeters = offer?.reasonMeters,
+                    offerReason = null,
+                    reasonMeters = null,
                     waitingCompensationCents = snapshot?.waitingCompensationCents ?: 0,
-                    showPaymentDetails = offer != null || snapshot?.isCompleted == true
+                    showPaymentDetails = snapshot?.isCompleted == true
                 )
             }
 
-            if (offer != null) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Ganancia del pedido", fontWeight = FontWeight.Bold)
-                Text(stringResource(R.string.orders_money, offer.quote.totalCents / 100.0), fontWeight = FontWeight.Bold)
-            }
             OrderActionControls(
                 state = state,
                 actionsEnabled = actionsEnabled,

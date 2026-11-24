@@ -149,9 +149,10 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
         (orderSnapshot == null || orderSnapshot.batch == null || orderSnapshot.isCompleted)
     val trackingOrderId = ordersState.snapshot?.batch?.stops?.singleOrNull()?.orderId
     val shouldTrack = workArea && ordersState.snapshot?.pickedUp == true && ordersState.snapshot?.isCompleted != true
-    androidx.lifecycle.compose.LifecycleStartEffect(user?.id, trackingOrderId, shouldTrack) {
-        if (shouldTrack && trackingOrderId != null && user != null)
-            com.example.chaskirider.platform.OrderTrackingService.start(context, user.id, trackingOrderId)
+    val trackingUserId = user?.id
+    androidx.lifecycle.compose.LifecycleStartEffect(trackingUserId, trackingOrderId, shouldTrack) {
+        if (shouldTrack && trackingOrderId != null && trackingUserId != null)
+            com.example.chaskirider.platform.OrderTrackingService.start(context, trackingUserId, trackingOrderId)
         else com.example.chaskirider.platform.OrderTrackingService.stop(context)
         onStopOrDispose { }
     }

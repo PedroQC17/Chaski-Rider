@@ -2,7 +2,6 @@ package com.example.chaskirider.dashboard.components
 import com.example.chaskirider.ui.components.riderMapMarker
 
 import com.example.chaskirider.feature.orders.domain.DemandZone
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -28,7 +27,6 @@ import com.google.maps.android.compose.*
 @Composable
 fun WorkMap(state: HomeUiState, bottomInset: androidx.compose.ui.unit.Dp,
     onZoneTap: (com.example.chaskirider.feature.orders.domain.DemandZone) -> Unit = {}) {
-    Log.d("WorkMap", "Rendering WorkMap. MAPS_CONFIGURED=${BuildConfig.MAPS_CONFIGURED}, isInspection=${LocalInspectionMode.current}")
     if (!BuildConfig.MAPS_CONFIGURED || LocalInspectionMode.current) {
         Box(Modifier.fillMaxSize().background(Color(0xFFF0F2EF)), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -48,9 +46,7 @@ fun WorkMap(state: HomeUiState, bottomInset: androidx.compose.ui.unit.Dp,
     val riderIcon = remember(loaded, context) { if (loaded) com.example.chaskirider.ui.components.riderMapMarker(context) else null }
     LaunchedEffect(loaded, state.cameraRequest, state.location) {
         val point = state.location
-        Log.d("WorkMap", "LaunchedEffect: loaded=$loaded, location=$point, cameraRequest=${state.cameraRequest}")
         if (loaded && point != null) {
-            Log.d("WorkMap", "Animating camera to: ${point.latitude}, ${point.longitude}")
             camera.animate(
                 CameraUpdateFactory.newLatLngZoom(LatLng(point.latitude, point.longitude), 16f))
         }
@@ -62,7 +58,6 @@ fun WorkMap(state: HomeUiState, bottomInset: androidx.compose.ui.unit.Dp,
             mapToolbarEnabled = false, compassEnabled = false, rotationGesturesEnabled = false),
         contentPadding = PaddingValues(top = 96.dp, bottom = bottomInset),
         onMapLoaded = {
-            Log.d("WorkMap", "GoogleMap onMapLoaded triggered")
             loaded = true
         }
     ) {
