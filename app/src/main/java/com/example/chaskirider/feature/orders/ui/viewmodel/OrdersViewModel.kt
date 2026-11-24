@@ -24,7 +24,8 @@ class OrdersViewModel(
     private val automaticSearch: Boolean = true,
     private val elapsed: () -> Long = SystemClock::elapsedRealtime,
     private val synchronization: OrderSyncRepository? = null,
-    private val searchSignals: Flow<Unit> = AppContainer.orderChanges
+    private val searchSignals: Flow<Unit> = AppContainer.orderChanges,
+    private val evidenceAnalyzer: EvidenceAnalyzer? = null
 ) : ViewModel() {
     private val draft = DeliveryDraft(savedStateHandle)
 
@@ -120,22 +121,67 @@ class OrdersViewModel(
     }
 
     fun confirmEvidenceCapture(success: Boolean) {
-        val evidence = if (success) draft.confirmPending(mutable.value.pendingCaptureUri) else null
-        if (!success) draft.discardPending()
-        mutable.update {
-            if (evidence != null) it.copy(evidencePhotoUri = evidence, pendingCaptureUri = null)
-            else it.copy(pendingCaptureUri = null)
+        val source = mutable.value.pendingCaptureUri
+        if (!success || source == null) {
+            draft.discardPending()
+            mutable.update {
+                it.copy(pendingCaptureUri = null, evidenceQuality = null, isAnalyzingEvidence = false)
+            }
+            return
         }
+        val evidence = draft.confirmPending(source)
+        mutable.update {
+            if (evidence != null) it.copy(
+                evidencePhotoUri = evidence,
+                pendingCaptureUri = null,
+                evidenceQuality = null,
+                isAnalyzingEvidence = evidenceAnalyzer != null
+            ) else it.copy(pendingCaptureUri = null)
+        }
+        if (evidence != null) analyzeEvidence(evidence)
     }
 
     fun setEvidencePhoto(uri: Uri) {
         draft.saveEvidence(uri)
-        mutable.update { it.copy(evidencePhotoUri = uri, pendingCaptureUri = null) }
+        mutable.update {
+            it.copy(
+                evidencePhotoUri = uri,
+                pendingCaptureUri = null,
+                evidenceQuality = null,
+                isAnalyzingEvidence = evidenceAnalyzer != null
+            )
+        }
+        analyzeEvidence(uri)
     }
 
     fun clearEvidencePhoto() {
         draft.clearEvidence()
-        mutable.update { it.copy(evidencePhotoUri = null, pendingCaptureUri = null) }
+        mutable.update {
+            it.copy(
+                evidencePhotoUri = null,
+                pendingCaptureUri = null,
+                evidenceQuality = null,
+                isAnalyzingEvidence = false
+            )
+        }
+    }
+
+    private fun analyzeEvidence(uri: Uri) {
+        val analyzer = evidenceAnalyzer ?: return
+        val owner = uid ?: return
+        val source = uri.toString()
+        viewModelScope.launch {
+            val quality = try {
+                analyzer.analyze(source)
+            } catch (error: CancellationException) {
+                throw error
+            } catch (_: Exception) {
+                EvidenceQuality(listOf(EvidenceIssue.UNREADABLE))
+            }
+            if (uid == owner && mutable.value.evidencePhotoUri?.toString() == source) {
+                mutable.update { it.copy(evidenceQuality = quality, isAnalyzingEvidence = false) }
+            }
+        }
     }
 
     fun updateDeliveryNote(note: String) {
@@ -196,7 +242,16 @@ class OrdersViewModel(
         val order = snapshot.batch?.stops?.singleOrNull()?.orderId
         if (draft.boundOrderId() != order) {
             draft.clear()
-            mutable.update { it.copy(deliveryNote = null, evidencePhotoUri = null, pendingCaptureUri = null, deliveryPin = "") }
+            mutable.update {
+                it.copy(
+                    deliveryNote = null,
+                    evidencePhotoUri = null,
+                    pendingCaptureUri = null,
+                    deliveryPin = "",
+                    evidenceQuality = null,
+                    isAnalyzingEvidence = false
+                )
+            }
         }
         if (order != null) {
             draft.bind(uid, order)

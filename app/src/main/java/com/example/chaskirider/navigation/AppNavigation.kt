@@ -141,7 +141,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController(), au
     val offersActive = workArea && user?.isAvailable == true
     val demoOrdersViewModel: OrdersViewModel = viewModel(key = "demo_orders") {
         OrdersViewModel(AppContainer.demoOfferRepository, AppContainer.riderSession, automaticSearch = false,
-            synchronization = AppContainer.orderSyncRepository)
+            synchronization = AppContainer.orderSyncRepository, evidenceAnalyzer = AppContainer.evidenceAnalyzer)
     }
     val ordersState by demoOrdersViewModel.uiState.collectAsStateWithLifecycle()
     val orderSnapshot = ordersState.snapshot

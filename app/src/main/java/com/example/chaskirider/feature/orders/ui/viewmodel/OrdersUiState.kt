@@ -31,6 +31,8 @@ data class OrdersUiState(
     val evidencePhotoUri: Uri? = null,
     val deliveryNote: String? = null,
     val isUploadingEvidence: Boolean = false,
+    val evidenceQuality: com.example.chaskirider.feature.orders.domain.EvidenceQuality? = null,
+    val isAnalyzingEvidence: Boolean = false,
     val sync: com.example.chaskirider.feature.orders.domain.OrderSyncState = com.example.chaskirider.feature.orders.domain.OrderSyncState(),
 
 )

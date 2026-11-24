@@ -168,6 +168,9 @@ object AppContainer {
         VehicleRepositoryImpl(textProvider, VehicleRemote(textProvider), refreshRider)
     }
     val locationRepository: LocationRepository by lazy { DeviceLocationRepository(applicationContext) }
+    val evidenceAnalyzer: com.example.chaskirider.feature.orders.domain.EvidenceAnalyzer by lazy {
+        com.example.chaskirider.feature.orders.data.local.AndroidEvidenceAnalyzer(applicationContext)
+    }
     val documentPreviewRepository: DocumentPreviewRepository by lazy { com.example.chaskirider.feature.documents.data.DocumentPreviewRepositoryImpl(applicationContext, textProvider) }
     val documentRepository: DocumentRepository by lazy { DocumentRepositoryImpl(documents) }
     val notificationsRepository: NotificationsRepository by lazy {

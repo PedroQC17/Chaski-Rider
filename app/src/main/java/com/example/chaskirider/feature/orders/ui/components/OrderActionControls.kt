@@ -3,21 +3,26 @@ package com.example.chaskirider.feature.orders.ui.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.chaskirider.R
+import com.example.chaskirider.feature.orders.domain.EvidenceIssue
 import com.example.chaskirider.feature.orders.ui.viewmodel.OrdersUiState
 import java.util.Locale
 
@@ -126,9 +131,19 @@ internal fun OrderActionControls(
                 shape = RoundedCornerShape(12.dp)
             )
 
+            EvidenceSection(
+                state = state,
+                actionsEnabled = actionsEnabled,
+                actions = actions
+            )
+
             Button(
                 onClick = actions.onDeliver,
-                enabled = actionsEnabled && state.isNearCustomer && (snapshot?.paidByCustomer != true || (state.deliveryPin.length == 4 && state.sync.online)),
+                enabled = actionsEnabled && !state.isAnalyzingEvidence &&
+                    state.evidenceQuality?.sufficient != false &&
+                    state.isNearCustomer &&
+                    (snapshot?.paidByCustomer != true ||
+                        (state.deliveryPin.length == 4 && state.sync.online)),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Confirmar entrega")
@@ -215,4 +230,76 @@ internal fun OrderActionControls(
             modifier = Modifier.padding(vertical = 8.dp)
         )
     }
+}
+
+@Composable
+private fun EvidenceSection(
+    state: OrdersUiState,
+    actionsEnabled: Boolean,
+    actions: OrderActions
+) {
+    val quality = state.evidenceQuality
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(Modifier.padding(12.dp)) {
+            Text("Evidencia de entrega", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+            Spacer(Modifier.height(6.dp))
+
+            when {
+                state.isAnalyzingEvidence -> {
+                    Text("Analizando foto...", style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(6.dp))
+                    LinearProgressIndicator(Modifier.fillMaxWidth())
+                }
+                quality?.sufficient == true -> {
+                    Text(
+                        "Foto verificada: buena calidad.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+                quality != null -> {
+                    Text(
+                        "La foto no es suficiente:",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    quality.issues.forEach { issue ->
+                        Text("• ${issueLabel(issue)}", style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+                state.evidencePhotoUri == null -> {
+                    Text("Agrega una foto para respaldar la entrega.", style = MaterialTheme.typography.bodySmall)
+                }
+            }
+
+            Spacer(Modifier.height(6.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(
+                    onClick = actions.onTakeEvidencePhoto,
+                    enabled = actionsEnabled && !state.isAnalyzingEvidence
+                ) {
+                    Text(if (state.evidencePhotoUri == null) "Tomar foto" else "Volver a tomar")
+                }
+                if (state.evidencePhotoUri != null) {
+                    TextButton(
+                        onClick = actions.onClearEvidencePhoto,
+                        enabled = actionsEnabled && !state.isAnalyzingEvidence
+                    ) {
+                        Text("Quitar")
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun issueLabel(issue: EvidenceIssue): String = when (issue) {
+    EvidenceIssue.BLURRY -> "La foto está borrosa."
+    EvidenceIssue.TOO_DARK -> "La foto está muy oscura."
+    EvidenceIssue.LOW_RESOLUTION -> "La imagen tiene poca resolución."
+    EvidenceIssue.UNREADABLE -> "No se pudo leer la imagen."
 }
